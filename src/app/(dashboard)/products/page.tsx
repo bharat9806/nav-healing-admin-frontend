@@ -1,5 +1,6 @@
 'use client';
 
+import { isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { exportToExcel } from '@/lib/exportExcel';
@@ -8,6 +9,104 @@ import s from './products.module.scss';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
 const categories = ['Herbs', 'Oils', 'Powders', 'Capsules', 'Drops', 'Other'];
+
+type ProductFormState = {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  isActive: boolean;
+};
+
+type ProductFormProps = {
+  editing: Product | null;
+  error: string;
+  form: ProductFormState;
+  imagePreview: string;
+  saving: boolean;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onCancel: () => void;
+  onFormChange: (next: ProductFormState) => void;
+  onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+};
+
+function ProductForm({
+  editing,
+  error,
+  form,
+  imagePreview,
+  saving,
+  onSubmit,
+  onCancel,
+  onFormChange,
+  onImageChange,
+}: ProductFormProps) {
+  return (
+    <form onSubmit={onSubmit} className={s.inlineForm}>
+      <h2 className={s.inlineFormTitle}>{editing ? 'Edit Product' : 'New Product'}</h2>
+      {error && <div className={s.error}>{error}</div>}
+      <div className={s.formGroup}>
+        <label>Name *</label>
+        <input
+          type="text"
+          required
+          value={form.name}
+          onChange={(e) => onFormChange({ ...form, name: e.target.value })}
+          className={s.formInput}
+        />
+      </div>
+      <div className={s.formGroup}>
+        <label>Description</label>
+        <textarea
+          value={form.description}
+          onChange={(e) => onFormChange({ ...form, description: e.target.value })}
+          rows={2}
+          className={s.formTextarea}
+        />
+      </div>
+      <div className={s.grid2}>
+        <div className={s.formGroup}>
+          <label>Price *</label>
+          <input
+            type="number"
+            step="0.01"
+            required
+            value={form.price}
+            onChange={(e) => onFormChange({ ...form, price: e.target.value })}
+            className={s.formInput}
+          />
+        </div>
+        <div className={s.formGroup}>
+          <label>Category *</label>
+          <select
+            value={form.category}
+            onChange={(e) => onFormChange({ ...form, category: e.target.value })}
+            className={s.formSelect}
+          >
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className={s.formGroup}>
+        <label>Product Image</label>
+        <input type="file" accept="image/*" onChange={onImageChange} className={s.fileInput} />
+        {imagePreview && <img src={imagePreview} alt="Preview" className={s.imagePreview} />}
+      </div>
+      <div className={s.checkboxRow}>
+        <input
+          type="checkbox"
+          checked={form.isActive}
+          onChange={(e) => onFormChange({ ...form, isActive: e.target.checked })}
+        />
+        <label>Active</label>
+      </div>
+      <div className={s.formActions}>
+        <button type="button" onClick={onCancel} className={s.cancelBtn}>Cancel</button>
+        <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
+      </div>
+    </form>
+  );
+}
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -18,7 +117,7 @@ export default function ProductsPage() {
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [form, setForm] = useState({ name: '', description: '', price: '', category: 'Herbs', isActive: true });
+  const [form, setForm] = useState<ProductFormState>({ name: '', description: '', price: '', category: 'Herbs', isActive: true });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState('');
   const [saving, setSaving] = useState(false);
@@ -73,8 +172,11 @@ export default function ProductsPage() {
       if (editing) { await api.put(`/products/${editing.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setShowModal(false); }
       else { await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setShowInlineForm(false); }
       fetchProducts();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save product');
+    } catch (error) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      setError(message || 'Failed to save product');
     } finally { setSaving(false); }
   };
 
@@ -98,46 +200,6 @@ export default function ProductsPage() {
     }));
     exportToExcel(rows, `products_${new Date().toISOString().slice(0, 10)}`);
   };
-
-  const ProductForm = () => (
-    <form onSubmit={handleSubmit} className={s.inlineForm}>
-      <h2 className={s.inlineFormTitle}>{editing ? 'Edit Product' : 'New Product'}</h2>
-      {error && <div className={s.error}>{error}</div>}
-      <div className={s.formGroup}>
-        <label>Name *</label>
-        <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={s.formInput} />
-      </div>
-      <div className={s.formGroup}>
-        <label>Description</label>
-        <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} className={s.formTextarea} />
-      </div>
-      <div className={s.grid2}>
-        <div className={s.formGroup}>
-          <label>Price *</label>
-          <input type="number" step="0.01" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className={s.formInput} />
-        </div>
-        <div className={s.formGroup}>
-          <label>Category *</label>
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={s.formSelect}>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-      </div>
-      <div className={s.formGroup}>
-        <label>Product Image</label>
-        <input type="file" accept="image/*" onChange={handleImageChange} className={s.fileInput} />
-        {imagePreview && <img src={imagePreview} alt="Preview" className={s.imagePreview} />}
-      </div>
-      <div className={s.checkboxRow}>
-        <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-        <label>Active</label>
-      </div>
-      <div className={s.formActions}>
-        <button type="button" onClick={editing ? () => setShowModal(false) : cancelCreate} className={s.cancelBtn}>Cancel</button>
-        <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
-      </div>
-    </form>
-  );
 
   return (
     <div className={s.page}>
@@ -163,7 +225,19 @@ export default function ProductsPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className={s.emptyBox}>
-          {showInlineForm ? <ProductForm /> : <div className={s.emptyText}>No products found</div>}
+          {showInlineForm ? (
+            <ProductForm
+              editing={editing}
+              error={error}
+              form={form}
+              imagePreview={imagePreview}
+              saving={saving}
+              onSubmit={handleSubmit}
+              onCancel={cancelCreate}
+              onFormChange={setForm}
+              onImageChange={handleImageChange}
+            />
+          ) : <div className={s.emptyText}>No products found</div>}
         </div>
       ) : (
         <div className={s.tableWrap}>
@@ -212,7 +286,19 @@ export default function ProductsPage() {
 
       {showModal && (
         <div className={s.overlay}>
-          <div className={s.modal}><ProductForm /></div>
+          <div className={s.modal}>
+            <ProductForm
+              editing={editing}
+              error={error}
+              form={form}
+              imagePreview={imagePreview}
+              saving={saving}
+              onSubmit={handleSubmit}
+              onCancel={() => setShowModal(false)}
+              onFormChange={setForm}
+              onImageChange={handleImageChange}
+            />
+          </div>
         </div>
       )}
 
