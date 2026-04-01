@@ -1,10 +1,21 @@
 import axios from 'axios';
-import { clearFrontendAuthCookie } from '@/lib/auth-cookie';
+import { clearFrontendAuthCookie, getFrontendAuthToken } from '@/lib/auth-cookie';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = getFrontendAuthToken();
+
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
 });
 
 api.interceptors.response.use(

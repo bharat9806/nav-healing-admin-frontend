@@ -18,3 +18,19 @@ export function clearFrontendAuthCookie() {
 
   document.cookie = `${ACCESS_TOKEN_COOKIE}=; path=/; max-age=0; samesite=lax`;
 }
+
+export function getFrontendAuthToken() {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const cookie = document.cookie
+    .split('; ')
+    .find((part) => part.startsWith(`${ACCESS_TOKEN_COOKIE}=`));
+
+  if (!cookie) {
+    return null;
+  }
+
+  return decodeURIComponent(cookie.split('=').slice(1).join('='));
+}
