@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import api from '@/lib/api';
 import { clearFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache, fetchCurrentUser } from '@/lib/current-user';
@@ -16,14 +17,14 @@ type PermissionKey =
   | 'canManageUsers';
 
 const allNavItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: '[]', permission: 'canViewDashboard' },
-  { label: 'Products', href: '/products', icon: '[P]', permission: 'canManageProducts' },
-  { label: 'Leads', href: '/leads', icon: '[L]', permission: 'canManageLeads' },
-  { label: 'Users', href: '/users', icon: '[U]', permission: 'canManageUsers' },
+  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, permission: 'canViewDashboard' },
+  { label: 'Products', href: '/products', icon: <ProductsIcon />, permission: 'canManageProducts' },
+  { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
+  { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
   label: string;
   href: string;
-  icon: string;
+  icon: ReactNode;
   permission: PermissionKey;
 }>;
 
@@ -87,5 +88,56 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+  );
+}
+
+function IconShell({ children }: { children: ReactNode }) {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {children}
+    </svg>
+  );
+}
+
+function DashboardIcon() {
+  return (
+    <IconShell>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" />
+      <rect x="14" y="3" width="7" height="7" rx="1.5" />
+      <rect x="3" y="14" width="7" height="7" rx="1.5" />
+      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </IconShell>
+  );
+}
+
+function ProductsIcon() {
+  return (
+    <IconShell>
+      <path d="M5 8.5 12 4l7 4.5" />
+      <path d="M5 8.5V16l7 4 7-4V8.5" />
+      <path d="M12 12 19 8.5" />
+      <path d="M12 12 5 8.5" />
+      <path d="M12 12v8" />
+    </IconShell>
+  );
+}
+
+function LeadsIcon() {
+  return (
+    <IconShell>
+      <path d="M6 5h12" />
+      <path d="M6 10h12" />
+      <path d="M6 15h7" />
+      <path d="M6 19h4" />
+    </IconShell>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <IconShell>
+      <path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </IconShell>
   );
 }
