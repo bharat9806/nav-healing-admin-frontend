@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { clearFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache, fetchCurrentUser } from '@/lib/current-user';
 import { User } from '@/types';
 import s from './Sidebar.module.scss';
@@ -43,6 +44,7 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     clearCurrentUserCache();
+    clearFrontendAuthCookie();
     try {
       await api.post('/auth/logout');
     } finally {

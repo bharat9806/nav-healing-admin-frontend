@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { clearFrontendAuthCookie } from '@/lib/auth-cookie';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
@@ -16,6 +17,7 @@ api.interceptors.response.use(
       const isOnLoginPage = window.location.pathname.startsWith('/login');
 
       if (!isAuthSubmit && !isOnLoginPage) {
+        clearFrontendAuthCookie();
         window.location.replace('/login?force=1');
       }
     }

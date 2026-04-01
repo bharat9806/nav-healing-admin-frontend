@@ -3,6 +3,7 @@
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import api from '@/lib/api';
+import { setFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './login.module.scss';
 
@@ -22,7 +23,10 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await api.post('/auth/login', form);
+      const response = await api.post<{ access_token?: string }>('/auth/login', form);
+      if (response.data.access_token) {
+        setFrontendAuthCookie(response.data.access_token);
+      }
       clearCurrentUserCache();
       window.location.replace('/dashboard');
     } catch (error) {
