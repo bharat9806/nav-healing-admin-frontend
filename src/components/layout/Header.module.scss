@@ -1,0 +1,74 @@
+@use '../../styles/variables' as *;
+
+.header {
+  height: 4rem;
+  background-color: $bg-surface;
+  border-bottom: 1px solid $border;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 $s6;
+  flex-shrink: 0;
+}
+
+.title {
+  color: $text-primary;
+  font-weight: 600;
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+}
+
+.userInfo {
+  text-align: right;
+}
+
+.username {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.roleBadge {
+  font-size: 0.75rem;
+  padding: 0.125rem $s2;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.roleSuperAdmin {
+  background-color: rgba(#059669, 0.1);
+  color: #34d399;
+}
+
+.roleAdmin {
+  background-color: rgba(#8b5cf6, 0.1);
+  color: #a78bfa;
+}
+
+.roleTeamMember {
+  background-color: rgba(#3b82f6, 0.1);
+  color: #60a5fa;
+}
+
+.avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background-color: $emerald;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  span {
+    color: $text-primary;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+}

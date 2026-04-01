@@ -1,0 +1,323 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page { padding: $s6; }
+
+.header {
+  @include flex-between;
+  margin-bottom: $s6;
+}
+
+.pageTitle {
+  color: $text-primary;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.addBtn {
+  @include btn-primary;
+  padding: $s2 $s4;
+}
+
+.exportBtn {
+  @include btn-ghost;
+  padding: $s2 $s4;
+  border: 1px solid $border;
+  &:hover { border-color: $text-muted; color: $text-primary; }
+}
+
+// Filters
+.filters {
+  display: flex;
+  gap: $s3;
+  margin-bottom: $s6;
+}
+
+.searchInput {
+  @include input;
+  flex: 1;
+}
+
+.select {
+  @include input;
+  width: auto;
+  cursor: pointer;
+}
+
+// Skeleton
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.skeletonRow {
+  height: 4rem;
+  background-color: $bg-elevated;
+  border-radius: $r-md;
+  @include animate-pulse;
+}
+
+.emptyBox {
+  @include card;
+  padding: $s6;
+}
+
+.emptyText {
+  text-align: center;
+  padding: $s8 0;
+  color: $text-subtle;
+}
+
+// Table
+.tableWrap {
+  @include card;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thead tr {
+  border-bottom: 1px solid $border;
+}
+
+.th {
+  text-align: left;
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: $s3 $s4;
+}
+
+.thRight { text-align: right; }
+.hideMd  { @media (max-width: ($md - 1px)) { display: none; } }
+
+.tr {
+  border-bottom: 1px solid rgba($border, 0.5);
+  transition: background-color 0.15s;
+  &:last-child { border-bottom: none; }
+  &:hover { background-color: rgba($bg-elevated, 0.3); }
+}
+
+.td { padding: $s3 $s4; }
+.tdRight { text-align: right; }
+
+.productCell {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+}
+
+.productImg {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: $r-md;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.productImgPlaceholder {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: $r-md;
+  background-color: $bg-elevated;
+  @include flex-center;
+  color: $text-subtle;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.productName {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.productDesc {
+  color: $text-subtle;
+  font-size: 0.75rem;
+  @include truncate;
+  max-width: 12.5rem;
+}
+
+.categoryText {
+  color: $text-secondary;
+  font-size: 0.875rem;
+}
+
+.price {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.statusBtn {
+  @include status-badge;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.statusActive {
+  background-color: rgba($emerald, 0.1);
+  color: $emerald-light;
+  &:hover { background-color: rgba($emerald, 0.2); }
+}
+
+.statusInactive {
+  background-color: rgba(#6b7280, 0.1);
+  color: $text-muted;
+  &:hover { background-color: rgba(#6b7280, 0.2); }
+}
+
+.editBtn {
+  @include btn-ghost;
+  margin-right: $s3;
+  &:hover { color: $text-primary; }
+}
+
+.deleteBtn {
+  @include btn-ghost;
+  &:hover { color: $red-light; }
+}
+
+// Inline form
+.inlineForm {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.inlineFormTitle {
+  color: $text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 $s2;
+}
+
+// Modal
+.overlay { @include modal-overlay; }
+
+.modal {
+  @include modal-card;
+  max-width: 32rem;
+}
+
+.modalTitle {
+  color: $text-primary;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 $s4;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s4;
+}
+
+.formInput  { @include input; }
+.formSelect { @include input; cursor: pointer; }
+
+.formTextarea {
+  @include input;
+  resize: none;
+}
+
+.fileInput {
+  width: 100%;
+  color: $text-muted;
+  font-size: 0.875rem;
+
+  &::file-selector-button {
+    margin-right: $s4;
+    padding: $s2 $s4;
+    border-radius: $r-md;
+    border: none;
+    font-size: 0.875rem;
+    background-color: $bg-elevated;
+    color: $text-secondary;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    &:hover { background-color: $bg-muted; }
+  }
+}
+
+.imagePreview {
+  margin-top: $s2;
+  height: 5rem;
+  border-radius: $r-md;
+  object-fit: cover;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  label { font-size: 0.875rem; color: $text-secondary; }
+  input { accent-color: $emerald; }
+}
+
+.error {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s3;
+  padding-top: $s2;
+}
+
+.cancelBtn { @include btn-ghost; padding: $s2 $s4; }
+.saveBtn   { @include btn-primary; padding: $s2 $s4; }
+
+// Delete modal
+.deleteModal {
+  @include modal-card;
+  max-width: 24rem;
+  text-align: center;
+}
+
+.deleteTitle {
+  color: $text-primary;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 $s2;
+}
+
+.deleteMsg {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin: 0 0 $s6;
+}
+
+.deleteActions {
+  display: flex;
+  justify-content: center;
+  gap: $s3;
+}
+
+.deleteCancelBtn { @include btn-ghost; padding: $s2 $s4; }
+.deleteConfirmBtn { @include btn-danger; padding: $s2 $s4; }

@@ -1,0 +1,105 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.sidebar {
+  width: 16rem;
+  background-color: $bg-surface;
+  border-right: 1px solid $border;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  padding: $s5 $s6;
+  border-bottom: 1px solid $border;
+}
+
+.brandIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: $r-sm;
+  background-color: $emerald;
+  @include flex-center;
+  span {
+    color: $text-primary;
+    font-size: 0.875rem;
+    font-weight: 700;
+  }
+}
+
+.brandName {
+  color: $text-primary;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.nav {
+  flex: 1;
+  padding: $s4 $s3;
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  overflow-y: auto;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  padding: $s2 + 0.125rem $s3;
+  border-radius: $r-md;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s, background-color 0.15s;
+  color: $text-muted;
+
+  &:hover {
+    color: $text-primary;
+    background-color: $bg-elevated;
+  }
+
+  .icon { font-size: 1rem; }
+}
+
+.navItemActive {
+  background-color: $emerald;
+  color: $text-primary;
+
+  &:hover {
+    background-color: $emerald;
+    color: $text-primary;
+  }
+}
+
+.footer {
+  padding: $s4 $s3;
+  border-top: 1px solid $border;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  width: 100%;
+  padding: $s2 + 0.125rem $s3;
+  border-radius: $r-md;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: $text-muted;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover {
+    color: $red-light;
+    background-color: rgba($red, 0.1);
+  }
+}

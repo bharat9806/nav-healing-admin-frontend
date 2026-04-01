@@ -1,0 +1,349 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page {
+  padding: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s6;
+}
+
+.header {
+  @include flex-between;
+}
+
+.pageTitle {
+  color: $text-primary;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pageSubtitle {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin-top: $s1;
+}
+
+.error {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
+// Search box
+.searchBox {
+  @include card;
+  padding: $s4;
+}
+
+.searchInput { @include input; }
+
+// Table
+.tableWrap {
+  @include card;
+  overflow: hidden;
+}
+
+.tableScroll { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thead tr { border-bottom: 1px solid $border; }
+
+.th {
+  text-align: left;
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: $s3 $s6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.thRight { text-align: right; }
+.hideLg  { @media (max-width: ($lg - 1px)) { display: none; } }
+
+.tbody { }
+
+.tr {
+  border-bottom: 1px solid $border;
+  transition: background-color 0.15s;
+  &:last-child { border-bottom: none; }
+  &:hover { background-color: rgba($bg-elevated, 0.4); }
+}
+
+.td { padding: $s4 $s6; }
+.tdRight { text-align: right; }
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+}
+
+.avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: $r-full;
+  background-color: rgba($emerald, 0.2);
+  @include flex-center;
+  flex-shrink: 0;
+  span { color: $emerald-light; font-size: 0.875rem; font-weight: 700; }
+}
+
+.username {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.email {
+  color: $text-subtle;
+  font-size: 0.75rem;
+}
+
+.rolePill {
+  @include status-badge;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.roleSuperAdmin {
+  background-color: rgba($emerald, 0.2);
+  color: $emerald-lighter;
+  border-color: rgba($emerald, 0.3);
+}
+
+.roleAdmin {
+  background-color: rgba(#8b5cf6, 0.2);
+  color: $violet-muted;
+  border-color: rgba(#8b5cf6, 0.3);
+}
+
+.roleTeamMember {
+  background-color: rgba(#3b82f6, 0.2);
+  color: $blue-muted;
+  border-color: rgba(#3b82f6, 0.3);
+}
+
+.joinedDate {
+  color: $text-muted;
+  font-size: 0.875rem;
+}
+
+.statusBtn {
+  @include status-badge;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.statusActive {
+  background-color: rgba($emerald, 0.1);
+  color: $emerald-light;
+  &:hover { background-color: rgba($emerald, 0.2); }
+}
+
+.statusInactive {
+  background-color: $bg-muted;
+  color: $text-muted;
+  &:hover { background-color: $bg-elevated; }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $s2;
+}
+
+.editBtn {
+  color: $text-muted;
+  font-size: 0.875rem;
+  padding: $s1 + 0.125rem $s3;
+  border-radius: $r-md;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+  &:hover { color: $emerald-light; background-color: rgba($emerald, 0.1); }
+}
+
+.deleteBtn {
+  color: $text-muted;
+  font-size: 0.875rem;
+  padding: $s1 + 0.125rem $s3;
+  border-radius: $r-md;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+  &:hover { color: $red-light; background-color: rgba($red, 0.1); }
+}
+
+.emptyRow td {
+  padding: $s6;
+  text-align: center;
+  color: $text-subtle;
+}
+
+// Edit modal
+.overlay { @include modal-overlay; }
+
+.modal {
+  @include modal-card;
+  max-width: 28rem;
+  padding: 0;
+}
+
+.modalHeader {
+  @include flex-between;
+  padding: $s4 $s6;
+  border-bottom: 1px solid $border;
+
+  h3 { color: $text-primary; font-weight: 600; margin: 0; }
+}
+
+.modalClose {
+  @include btn-ghost;
+  font-size: 1.25rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.modalBody {
+  padding: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.editingNote {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin: 0;
+  margin-bottom: $s4;
+  span { color: $text-primary; font-weight: 500; }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $s1 + 0.125rem;
+  label { font-size: 0.875rem; font-weight: 500; color: $text-secondary; }
+}
+
+.formSelect { @include input; cursor: pointer; }
+.formInput  { @include input; }
+.formError  {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+  margin-bottom: $s2;
+}
+.addBtn { @include btn-primary; padding: $s2 $s4; }
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  label { font-size: 0.875rem; color: $text-secondary; }
+  input { width: 1rem; height: 1rem; accent-color: $emerald; }
+}
+
+.permissionsBox {
+  border: 1px solid $border;
+  border-radius: $r-md;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.permissionsTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $text-secondary;
+  margin: 0 0 $s1;
+}
+
+.modalActions {
+  display: flex;
+  gap: $s3;
+  padding-top: $s2;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: $s2 + 0.125rem $s4;
+  border-radius: $r-md;
+  border: 1px solid $border-input;
+  background: none;
+  color: $text-secondary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s;
+  &:hover { color: $text-primary; }
+}
+
+.saveBtn {
+  @include btn-primary;
+  flex: 1;
+  padding: $s2 + 0.125rem $s4;
+}
+
+// Delete modal
+.deleteModal {
+  @include modal-card;
+  max-width: 24rem;
+  text-align: center;
+}
+
+.deleteIconWrap {
+  width: 3rem;
+  height: 3rem;
+  border-radius: $r-full;
+  background-color: rgba($red, 0.1);
+  @include flex-center;
+  margin: 0 auto $s4;
+  span { color: $red-light; font-size: 1.25rem; }
+}
+
+.deleteTitle {
+  color: $text-primary;
+  font-weight: 600;
+  margin: 0 0 $s2;
+}
+
+.deleteMsg {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin: 0 0 $s6;
+}
+
+.deleteActions { display: flex; gap: $s3; }
+.deleteCancelBtn {
+  flex: 1;
+  padding: $s2 + 0.125rem $s4;
+  border-radius: $r-md;
+  border: 1px solid $border-input;
+  background: none;
+  color: $text-secondary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  &:hover { color: $text-primary; }
+}
+.deleteConfirmBtn { @include btn-danger; flex: 1; padding: $s2 + 0.125rem $s4; }

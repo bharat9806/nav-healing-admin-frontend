@@ -1,0 +1,26 @@
+@use '../styles/variables' as *;
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background-color: $bg-base;
+  color: $text-primary;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
+// Date input color fix for dark theme
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

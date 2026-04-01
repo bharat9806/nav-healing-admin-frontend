@@ -1,0 +1,113 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $bg-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $s4;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 28rem;
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: $s8;
+}
+
+.brandIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: $r-xl;
+  background-color: $emerald;
+  margin-bottom: $s4;
+
+  svg { color: $text-primary; }
+}
+
+.brandTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0;
+}
+
+.brandSub {
+  color: $text-muted;
+  margin-top: $s1;
+  font-size: 0.875rem;
+}
+
+.card {
+  @include card;
+  border-radius: $r-xl;
+  padding: $s8;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $s5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $s1 + 0.125rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+}
+
+.input {
+  @include input;
+  padding: $s2 + 0.125rem $s4;
+}
+
+.error {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
+.submitBtn {
+  @include btn-primary;
+  width: 100%;
+  padding: $s2 + 0.125rem $s4;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s2;
+}
+
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  animation: spin 1s linear infinite;
+
+  .track { opacity: 0.25; }
+  .fill { opacity: 0.75; }
+}
+
+.footer {
+  text-align: center;
+  color: $text-faint;
+  font-size: 0.75rem;
+  margin-top: $s6;
+}

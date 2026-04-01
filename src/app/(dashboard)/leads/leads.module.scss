@@ -1,0 +1,356 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page { padding: $s6; }
+
+.header {
+  @include flex-between;
+  margin-bottom: $s4;
+}
+
+.pageTitle {
+  color: $text-primary;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.addBtn {
+  @include btn-primary;
+  padding: $s2 $s4;
+}
+
+.exportBtn {
+  @include btn-ghost;
+  padding: $s2 $s4;
+  border: 1px solid $border;
+  &:hover { border-color: $text-muted; color: $text-primary; }
+}
+
+// Filter panel
+.filterPanel {
+  @include card;
+  padding: $s4;
+  margin-bottom: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  @include input;
+  flex: 1;
+  min-width: 12rem;
+}
+
+.select {
+  @include input;
+  width: 10rem;
+  cursor: pointer;
+}
+
+.filterDivider {
+  width: 100%;
+  height: 1px;
+  background-color: $border;
+  opacity: 0.5;
+}
+
+.filterLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $text-muted;
+  white-space: nowrap;
+  min-width: 4.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+// Inline date range inputs
+.dateRange {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  flex-wrap: wrap;
+}
+
+.dateInput {
+  @include input;
+  width: 8.5rem;
+  padding: 0.3125rem $s3;
+  font-size: 0.75rem;
+}
+
+.sep { color: $text-subtle; font-size: 0.75rem; }
+
+.applyBtn {
+  @include btn-primary;
+  padding: 0.3125rem $s3;
+  font-size: 0.75rem;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $text-muted;
+  font-size: 0.75rem;
+  padding: 0.3125rem $s2;
+  border-radius: $r-md;
+  transition: color 0.15s;
+  &:hover { color: $red-light; }
+}
+
+// Two-column date filter row
+.dateFilterCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s4;
+  width: 100%;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dateFilterCol {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  flex-wrap: wrap;
+}
+
+// Skeleton
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.skeletonRow {
+  height: 4rem;
+  background-color: $bg-elevated;
+  border-radius: $r-md;
+  @include animate-pulse;
+}
+
+.emptyBox {
+  @include card;
+  padding: $s6;
+}
+
+.emptyText {
+  text-align: center;
+  padding: $s8 0;
+  color: $text-subtle;
+}
+
+// Table
+.tableWrap {
+  @include card;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thead tr { border-bottom: 1px solid $border; }
+
+.th {
+  text-align: left;
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: $s3 $s4;
+}
+
+.thRight { text-align: right; }
+.hideMd  { @media (max-width: ($md - 1px)) { display: none; } }
+.hideLg  { @media (max-width: ($lg - 1px)) { display: none; } }
+
+.tr {
+  border-bottom: 1px solid rgba($border, 0.5);
+  transition: background-color 0.15s;
+  &:last-child { border-bottom: none; }
+  &:hover { background-color: rgba($bg-elevated, 0.3); }
+}
+
+.td { padding: $s3 $s4; }
+.tdRight { text-align: right; }
+
+.leadName {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.leadDesc {
+  color: $text-subtle;
+  font-size: 0.75rem;
+  @include truncate;
+  max-width: 9.375rem;
+}
+
+.cellText {
+  color: $text-secondary;
+  font-size: 0.875rem;
+}
+
+.tracking {
+  color: $text-muted;
+  font-size: 0.875rem;
+  font-family: monospace;
+}
+
+.statusSelect {
+  font-size: 0.75rem;
+  padding: $s1 $s2 + 0.125rem;
+  border-radius: $r-full;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  outline: none;
+  appearance: none;
+}
+
+.statusNew           { background-color: rgba(#3b82f6, 0.1); color: $blue-light; }
+.statusContacted     { background-color: rgba(#f59e0b, 0.1); color: $amber-light; }
+.statusConverted     { background-color: rgba($emerald, 0.1); color: $emerald-light; }
+.statusClosed        { background-color: rgba(#6b7280, 0.1); color: $text-muted; }
+.statusMissed        { background-color: rgba(#ef4444, 0.1); color: $red-light; }
+.statusCallBack      { background-color: rgba(#8b5cf6, 0.1); color: #a78bfa; }
+.statusNotInterested { background-color: rgba(#6b7280, 0.15); color: #9ca3af; }
+.statusDnc           { background-color: rgba(#ef4444, 0.2); color: #fca5a5; }
+.statusFollowUp      { background-color: rgba(#06b6d4, 0.1); color: #67e8f9; }
+
+.editBtn   { @include btn-ghost; margin-right: $s3; &:hover { color: $text-primary; } }
+.deleteBtn { @include btn-ghost; &:hover { color: $red-light; } }
+
+// Inline form
+.inlineForm { display: flex; flex-direction: column; gap: $s4; }
+
+.inlineFormTitle {
+  color: $text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 $s2;
+}
+
+// Modal
+.overlay { @include modal-overlay; }
+
+.modal {
+  @include modal-card;
+  max-width: 42rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalTitle {
+  color: $text-primary;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 $s4;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+}
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: $s4; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: $s4; }
+
+.formInput    { @include input; }
+.formSelect   { @include input; cursor: pointer; }
+.formTextarea { @include input; resize: none; }
+
+.error {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
+// Products / items section
+.itemsHeader {
+  @include flex-between;
+  margin-bottom: $s2;
+  label { font-size: 0.875rem; font-weight: 500; color: $text-secondary; }
+}
+
+.addItemBtn {
+  @include btn-ghost;
+  font-size: 0.75rem;
+  color: $emerald-light;
+  &:hover { color: $emerald-hover; }
+}
+
+.itemRow {
+  display: flex;
+  gap: $s2;
+  align-items: center;
+}
+
+.itemSelect { @include input; flex: 1; cursor: pointer; }
+.itemQty    { @include input; width: 5rem; }
+
+.removeItemBtn {
+  @include btn-ghost;
+  color: $red-light;
+  padding: 0 $s2;
+  &:hover { color: $red-hover; }
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s3;
+  padding-top: $s2;
+}
+
+.cancelBtn { @include btn-ghost; padding: $s2 $s4; }
+.saveBtn   { @include btn-primary; padding: $s2 $s4; }
+
+// Delete modal
+.deleteModal {
+  @include modal-card;
+  max-width: 24rem;
+  text-align: center;
+}
+
+.deleteTitle {
+  color: $text-primary;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 $s2;
+}
+
+.deleteMsg {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin: 0 0 $s6;
+}
+
+.deleteActions { display: flex; justify-content: center; gap: $s3; }
+.deleteCancelBtn  { @include btn-ghost; padding: $s2 $s4; }
+.deleteConfirmBtn { @include btn-danger; padding: $s2 $s4; }

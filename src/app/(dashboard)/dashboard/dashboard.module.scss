@@ -1,0 +1,223 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page {
+  padding: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s6;
+}
+
+// Welcome banner
+.banner {
+  background: linear-gradient(to right, rgba($emerald, 0.2), rgba(#064e3b, 0.1));
+  border: 1px solid rgba($emerald-hover, 0.2);
+  border-radius: $r-xl;
+  padding: $s6;
+}
+
+.bannerTitle {
+  color: $text-primary;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.bannerDate {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin-top: $s1;
+}
+
+.rolePill {
+  display: inline-block;
+  margin-top: $s2;
+  font-size: 0.75rem;
+  padding: $s1 $s2 + 0.125rem;
+  border-radius: $r-full;
+  font-weight: 500;
+}
+.roleSuperAdmin { background-color: rgba($emerald, 0.1); color: $emerald-light; }
+.roleAdmin      { background-color: rgba(#8b5cf6, 0.1); color: $violet-light; }
+.roleTeamMember { background-color: rgba(#3b82f6, 0.1); color: $blue-light; }
+
+// Stats grid
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $s4;
+
+  @media (min-width: $md) { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: $lg) { grid-template-columns: repeat(5, 1fr); }
+}
+
+.statCard {
+  @include card;
+  padding: $s4;
+}
+
+.statLabel {
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: $s1;
+}
+
+.colorEmerald { color: $emerald-light; }
+.colorGreen   { color: $green-light; }
+.colorBlue    { color: $blue-light; }
+.colorAmber   { color: $amber-light; }
+.colorViolet  { color: $violet-light; }
+
+// Bottom grid
+.bottomGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $s6;
+
+  @media (min-width: $lg) { grid-template-columns: 2fr 1fr; }
+}
+
+// Recent leads panel
+.panel {
+  @include card;
+  padding: $s5;
+}
+
+.panelHeader {
+  @include flex-between;
+  margin-bottom: $s4;
+}
+
+.panelTitle {
+  color: $text-primary;
+  font-weight: 600;
+  margin: 0;
+}
+
+.panelLink {
+  color: $emerald-light;
+  font-size: 0.875rem;
+  transition: color 0.15s;
+  &:hover { color: $emerald-hover; }
+}
+
+.emptyText {
+  color: $text-subtle;
+  font-size: 0.875rem;
+}
+
+.leadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $s2 0;
+  border-bottom: 1px solid $border;
+  &:last-child { border-bottom: none; }
+}
+
+.leadName {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.leadSub {
+  color: $text-subtle;
+  font-size: 0.75rem;
+}
+
+// Status badges
+.badgeNew       { @include status-badge; background-color: rgba(#3b82f6, 0.1); color: $blue-light; }
+.badgeContacted { @include status-badge; background-color: rgba(#f59e0b, 0.1); color: $amber-light; }
+.badgeConverted { @include status-badge; background-color: rgba($emerald, 0.1); color: $emerald-light; }
+.badgeClosed    { @include status-badge; background-color: rgba(#6b7280, 0.1); color: $text-muted; }
+
+// Quick actions
+.actionList {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+  margin-top: $s4;
+}
+
+.actionItem {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  padding: $s2 + 0.125rem $s3;
+  border-radius: $r-md;
+  font-size: 0.875rem;
+  color: $text-secondary;
+  transition: background-color 0.15s;
+  &:hover { background-color: $bg-elevated; }
+}
+
+.actionIcon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: $r-md;
+  @include flex-center;
+}
+
+.iconEmerald { background-color: rgba($emerald, 0.1); color: $emerald-light; }
+.iconBlue    { background-color: rgba(#3b82f6, 0.1); color: $blue-light; }
+.iconViolet  { background-color: rgba(#8b5cf6, 0.1); color: $violet-light; }
+
+// System status bar
+.statusBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $s3 $s4;
+  background-color: rgba($bg-surface, 0.5);
+  border: 1px solid $border;
+  border-radius: $r-md;
+  font-size: 0.75rem;
+  color: $text-subtle;
+}
+
+.statusDot {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+
+  &::before {
+    content: '';
+    display: block;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: $r-full;
+    background-color: $emerald-light;
+  }
+}
+
+// Skeleton
+.skeletonBanner {
+  height: 6rem;
+  background-color: $bg-elevated;
+  border-radius: $r-xl;
+  @include animate-pulse;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $s4;
+  @media (min-width: $md) { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: $lg) { grid-template-columns: repeat(5, 1fr); }
+}
+
+.skeletonCard {
+  height: 6rem;
+  background-color: $bg-elevated;
+  border-radius: $r-lg;
+  @include animate-pulse;
+}

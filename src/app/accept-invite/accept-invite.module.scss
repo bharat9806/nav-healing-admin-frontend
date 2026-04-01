@@ -1,0 +1,121 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  min-height: 100vh;
+  background-color: $bg-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $s4;
+}
+
+.card {
+  @include card;
+  border-radius: $r-xl;
+  padding: $s8;
+  width: 100%;
+  max-width: 28rem;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: $s8;
+}
+
+.brandIcon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: $r-lg;
+  background-color: $emerald;
+  @include flex-center;
+  margin: 0 auto $s4;
+  span {
+    color: $text-primary;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+}
+
+.brandTitle {
+  color: $text-primary;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.brandSub {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin-top: $s2;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $s1 + 0.125rem;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+}
+
+.input {
+  @include input;
+  padding: $s2 + 0.125rem $s4;
+}
+
+.error {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
+.submitBtn {
+  @include btn-primary;
+  width: 100%;
+  padding: $s2 + 0.125rem $s4;
+  font-weight: 500;
+  margin-top: $s2;
+}
+
+.success {
+  text-align: center;
+}
+
+.successIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background-color: rgba($emerald-light, 0.1);
+  @include flex-center;
+  margin: 0 auto $s4;
+  span {
+    color: $emerald-light;
+    font-size: 1.875rem;
+  }
+}
+
+.successTitle {
+  color: $text-primary;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 $s2;
+}
+
+.successSub {
+  color: $text-muted;
+  font-size: 0.875rem;
+}

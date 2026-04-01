@@ -1,0 +1,123 @@
+@use 'variables' as *;
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin card {
+  background-color: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $r-lg;
+}
+
+@mixin input {
+  width: 100%;
+  background-color: $bg-elevated;
+  border: 1px solid $border-input;
+  color: $text-primary;
+  border-radius: $r-md;
+  padding: $s2 $s4;
+  font-size: 0.875rem;
+  outline: none;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  resize: none;
+
+  &::placeholder { color: $text-subtle; }
+  &:focus { box-shadow: 0 0 0 2px $emerald-hover; border-color: transparent; }
+}
+
+@mixin btn-primary {
+  background-color: $emerald;
+  color: $text-primary;
+  border: none;
+  border-radius: $r-md;
+  padding: $s2 $s4;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) { background-color: $emerald-hover; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+@mixin btn-danger {
+  background-color: $red;
+  color: $text-primary;
+  border: none;
+  border-radius: $r-md;
+  padding: $s2 $s4;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+
+  &:hover:not(:disabled) { background-color: $red-hover; }
+}
+
+@mixin btn-ghost {
+  background: none;
+  border: none;
+  color: $text-muted;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color 0.15s;
+
+  &:hover { color: $text-primary; }
+}
+
+@mixin modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: $s4;
+}
+
+@mixin modal-card {
+  @include card;
+  border-radius: $r-xl;
+  padding: $s6;
+  width: 100%;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin status-badge {
+  font-size: 0.75rem;
+  padding: $s1 $s3 - 0.125rem;
+  border-radius: $r-full;
+  font-weight: 500;
+  display: inline-block;
+}
+
+@mixin animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
