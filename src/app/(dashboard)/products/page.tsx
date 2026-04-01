@@ -112,6 +112,9 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [showInlineForm, setShowInlineForm] = useState(false);
@@ -124,18 +127,32 @@ export default function ProductsPage() {
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Product | null>(null);
 
-  const fetchProducts = () => {
+  const fetchProducts = (p = page) => {
     setLoading(true);
-    api.get('/products').then((res) => setProducts(res.data)).catch(() => {}).finally(() => setLoading(false));
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (catFilter) params.set('category', catFilter);
+    params.set('page', String(p));
+    params.set('limit', '20');
+    api.get(`/products?${params.toString()}`)
+      .then((res) => {
+        setProducts(res.data.data);
+        setTotalPages(res.data.meta.totalPages);
+        setTotal(res.data.meta.total);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchProducts(); }, []);
 
-  const filtered = products.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchCat = !catFilter || p.category === catFilter;
-    return matchSearch && matchCat;
-  });
+  // Filtering is now server-side
+  const filtered = products;
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    fetchProducts(p);
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -188,8 +205,14 @@ export default function ProductsPage() {
     setDeleteTarget(null); fetchProducts();
   };
 
-  const handleExport = () => {
-    const rows = filtered.map((p) => ({
+  const handleExport = async () => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (catFilter) params.set('category', catFilter);
+    params.set('limit', '10000');
+    const res = await api.get(`/products?${params.toString()}`);
+    const allProducts: Product[] = res.data.data;
+    const rows = allProducts.map((p) => ({
       ID: p.id,
       Name: p.name,
       Category: p.category,
@@ -212,8 +235,8 @@ export default function ProductsPage() {
       </div>
 
       <div className={s.filters}>
-        <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className={s.searchInput} />
-        <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className={s.select}>
+        <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchProducts(1); } }} className={s.searchInput} />
+        <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setPage(1); setTimeout(() => fetchProducts(1), 0); }} className={s.select}>
           <option value="">All Categories</option>
           {categories.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -281,6 +304,29 @@ export default function ProductsPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className={s.pagination}>
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className={s.pageBtn}
+              >
+                ← Prev
+              </button>
+              <span className={s.pageInfo}>
+                Page {page} of {totalPages} ({total} products)
+              </span>
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className={s.pageBtn}
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       )}
 

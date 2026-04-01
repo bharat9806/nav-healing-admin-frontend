@@ -67,6 +67,9 @@ export default function LeadsPage() {
   const [followUpPreset, setFollowUpPreset] = useState('');
   const [followUpFrom, setFollowUpFrom] = useState('');
   const [followUpTo, setFollowUpTo] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const [showInlineForm, setShowInlineForm] = useState(false);
@@ -87,6 +90,7 @@ export default function LeadsPage() {
     from = dateFrom, to = dateTo,
     delFrom = deliveredFrom, delTo = deliveredTo,
     fuFrom = followUpFrom, fuTo = followUpTo,
+    p = page,
   ) => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -96,22 +100,31 @@ export default function LeadsPage() {
     if (delTo) params.set('deliveredTo', delTo);
     if (fuFrom) params.set('followUpFrom', fuFrom);
     if (fuTo) params.set('followUpTo', fuTo);
-    const query = params.toString() ? `?${params.toString()}` : '';
-    Promise.all([api.get(`/leads${query}`), api.get('/products')])
-      .then(([leadsRes, productsRes]) => { setLeads(leadsRes.data); setProducts(productsRes.data); })
+    if (search) params.set('search', search);
+    if (statusFilter) params.set('status', statusFilter);
+    params.set('page', String(p));
+    params.set('limit', '20');
+    const query = `?${params.toString()}`;
+    Promise.all([api.get(`/leads${query}`), api.get('/products?limit=100')])
+      .then(([leadsRes, productsRes]) => {
+        setLeads(leadsRes.data.data);
+        setTotalPages(leadsRes.data.meta.totalPages);
+        setTotal(leadsRes.data.meta.total);
+        setProducts(productsRes.data.data);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const filtered = leads.filter((l) => {
-    const matchSearch = l.name.toLowerCase().includes(search.toLowerCase()) ||
-      (l.phone || '').includes(search) ||
-      (l.diseases || '').toLowerCase().includes(search.toLowerCase());
-    const matchStatus = !statusFilter || l.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  // Search and status filtering is now done server-side
+  const filtered = leads;
+
+  const goToPage = (p: number) => {
+    setPage(p);
+    fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, p);
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -222,8 +235,21 @@ export default function LeadsPage() {
     else { setFollowUpFrom(''); setFollowUpTo(''); }
   };
 
-  const handleExport = () => {
-    const rows = filtered.map((l) => ({
+  const handleExport = async () => {
+    // Fetch all leads (no pagination) for export
+    const params = new URLSearchParams();
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (deliveredFrom) params.set('deliveredFrom', deliveredFrom);
+    if (deliveredTo) params.set('deliveredTo', deliveredTo);
+    if (followUpFrom) params.set('followUpFrom', followUpFrom);
+    if (followUpTo) params.set('followUpTo', followUpTo);
+    if (search) params.set('search', search);
+    if (statusFilter) params.set('status', statusFilter);
+    params.set('limit', '10000');
+    const res = await api.get(`/leads?${params.toString()}`);
+    const allLeads: Lead[] = res.data.data;
+    const rows = allLeads.map((l) => ({
       ID: l.id,
       Name: l.name,
       Phone: l.phone || '',
@@ -319,8 +345,8 @@ export default function LeadsPage() {
 
       <div className={s.filterPanel}>
         <div className={s.filterRow}>
-          <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => setSearch(e.target.value)} className={s.searchInput} />
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className={s.select}>
+          <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); } }} className={s.searchInput} />
+          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.select}>
             <option value="">All Statuses</option>
             {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
           </select>
@@ -421,6 +447,29 @@ export default function LeadsPage() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className={s.pagination}>
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className={s.pageBtn}
+              >
+                ← Prev
+              </button>
+              <span className={s.pageInfo}>
+                Page {page} of {totalPages} ({total} leads)
+              </span>
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className={s.pageBtn}
+              >
+                Next →
+              </button>
+            </div>
+          )}
         </div>
       )}
 
