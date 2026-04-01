@@ -21,7 +21,12 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/login', form);
+      const res = await api.post('/auth/login', form);
+      // Set cookie on current domain so Next.js middleware can read it
+      if (res.data.access_token) {
+        const maxAge = 7 * 24 * 60 * 60;
+        document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${maxAge}; secure; samesite=lax`;
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials');

@@ -25,7 +25,11 @@ function AcceptInviteForm() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/accept-invite', { token, username: form.username, password: form.password });
+      const res = await api.post('/auth/accept-invite', { token, username: form.username, password: form.password });
+      if (res.data.access_token) {
+        const maxAge = 7 * 24 * 60 * 60;
+        document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${maxAge}; secure; samesite=lax`;
+      }
       setSuccess(true);
       setTimeout(() => router.push('/dashboard'), 1500);
     } catch (err: any) {
