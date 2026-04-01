@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { isAxiosError } from 'axios';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './accept-invite.module.scss';
 
 function AcceptInviteForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -16,24 +17,38 @@ function AcceptInviteForm() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!token) setError('Invalid invite link. Please contact your administrator.');
+    if (!token) {
+      setError('Invalid invite link. Please contact your administrator.');
+    }
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password !== form.confirmPassword) { setError('Passwords do not match'); return; }
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setLoading(true);
     setError('');
+
     try {
-      const res = await api.post('/auth/accept-invite', { token, username: form.username, password: form.password });
-      if (res.data.access_token) {
-        const maxAge = 7 * 24 * 60 * 60;
-        document.cookie = `access_token=${res.data.access_token}; path=/; max-age=${maxAge}; secure; samesite=lax`;
-      }
+      await api.post('/auth/accept-invite', {
+        token,
+        username: form.username,
+        password: form.password,
+      });
+
+      clearCurrentUserCache();
       setSuccess(true);
-      setTimeout(() => router.push('/dashboard'), 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong');
+      setTimeout(() => window.location.replace('/dashboard'), 1500);
+    } catch (error) {
+      const message = isAxiosError<{ message?: string }>(error)
+        ? error.response?.data?.message
+        : undefined;
+
+      setError(message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -42,7 +57,9 @@ function AcceptInviteForm() {
   if (success) {
     return (
       <div className={s.success}>
-        <div className={s.successIcon}><span>✓</span></div>
+        <div className={s.successIcon}>
+          <span>OK</span>
+        </div>
         <h2 className={s.successTitle}>Account created!</h2>
         <p className={s.successSub}>Redirecting you to the dashboard...</p>
       </div>
@@ -52,7 +69,9 @@ function AcceptInviteForm() {
   return (
     <>
       <div className={s.brand}>
-        <div className={s.brandIcon}><span>N</span></div>
+        <div className={s.brandIcon}>
+          <span>N</span>
+        </div>
         <h1 className={s.brandTitle}>Set up your account</h1>
         <p className={s.brandSub}>Choose a username and password to get started</p>
       </div>
@@ -62,20 +81,39 @@ function AcceptInviteForm() {
 
         <div className={s.field}>
           <label>Username</label>
-          <input type="text" value={form.username} onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
-            required placeholder="e.g. johndoe" className={s.input} />
+          <input
+            type="text"
+            value={form.username}
+            onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
+            required
+            placeholder="e.g. johndoe"
+            className={s.input}
+          />
         </div>
 
         <div className={s.field}>
           <label>Password</label>
-          <input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-            required minLength={6} placeholder="Minimum 6 characters" className={s.input} />
+          <input
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+            required
+            minLength={6}
+            placeholder="Minimum 6 characters"
+            className={s.input}
+          />
         </div>
 
         <div className={s.field}>
           <label>Confirm Password</label>
-          <input type="password" value={form.confirmPassword} onChange={e => setForm(p => ({ ...p, confirmPassword: e.target.value }))}
-            required placeholder="Repeat your password" className={s.input} />
+          <input
+            type="password"
+            value={form.confirmPassword}
+            onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+            required
+            placeholder="Repeat your password"
+            className={s.input}
+          />
         </div>
 
         <button type="submit" disabled={loading || !token} className={s.submitBtn}>

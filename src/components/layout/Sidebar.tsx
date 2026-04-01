@@ -4,15 +4,27 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { clearCurrentUserCache, fetchCurrentUser } from '@/lib/current-user';
 import { User } from '@/types';
 import s from './Sidebar.module.scss';
 
+type PermissionKey =
+  | 'canViewDashboard'
+  | 'canManageProducts'
+  | 'canManageLeads'
+  | 'canManageUsers';
+
 const allNavItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: '▦', permission: 'canViewDashboard' },
-  { label: 'Products',  href: '/products',  icon: '🌿', permission: 'canManageProducts' },
-  { label: 'Leads',     href: '/leads',     icon: '📋', permission: 'canManageLeads' },
-  { label: 'Users',     href: '/users',     icon: '◎',  permission: 'canManageUsers' },
-];
+  { label: 'Dashboard', href: '/dashboard', icon: '[]', permission: 'canViewDashboard' },
+  { label: 'Products', href: '/products', icon: '[P]', permission: 'canManageProducts' },
+  { label: 'Leads', href: '/leads', icon: '[L]', permission: 'canManageLeads' },
+  { label: 'Users', href: '/users', icon: '[U]', permission: 'canManageUsers' },
+] satisfies Array<{
+  label: string;
+  href: string;
+  icon: string;
+  permission: PermissionKey;
+}>;
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -20,23 +32,30 @@ export default function Sidebar() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    api.get('/auth/me').then((res) => setUser(res.data)).catch(() => {});
+    fetchCurrentUser().then(setUser).catch(() => {});
   }, []);
 
   const navItems = allNavItems.filter((item) => {
     if (!user) return true;
     if (user.role === 'SUPER_ADMIN') return true;
-    return (user as any)[item.permission] === true;
+    return user[item.permission] === true;
   });
 
   const handleLogout = async () => {
-    try { await api.post('/auth/logout'); } finally { router.push('/login'); }
+    clearCurrentUserCache();
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      router.push('/login?force=1');
+    }
   };
 
   return (
     <aside className={s.sidebar}>
       <div className={s.brand}>
-        <div className={s.brandIcon}><span>N</span></div>
+        <div className={s.brandIcon}>
+          <span>N</span>
+        </div>
         <span className={s.brandName}>Nav Healing</span>
       </div>
 
@@ -45,6 +64,7 @@ export default function Sidebar() {
           const isActive = item.href === '/dashboard'
             ? pathname === item.href
             : pathname.startsWith(item.href);
+
           return (
             <Link
               key={item.href}
@@ -60,7 +80,7 @@ export default function Sidebar() {
 
       <div className={s.footer}>
         <button onClick={handleLogout} className={s.logoutBtn}>
-          <span>⇤</span>
+          <span>{'<-'}</span>
           Logout
         </button>
       </div>

@@ -2,17 +2,24 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
-  withCredentials: true, // send cookies automatically
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Response interceptor — redirect to login on 401
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
-      window.location.href = '/login';
+      const requestUrl = String(error.config?.url ?? '');
+      const isAuthSubmit =
+        requestUrl.includes('/auth/login') || requestUrl.includes('/auth/accept-invite');
+      const isOnLoginPage = window.location.pathname.startsWith('/login');
+
+      if (!isAuthSubmit && !isOnLoginPage) {
+        window.location.replace('/login?force=1');
+      }
     }
+
     return Promise.reject(error);
   },
 );

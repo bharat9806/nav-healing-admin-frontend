@@ -8,6 +8,7 @@ const authPaths = ['/login'];
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value;
   const { pathname } = request.nextUrl;
+  const forceLogin = request.nextUrl.searchParams.get('force') === '1';
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
   const isAuthPage = authPaths.some((p) => pathname.startsWith(p));
@@ -16,7 +17,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  if (isAuthPage && token) {
+  if (isAuthPage && token && !forceLogin) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

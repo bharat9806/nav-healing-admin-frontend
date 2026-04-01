@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { fetchCurrentUser } from '@/lib/current-user';
 import { User, Lead } from '@/types';
 import s from './dashboard.module.scss';
 
@@ -39,9 +40,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([api.get('/auth/me'), api.get('/dashboard/stats'), api.get('/leads')])
-      .then(([meRes, statsRes, leadsRes]) => {
-        setUser(meRes.data);
+    Promise.all([fetchCurrentUser(), api.get('/dashboard/stats'), api.get('/leads')])
+      .then(([me, statsRes, leadsRes]) => {
+        setUser(me);
         setStats(statsRes.data);
         setRecentLeads(leadsRes.data.slice(0, 5));
       })

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import api from '@/lib/api';
+import { fetchCurrentUser } from '@/lib/current-user';
 import { User } from '@/types';
 import s from './Header.module.scss';
 
@@ -9,7 +9,7 @@ export default function Header({ title }: { title?: string }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    api.get('/auth/me').then((res) => setUser(res.data)).catch(() => {});
+    fetchCurrentUser().then(setUser).catch(() => {});
   }, []);
 
   const roleCls = (role: string) => {
