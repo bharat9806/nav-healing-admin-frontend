@@ -43,7 +43,7 @@ const statusCls = (st: string) => {
   }
 };
 
-interface LeadItemForm { productId: number; quantity: number; }
+interface LeadItemForm { productId: number; quantity: number; search: string; showDropdown: boolean; }
 
 const DATE_PRESETS = [
   { label: 'Today',        key: 'today' },
@@ -56,6 +56,7 @@ const DATE_PRESETS = [
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [doctors, setDoctors] = useState<{ id: number; username: string }[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [datePreset, setDatePreset] = useState<string>('');
@@ -76,12 +77,12 @@ export default function LeadsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Lead | null>(null);
   const [form, setForm] = useState({
-    name: '', phone: '', email: '', description: '',
-    age: '', gender: '', address: '', pinCode: '',
+    name: '', phone: '', alternatePhone: '', email: '', description: '',
+    age: '', height: '', weight: '', gender: '', address: '', pinCode: '',
     trackingNumber: '', diseases: '', status: 'NEW' as LeadStatus, notes: '',
-    deliveredAt: '', nextFollowUpDate: '',
+    deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '',
   });
-  const [items, setItems] = useState<LeadItemForm[]>([{ productId: 0, quantity: 1 }]);
+  const [items, setItems] = useState<LeadItemForm[]>([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
@@ -105,12 +106,13 @@ export default function LeadsPage() {
     params.set('page', String(p));
     params.set('limit', '20');
     const query = `?${params.toString()}`;
-    Promise.all([api.get(`/leads${query}`), api.get('/products?limit=100')])
-      .then(([leadsRes, productsRes]) => {
+    Promise.all([api.get(`/leads${query}`), api.get('/products?limit=100'), api.get('/users/doctors')])
+      .then(([leadsRes, productsRes, doctorsRes]) => {
         setLeads(leadsRes.data.data);
         setTotalPages(leadsRes.data.meta.totalPages);
         setTotal(leadsRes.data.meta.total);
         setProducts(productsRes.data.data);
+        setDoctors(doctorsRes.data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -128,34 +130,38 @@ export default function LeadsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', phone: '', email: '', description: '', age: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '' });
-    setItems([{ productId: 0, quantity: 1 }]);
+    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '' });
+    setItems([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
     setShowInlineForm(true);
   };
 
-  const cancelCreate = () => { setShowInlineForm(false); setError(''); };
+  const cancelCreate = () => { setShowInlineForm(false); setEditing(null); setError(''); };
 
   const openEdit = (l: Lead) => {
     setEditing(l);
     setForm({
-      name: l.name, phone: l.phone || '', email: l.email || '', description: l.description || '',
-      age: l.age ? String(l.age) : '', gender: l.gender || '', address: l.address || '', pinCode: l.pinCode || '',
+      name: l.name, phone: l.phone || '', alternatePhone: l.alternatePhone || '', email: l.email || '', description: l.description || '',
+      age: l.age ? String(l.age) : '', height: l.height ? String(l.height) : '', weight: l.weight ? String(l.weight) : '',
+      gender: l.gender || '', address: l.address || '', pinCode: l.pinCode || '',
       trackingNumber: l.trackingNumber || '', diseases: l.diseases || '', status: l.status, notes: l.notes || '',
       deliveredAt: l.deliveredAt ? l.deliveredAt.slice(0, 10) : '',
       nextFollowUpDate: l.nextFollowUpDate ? l.nextFollowUpDate.slice(0, 10) : '',
+      assignedDoctorId: l.assignedDoctorId ? String(l.assignedDoctorId) : '',
     });
-    setItems(l.items.length > 0 ? l.items.map((i) => ({ productId: i.productId, quantity: i.quantity })) : [{ productId: 0, quantity: 1 }]);
+    setItems(l.items.length > 0 ? l.items.map((i) => ({ productId: i.productId, quantity: i.quantity, search: i.product?.name || '', showDropdown: false })) : [{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
-    setShowModal(true);
+    setShowInlineForm(true);
   };
 
-  const addItem = () => setItems([...items, { productId: 0, quantity: 1 }]);
-  const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx));
+  const addItem = () => setItems((prev) => [...prev, { productId: 0, quantity: 1, search: '', showDropdown: false }]);
+  const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
   const updateItem = (idx: number, field: string, value: any) => {
-    const updated = [...items];
-    (updated[idx] as any)[field] = value;
-    setItems(updated);
+    setItems((prev) => {
+      const updated = [...prev];
+      (updated[idx] as any)[field] = value;
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -163,19 +169,28 @@ export default function LeadsPage() {
     setSaving(true);
     setError('');
     const validItems = items.filter((i) => i.productId > 0);
+    const heightNum = form.height ? Number(form.height) : undefined;
+    const weightNum = form.weight ? Number(form.weight) : undefined;
+    const bmi = heightNum && weightNum
+      ? Math.round((weightNum / Math.pow(heightNum / 100, 2)) * 10) / 10
+      : undefined;
     const payload: any = {
       name: form.name,
-      phone: form.phone || undefined, email: form.email || undefined,
+      phone: form.phone || undefined, alternatePhone: form.alternatePhone || undefined,
+      email: form.email || undefined,
       description: form.description || undefined, age: form.age ? Number(form.age) : undefined,
+      height: heightNum, weight: weightNum, bmi,
       gender: form.gender || undefined, address: form.address || undefined,
+      assignedDoctorId: form.assignedDoctorId ? Number(form.assignedDoctorId) : undefined,
       pinCode: form.pinCode || undefined, trackingNumber: form.trackingNumber || undefined,
       diseases: form.diseases || undefined, status: form.status, notes: form.notes || undefined,
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
       items: validItems.length > 0 ? validItems : undefined,
     };
     try {
-      if (editing) { await api.put(`/leads/${editing.id}`, payload); setShowModal(false); }
-      else { await api.post('/leads', payload); setShowInlineForm(false); }
+      if (editing) { await api.put(`/leads/${editing.id}`, payload); }
+      else { await api.post('/leads', payload); }
+      setShowInlineForm(false); setEditing(null);
       fetchData();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save lead');
@@ -279,6 +294,15 @@ export default function LeadsPage() {
         <div className={s.formGroup}><label>Phone</label><input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={s.formInput} /></div>
       </div>
       <div className={s.grid2}>
+        <div className={s.formGroup}><label>Alternate Number</label><input type="tel" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value })} className={s.formInput} placeholder="Optional" /></div>
+        <div className={s.formGroup}><label>Assign Doctor</label>
+          <select value={form.assignedDoctorId} onChange={(e) => setForm({ ...form, assignedDoctorId: e.target.value })} className={s.formSelect}>
+            <option value="">No doctor assigned</option>
+            {doctors.map((d) => <option key={d.id} value={d.id}>Dr. {d.username}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className={s.grid2}>
         <div className={s.formGroup}><label>Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={s.formInput} /></div>
         <div className={s.formGroup}><label>Description</label><input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={s.formInput} placeholder="Inquiry details..." /></div>
       </div>
@@ -290,6 +314,23 @@ export default function LeadsPage() {
           </select>
         </div>
         <div className={s.formGroup}><label>Pin Code</label><input type="text" value={form.pinCode} onChange={(e) => setForm({ ...form, pinCode: e.target.value })} className={s.formInput} /></div>
+      </div>
+      <div className={s.grid3}>
+        <div className={s.formGroup}><label>Height (cm)</label><input type="number" min={1} step="0.1" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} className={s.formInput} placeholder="e.g. 170" /></div>
+        <div className={s.formGroup}><label>Weight (kg)</label><input type="number" min={1} step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className={s.formInput} placeholder="e.g. 70" /></div>
+        <div className={s.formGroup}>
+          <label>BMI</label>
+          {(() => {
+            const h = Number(form.height), w = Number(form.weight);
+            if (!h || !w) return <div className={s.bmiEmpty}>Enter height & weight</div>;
+            const bmi = Math.round((w / Math.pow(h / 100, 2)) * 10) / 10;
+            const { label, cls } = bmi < 18.5 ? { label: 'Underweight', cls: s.bmiUnderweight }
+              : bmi < 25 ? { label: 'Normal', cls: s.bmiNormal }
+              : bmi < 30 ? { label: 'Overweight', cls: s.bmiOverweight }
+              : { label: 'Obese', cls: s.bmiObese };
+            return <div className={`${s.bmiResult} ${cls}`}>{bmi} <span className={s.bmiLabel}>{label}</span></div>;
+          })()}
+        </div>
       </div>
       <div className={s.formGroup}><label>Address</label><textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2} className={s.formTextarea} /></div>
       <div className={s.formGroup}><label>Diseases</label><textarea value={form.diseases} onChange={(e) => setForm({ ...form, diseases: e.target.value })} rows={2} className={s.formTextarea} /></div>
@@ -311,23 +352,58 @@ export default function LeadsPage() {
           <button type="button" onClick={addItem} className={s.addItemBtn}>+ Add Item</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {items.map((item, idx) => (
-            <div key={idx} className={s.itemRow}>
-              <select value={item.productId} onChange={(e) => updateItem(idx, 'productId', Number(e.target.value))} className={s.itemSelect}>
-                <option value={0}>Select product...</option>
-                {products.filter((p) => p.isActive).map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} (&#8377;{Number(p.price).toFixed(2)})</option>
-                ))}
-              </select>
-              <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className={s.itemQty} placeholder="Qty" />
-              {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className={s.removeItemBtn}>✕</button>}
-            </div>
-          ))}
+          {items.map((item, idx) => {
+            const filtered = products.filter(
+              (p) => p.isActive && p.name.toLowerCase().includes(item.search.toLowerCase()),
+            );
+            return (
+              <div key={idx} className={s.itemRow}>
+                <div className={s.itemSearchWrap}>
+                  <input
+                    type="text"
+                    className={s.itemSearchInput}
+                    placeholder="Search medicine..."
+                    value={item.search}
+                    autoComplete="off"
+                    onChange={(e) => {
+                      updateItem(idx, 'search', e.target.value);
+                      updateItem(idx, 'showDropdown', true);
+                      if (e.target.value === '') updateItem(idx, 'productId', 0);
+                    }}
+                    onFocus={() => updateItem(idx, 'showDropdown', true)}
+                    onBlur={() => setTimeout(() => updateItem(idx, 'showDropdown', false), 150)}
+                  />
+                  {item.showDropdown && (
+                    <div className={s.productDropdown}>
+                      {filtered.length > 0 ? filtered.map((p) => (
+                        <div
+                          key={p.id}
+                          className={`${s.productOption} ${item.productId === p.id ? s.productOptionSelected : ''}`}
+                          onMouseDown={() => {
+                            updateItem(idx, 'productId', p.id);
+                            updateItem(idx, 'search', p.name);
+                            updateItem(idx, 'showDropdown', false);
+                          }}
+                        >
+                          <span>{p.name}</span>
+                          <span className={s.productPrice}>&#8377;{Number(p.price).toFixed(2)}</span>
+                        </div>
+                      )) : (
+                        <div className={s.productOptionEmpty}>No medicines found</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className={s.itemQty} placeholder="Qty" />
+                {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className={s.removeItemBtn}>✕</button>}
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className={s.formGroup}><label>Notes</label><input type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} /></div>
       <div className={s.formActions}>
-        <button type="button" onClick={editing ? () => setShowModal(false) : cancelCreate} className={s.cancelBtn}>Cancel</button>
+        <button type="button" onClick={cancelCreate} className={s.cancelBtn}>Cancel</button>
         <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
       </div>
     </form>
@@ -346,22 +422,35 @@ export default function LeadsPage() {
       <div className={s.filterPanel}>
         <div className={s.filterRow}>
           <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); } }} className={s.searchInput} />
-          <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.select}>
-            <option value="">All Statuses</option>
-            {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
-          </select>
-          <select value={datePreset} onChange={(e) => handlePreset(e.target.value)} className={s.select}>
-            <option value="">Created: All</option>
-            {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-          </select>
-          <select value={deliveredPreset} onChange={(e) => handleDeliveredPreset(e.target.value)} className={s.select}>
-            <option value="">Delivered: All</option>
-            {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-          </select>
-          <select value={followUpPreset} onChange={(e) => handleFollowUpPreset(e.target.value)} className={s.select}>
-            <option value="">Follow-Up: All</option>
-            {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-          </select>
+          <button onClick={() => { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); }} className={s.searchBtn}>Search</button>
+          <div className={s.filterGroup}>
+            <span className={s.filterIcon}>🏷️</span>
+            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.compactSelect}>
+              <option value="">All Statuses</option>
+              {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
+            </select>
+          </div>
+          <div className={s.filterGroup}>
+            <span className={s.filterIcon}>📅</span>
+            <select value={datePreset} onChange={(e) => handlePreset(e.target.value)} className={s.compactSelect}>
+              <option value="">Created: All</option>
+              {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+            </select>
+          </div>
+          <div className={s.filterGroup}>
+            <span className={s.filterIcon}>📦</span>
+            <select value={deliveredPreset} onChange={(e) => handleDeliveredPreset(e.target.value)} className={s.compactSelect}>
+              <option value="">Delivered: All</option>
+              {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+            </select>
+          </div>
+          <div className={s.filterGroup}>
+            <span className={s.filterIcon}>🔔</span>
+            <select value={followUpPreset} onChange={(e) => handleFollowUpPreset(e.target.value)} className={s.compactSelect}>
+              <option value="">Follow-Up: All</option>
+              {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+            </select>
+          </div>
         </div>
 
         {/* Custom date range pickers */}
@@ -398,13 +487,19 @@ export default function LeadsPage() {
         )}
       </div>
 
-      {loading ? (
+      {showInlineForm && (
+        <div className={s.inlineFormWrap}>
+          {LeadForm()}
+        </div>
+      )}
+
+      {!showInlineForm && (loading ? (
         <div className={s.skeletonList}>
           {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className={s.emptyBox}>
-          {showInlineForm ? <LeadForm /> : <div className={s.emptyText}>No leads found</div>}
+          <div className={s.emptyText}>No leads found</div>
         </div>
       ) : (
         <div className={s.tableWrap}>
@@ -413,9 +508,11 @@ export default function LeadsPage() {
               <tr>
                 <th className={s.th}>Name</th>
                 <th className={s.th}>Phone</th>
+                <th className={`${s.th} ${s.hideMd}`}>Alt. Number</th>
                 <th className={`${s.th} ${s.hideMd}`}>Email</th>
                 <th className={`${s.th} ${s.hideLg}`}>Diseases</th>
                 <th className={s.th}>Products</th>
+                <th className={`${s.th} ${s.hideLg}`}>Doctor</th>
                 <th className={s.th}>Status</th>
                 <th className={`${s.th} ${s.hideLg}`}>Tracking</th>
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
@@ -429,9 +526,11 @@ export default function LeadsPage() {
                     {l.description && <p className={s.leadDesc}>{l.description}</p>}
                   </td>
                   <td className={s.td}><span className={s.cellText}>{l.phone || '-'}</span></td>
+                  <td className={`${s.td} ${s.hideMd}`}><span className={s.cellText}>{l.alternatePhone || '-'}</span></td>
                   <td className={`${s.td} ${s.hideMd}`}><span className={s.cellText}>{l.email || '-'}</span></td>
                   <td className={`${s.td} ${s.hideLg}`}><span className={s.cellText}>{l.diseases || '-'}</span></td>
                   <td className={s.td}><span className={s.cellText}>{l.items?.length || 0} items</span></td>
+                  <td className={`${s.td} ${s.hideLg}`}><span className={s.cellText}>{l.assignedDoctor ? `Dr. ${l.assignedDoctor.username}` : '-'}</span></td>
                   <td className={s.td}>
                     <select value={l.status} onChange={(e) => handleStatusChange(l.id, e.target.value as LeadStatus)}
                       className={`${s.statusSelect} ${statusCls(l.status)}`}>
@@ -449,35 +548,27 @@ export default function LeadsPage() {
           </table>
 
           {/* Pagination */}
-          {totalPages > 1 && (
-            <div className={s.pagination}>
-              <button
-                onClick={() => goToPage(page - 1)}
-                disabled={page <= 1}
-                className={s.pageBtn}
-              >
-                ← Prev
-              </button>
-              <span className={s.pageInfo}>
-                Page {page} of {totalPages} ({total} leads)
-              </span>
-              <button
-                onClick={() => goToPage(page + 1)}
-                disabled={page >= totalPages}
-                className={s.pageBtn}
-              >
-                Next →
-              </button>
-            </div>
-          )}
+          <div className={s.pagination}>
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+              className={s.pageBtn}
+            >
+              ← Prev
+            </button>
+            <span className={s.pageInfo}>
+              Page {page} of {totalPages} ({total} leads)
+            </span>
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+              className={s.pageBtn}
+            >
+              Next →
+            </button>
+          </div>
         </div>
-      )}
-
-      {showModal && (
-        <div className={s.overlay}>
-          <div className={s.modal}><LeadForm /></div>
-        </div>
-      )}
+      ))}
 
       {deleteTarget && (
         <div className={s.overlay}>

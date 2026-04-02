@@ -116,6 +116,14 @@
   border-style: solid;
 }
 
+.doctorBadge {
+  @include status-badge;
+  margin-left: 0.375rem;
+  background-color: rgba(#06b6d4, 0.15);
+  color: #67e8f9;
+  border: 1px solid rgba(#06b6d4, 0.3);
+}
+
 .roleSuperAdmin {
   background-color: rgba($emerald, 0.2);
   color: $emerald-lighter;
@@ -195,7 +203,37 @@
   color: $text-subtle;
 }
 
-// Edit modal
+// Inline form
+.inlineFormWrap {
+  @include card;
+  padding: $s6;
+  margin-bottom: $s6;
+}
+
+.inlineForm {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.inlineFormTitle {
+  color: $text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 $s2;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s3;
+  padding-top: $s2;
+}
+
+.cancelBtn { @include btn-ghost; padding: $s2 $s4; }
+.saveBtn   { @include btn-primary; padding: $s2 $s4; }
+
+// Delete modal
 .overlay { @include modal-overlay; }
 
 .modal {

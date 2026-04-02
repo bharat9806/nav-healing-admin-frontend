@@ -118,7 +118,6 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
 
   const [showInlineForm, setShowInlineForm] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState<ProductFormState>({ name: '', description: '', price: '', category: 'Herbs', isActive: true });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -169,7 +168,7 @@ export default function ProductsPage() {
     setImageFile(null);
     setImagePreview(p.image ? `${API_BASE}${p.image}` : '');
     setError('');
-    setShowModal(true);
+    setShowInlineForm(true);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,8 +185,9 @@ export default function ProductsPage() {
     fd.append('isActive', String(form.isActive));
     if (imageFile) fd.append('image', imageFile);
     try {
-      if (editing) { await api.put(`/products/${editing.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setShowModal(false); }
-      else { await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); setShowInlineForm(false); }
+      if (editing) { await api.put(`/products/${editing.id}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } }); }
+      else { await api.post('/products', fd, { headers: { 'Content-Type': 'multipart/form-data' } }); }
+      setShowInlineForm(false);
       fetchProducts();
     } catch (error) {
       const message = isAxiosError<{ message?: string }>(error)
@@ -234,33 +234,39 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <div className={s.filters}>
-        <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchProducts(1); } }} className={s.searchInput} />
-        <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setPage(1); setTimeout(() => fetchProducts(1), 0); }} className={s.select}>
-          <option value="">All Categories</option>
-          {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
+      {showInlineForm && (
+        <div className={s.inlineFormWrap}>
+          <ProductForm
+            editing={editing}
+            error={error}
+            form={form}
+            imagePreview={imagePreview}
+            saving={saving}
+            onSubmit={handleSubmit}
+            onCancel={cancelCreate}
+            onFormChange={setForm}
+            onImageChange={handleImageChange}
+          />
+        </div>
+      )}
 
-      {loading ? (
+      {!showInlineForm && (
+        <div className={s.filters}>
+          <input type="text" placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchProducts(1); } }} className={s.searchInput} />
+          <select value={catFilter} onChange={(e) => { setCatFilter(e.target.value); setPage(1); setTimeout(() => fetchProducts(1), 0); }} className={s.select}>
+            <option value="">All Categories</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+      )}
+
+      {!showInlineForm && (loading ? (
         <div className={s.skeletonList}>
           {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className={s.emptyBox}>
-          {showInlineForm ? (
-            <ProductForm
-              editing={editing}
-              error={error}
-              form={form}
-              imagePreview={imagePreview}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={cancelCreate}
-              onFormChange={setForm}
-              onImageChange={handleImageChange}
-            />
-          ) : <div className={s.emptyText}>No products found</div>}
+          <div className={s.emptyText}>No products found</div>
         </div>
       ) : (
         <div className={s.tableWrap}>
@@ -328,25 +334,7 @@ export default function ProductsPage() {
             </div>
           )}
         </div>
-      )}
-
-      {showModal && (
-        <div className={s.overlay}>
-          <div className={s.modal}>
-            <ProductForm
-              editing={editing}
-              error={error}
-              form={form}
-              imagePreview={imagePreview}
-              saving={saving}
-              onSubmit={handleSubmit}
-              onCancel={() => setShowModal(false)}
-              onFormChange={setForm}
-              onImageChange={handleImageChange}
-            />
-          </div>
-        </div>
-      )}
+      ))}
 
       {deleteTarget && (
         <div className={s.overlay}>

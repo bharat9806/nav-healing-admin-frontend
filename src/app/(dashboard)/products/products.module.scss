@@ -187,6 +187,12 @@
 }
 
 // Inline form
+.inlineFormWrap {
+  @include card;
+  padding: $s6;
+  margin-bottom: $s6;
+}
+
 .inlineForm {
   display: flex;
   flex-direction: column;

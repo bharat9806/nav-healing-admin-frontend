@@ -14,13 +14,13 @@ const roleCls = (role: string) => {
 };
 
 interface EditForm {
-  role: string; isActive: boolean;
+  role: string; isActive: boolean; isDoctor: boolean;
   canManageProducts: boolean; canManageLeads: boolean;
   canManageUsers: boolean; canViewDashboard: boolean;
 }
 
 interface CreateForm {
-  username: string; email: string; password: string; role: string;
+  username: string; email: string; password: string; role: string; isDoctor: boolean;
   canManageProducts: boolean; canManageLeads: boolean;
   canManageUsers: boolean; canViewDashboard: boolean;
 }
@@ -39,21 +39,20 @@ export default function UsersPage() {
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showInlineForm, setShowInlineForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
-    role: 'ADMIN', isActive: true,
+    role: 'ADMIN', isActive: true, isDoctor: false,
     canManageProducts: true, canManageLeads: true,
     canManageUsers: false, canViewDashboard: true,
   });
   const [saving, setSaving] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>({
-    username: '', email: '', password: '', role: 'TEAM_MEMBER',
+    username: '', email: '', password: '', role: 'TEAM_MEMBER', isDoctor: false,
     canManageProducts: false, canManageLeads: true,
     canManageUsers: false, canViewDashboard: true,
   });
-  const [createError, setCreateError] = useState('');
+  const [formError, setFormError] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -76,35 +75,44 @@ export default function UsersPage() {
     catch (err: any) { setError(err.response?.data?.message || 'Failed to delete'); }
   };
 
+  const openCreate = () => {
+    setEditingUser(null);
+    setCreateForm({ username: '', email: '', password: '', role: 'TEAM_MEMBER', isDoctor: false, canManageProducts: false, canManageLeads: true, canManageUsers: false, canViewDashboard: true });
+    setFormError('');
+    setShowInlineForm(true);
+  };
+
   const openEdit = (user: User) => {
     setEditingUser(user);
     setEditForm({
-      role: user.role, isActive: user.isActive,
+      role: user.role, isActive: user.isActive, isDoctor: user.isDoctor,
       canManageProducts: user.canManageProducts, canManageLeads: user.canManageLeads,
       canManageUsers: user.canManageUsers, canViewDashboard: user.canViewDashboard,
     });
-    setShowEditModal(true);
+    setFormError('');
+    setShowInlineForm(true);
   };
+
+  const cancelForm = () => { setShowInlineForm(false); setEditingUser(null); setFormError(''); };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setCreateError('');
+    setSaving(true); setFormError('');
     try {
       await api.post('/users', createForm);
-      setShowCreateModal(false);
-      setCreateForm({ username: '', email: '', password: '', role: 'TEAM_MEMBER', canManageProducts: false, canManageLeads: true, canManageUsers: false, canViewDashboard: true });
+      setShowInlineForm(false);
+      setCreateForm({ username: '', email: '', password: '', role: 'TEAM_MEMBER', isDoctor: false, canManageProducts: false, canManageLeads: true, canManageUsers: false, canViewDashboard: true });
       fetchUsers();
-    } catch (err: any) { setCreateError(err.response?.data?.message || 'Failed to create user'); }
+    } catch (err: any) { setFormError(err.response?.data?.message || 'Failed to create user'); }
     finally { setSaving(false); }
   };
 
   const handleEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
-    setSaving(true);
-    try { await api.put(`/users/${editingUser.id}`, editForm); setShowEditModal(false); fetchUsers(); }
-    catch (err: any) { setError(err.response?.data?.message || 'Failed to update'); }
+    setSaving(true); setFormError('');
+    try { await api.put(`/users/${editingUser.id}`, editForm); setShowInlineForm(false); setEditingUser(null); fetchUsers(); }
+    catch (err: any) { setFormError(err.response?.data?.message || 'Failed to update'); }
     finally { setSaving(false); }
   };
 
@@ -120,16 +128,102 @@ export default function UsersPage() {
           <h2 className={s.pageTitle}>Users</h2>
           <p className={s.pageSubtitle}>{users.length} total users</p>
         </div>
-        <button onClick={() => { setShowCreateModal(true); setCreateError(''); }} className={s.addBtn}>+ Add User</button>
+        <button onClick={openCreate} className={s.addBtn}>+ Add User</button>
       </div>
 
       {error && <div className={s.error}>{error}</div>}
 
-      <div className={s.searchBox}>
-        <input type="text" placeholder="Search by username or email..." value={search}
-          onChange={e => setSearch(e.target.value)} className={s.searchInput} />
-      </div>
+      {showInlineForm && (
+        <div className={s.inlineFormWrap}>
+          <form onSubmit={editingUser ? handleEdit : handleCreate} className={s.inlineForm}>
+            <h2 className={s.inlineFormTitle}>{editingUser ? `Edit — ${editingUser.username}` : 'New User'}</h2>
+            {formError && <div className={s.formError}>{formError}</div>}
+            {!editingUser && (
+              <>
+                <div className={s.formGroup}>
+                  <label>Username</label>
+                  <input type="text" required value={createForm.username} onChange={e => setCreateForm(p => ({ ...p, username: e.target.value }))} className={s.formInput} />
+                </div>
+                <div className={s.formGroup}>
+                  <label>Email</label>
+                  <input type="email" required value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} className={s.formInput} />
+                </div>
+                <div className={s.formGroup}>
+                  <label>Password</label>
+                  <input type="password" required minLength={6} value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} className={s.formInput} />
+                </div>
+                <div className={s.formGroup}>
+                  <label>Role</label>
+                  <select value={createForm.role} onChange={e => setCreateForm(p => ({ ...p, role: e.target.value }))} className={s.formSelect}>
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="TEAM_MEMBER">Team Member</option>
+                  </select>
+                </div>
+                <div className={s.checkboxRow}>
+                  <input type="checkbox" id="c-isDoctor" checked={createForm.isDoctor} onChange={e => setCreateForm(p => ({ ...p, isDoctor: e.target.checked }))} />
+                  <label htmlFor="c-isDoctor">Is Doctor</label>
+                </div>
+                {createForm.role !== 'SUPER_ADMIN' && (
+                  <div className={s.permissionsBox}>
+                    <p className={s.permissionsTitle}>Permissions</p>
+                    {PERMISSIONS.map(({ key, label }) => (
+                      <div key={key} className={s.checkboxRow}>
+                        <input type="checkbox" id={`c-${key}`} checked={(createForm as any)[key]} onChange={e => setCreateForm(p => ({ ...p, [key]: e.target.checked }))} />
+                        <label htmlFor={`c-${key}`}>{label}</label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            {editingUser && (
+              <>
+                <div className={s.formGroup}>
+                  <label>Role</label>
+                  <select value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))} className={s.formSelect}>
+                    <option value="SUPER_ADMIN">Super Admin</option>
+                    <option value="ADMIN">Admin</option>
+                    <option value="TEAM_MEMBER">Team Member</option>
+                  </select>
+                </div>
+                <div className={s.checkboxRow}>
+                  <input type="checkbox" id="userActive" checked={editForm.isActive} onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))} />
+                  <label htmlFor="userActive">Active</label>
+                </div>
+                <div className={s.checkboxRow}>
+                  <input type="checkbox" id="userIsDoctor" checked={editForm.isDoctor} onChange={e => setEditForm(p => ({ ...p, isDoctor: e.target.checked }))} />
+                  <label htmlFor="userIsDoctor">Is Doctor</label>
+                </div>
+                {editForm.role !== 'SUPER_ADMIN' && (
+                  <div className={s.permissionsBox}>
+                    <p className={s.permissionsTitle}>Permissions</p>
+                    {PERMISSIONS.map(({ key, label }) => (
+                      <div key={key} className={s.checkboxRow}>
+                        <input type="checkbox" id={key} checked={(editForm as any)[key]} onChange={e => setEditForm(p => ({ ...p, [key]: e.target.checked }))} />
+                        <label htmlFor={key}>{label}</label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            <div className={s.formActions}>
+              <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
+              <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editingUser ? 'Save Changes' : 'Create User'}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
+      {!showInlineForm && (
+        <div className={s.searchBox}>
+          <input type="text" placeholder="Search by username or email..." value={search}
+            onChange={e => setSearch(e.target.value)} className={s.searchInput} />
+        </div>
+      )}
+
+      {!showInlineForm && (
       <div className={s.tableWrap}>
         <div className={s.tableScroll}>
           <table className={s.table}>
@@ -171,6 +265,7 @@ export default function UsersPage() {
                       <span className={`${s.rolePill} ${roleCls(user.role)}`}>
                         {user.role.replace(/_/g, ' ')}
                       </span>
+                      {user.isDoctor && <span className={s.doctorBadge}>Doctor</span>}
                     </td>
                     <td className={`${s.td} ${s.hideLg}`}>
                       <span className={s.joinedDate}>
@@ -196,98 +291,6 @@ export default function UsersPage() {
           </table>
         </div>
       </div>
-
-      {showCreateModal && (
-        <div className={s.overlay}>
-          <div className={s.modal}>
-            <div className={s.modalHeader}>
-              <h3>Add User</h3>
-              <button onClick={() => setShowCreateModal(false)} className={s.modalClose}>&times;</button>
-            </div>
-            <form onSubmit={handleCreate} className={s.modalBody}>
-              {createError && <div className={s.formError}>{createError}</div>}
-              <div className={s.formGroup}>
-                <label>Username</label>
-                <input type="text" required value={createForm.username} onChange={e => setCreateForm(p => ({ ...p, username: e.target.value }))} className={s.formInput} />
-              </div>
-              <div className={s.formGroup}>
-                <label>Email</label>
-                <input type="email" required value={createForm.email} onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))} className={s.formInput} />
-              </div>
-              <div className={s.formGroup}>
-                <label>Password</label>
-                <input type="password" required minLength={6} value={createForm.password} onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))} className={s.formInput} />
-              </div>
-              <div className={s.formGroup}>
-                <label>Role</label>
-                <select value={createForm.role} onChange={e => setCreateForm(p => ({ ...p, role: e.target.value }))} className={s.formSelect}>
-                  <option value="SUPER_ADMIN">Super Admin</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="TEAM_MEMBER">Team Member</option>
-                </select>
-              </div>
-              {createForm.role !== 'SUPER_ADMIN' && (
-                <div className={s.permissionsBox}>
-                  <p className={s.permissionsTitle}>Permissions</p>
-                  {PERMISSIONS.map(({ key, label }) => (
-                    <div key={key} className={s.checkboxRow}>
-                      <input type="checkbox" id={`c-${key}`} checked={(createForm as any)[key]}
-                        onChange={e => setCreateForm(p => ({ ...p, [key]: e.target.checked }))} />
-                      <label htmlFor={`c-${key}`}>{label}</label>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className={s.modalActions}>
-                <button type="button" onClick={() => setShowCreateModal(false)} className={s.cancelBtn}>Cancel</button>
-                <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Creating...' : 'Create User'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showEditModal && editingUser && (
-        <div className={s.overlay}>
-          <div className={s.modal}>
-            <div className={s.modalHeader}>
-              <h3>Edit User</h3>
-              <button onClick={() => setShowEditModal(false)} className={s.modalClose}>&times;</button>
-            </div>
-            <form onSubmit={handleEdit} className={s.modalBody}>
-              <p className={s.editingNote}>Editing <span>{editingUser.username}</span></p>
-              <div className={s.formGroup}>
-                <label>Role</label>
-                <select value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value }))} className={s.formSelect}>
-                  <option value="SUPER_ADMIN">SUPER ADMIN</option>
-                  <option value="ADMIN">ADMIN</option>
-                  <option value="TEAM_MEMBER">TEAM MEMBER</option>
-                </select>
-              </div>
-              <div className={s.checkboxRow}>
-                <input type="checkbox" id="userActive" checked={editForm.isActive}
-                  onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))} />
-                <label htmlFor="userActive">Active</label>
-              </div>
-              {editForm.role !== 'SUPER_ADMIN' && (
-                <div className={s.permissionsBox}>
-                  <p className={s.permissionsTitle}>Permissions</p>
-                  {PERMISSIONS.map(({ key, label }) => (
-                    <div key={key} className={s.checkboxRow}>
-                      <input type="checkbox" id={key} checked={(editForm as any)[key]}
-                        onChange={e => setEditForm(p => ({ ...p, [key]: e.target.checked }))} />
-                      <label htmlFor={key}>{label}</label>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className={s.modalActions}>
-                <button type="button" onClick={() => setShowEditModal(false)} className={s.cancelBtn}>Cancel</button>
-                <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : 'Save Changes'}</button>
-              </div>
-            </form>
-          </div>
-        </div>
       )}
 
       {showDeleteModal && (

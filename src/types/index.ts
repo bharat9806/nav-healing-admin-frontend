@@ -16,6 +16,7 @@ export interface User {
   canManageLeads: boolean;
   canManageUsers: boolean;
   canViewDashboard: boolean;
+  isDoctor: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -58,11 +59,17 @@ export interface Lead {
   email?: string;
   description?: string;
   age?: number;
+  height?: number;
+  weight?: number;
+  bmi?: number;
   gender?: string;
   address?: string;
   pinCode?: string;
   trackingNumber?: string;
   diseases?: string;
+  alternatePhone?: string;
+  assignedDoctorId?: number;
+  assignedDoctor?: { id: number; username: string };
   status: LeadStatus;
   notes?: string;
   deliveredAt?: string;
