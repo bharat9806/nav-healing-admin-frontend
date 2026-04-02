@@ -3,8 +3,9 @@
 import { isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { Product } from '@/types';
+import { Product, User } from '@/types';
 import s from './products.module.scss';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
@@ -116,6 +117,7 @@ export default function ProductsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -143,7 +145,10 @@ export default function ProductsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => {
+    fetchProducts();
+    fetchCurrentUser().then(setCurrentUser).catch(() => {});
+  }, []);
 
   // Filtering is now server-side
   const filtered = products;
@@ -206,6 +211,7 @@ export default function ProductsPage() {
   };
 
   const handleExport = async () => {
+    if (currentUser && currentUser.role !== 'SUPER_ADMIN' && !currentUser.canExportProducts) return;
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (catFilter) params.set('category', catFilter);
@@ -229,7 +235,9 @@ export default function ProductsPage() {
       <div className={s.header}>
         <h1 className={s.pageTitle}>Products</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={handleExport} className={s.exportBtn}>↓ Export Excel</button>
+          {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportProducts) && (
+            <button onClick={handleExport} className={s.exportBtn}>↓ Export Excel</button>
+          )}
           <button onClick={openCreate} className={s.addBtn}>+ Add Product</button>
         </div>
       </div>

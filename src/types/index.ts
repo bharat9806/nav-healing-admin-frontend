@@ -13,7 +13,13 @@ export interface User {
   role: Role;
   isActive: boolean;
   canManageProducts: boolean;
+  canManageProductSales: boolean;
   canManageLeads: boolean;
+  canManageSales: boolean;
+  canExportProducts: boolean;
+  canExportProductSales: boolean;
+  canExportLeads: boolean;
+  canExportSales: boolean;
   canManageUsers: boolean;
   canViewDashboard: boolean;
   isDoctor: boolean;
@@ -75,6 +81,30 @@ export interface Lead {
   deliveredAt?: string;
   nextFollowUpDate?: string;
   items: LeadItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Sale {
+  id: number;
+  date: string;
+  patientName: string;
+  amount: number;
+  paymentMode: string;
+  status: string;
+  pendingAmount: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductSaleItem {
+  id: number;
+  productId: number;
+  product?: Product;
+  date: string;
+  quantity: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedPaths = ['/dashboard', '/products', '/leads', '/users'];
+const protectedPaths = ['/dashboard', '/products', '/product-sales', '/leads', '/sales', '/users'];
 
 const authPaths = ['/login'];
 

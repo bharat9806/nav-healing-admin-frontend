@@ -216,11 +216,56 @@
   gap: $s4;
 }
 
+.formSection {
+  border: 1px solid $border;
+  border-radius: $r-lg;
+  padding: $s5;
+  background: rgba($bg-elevated, 0.42);
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
 .inlineFormTitle {
   color: $text-primary;
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 $s2;
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: $text-primary;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.sectionText {
+  margin: 0;
+  color: $text-muted;
+  font-size: 0.82rem;
+}
+
+.formGridTwo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s4;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formInlineChecks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s4;
 }
 
 .formActions {
@@ -298,6 +343,77 @@
   gap: $s3;
   label { font-size: 0.875rem; color: $text-secondary; }
   input { width: 1rem; height: 1rem; accent-color: $emerald; }
+}
+
+.permissionsLayout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s4;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.permissionsCard {
+  border: 1px solid $border;
+  border-radius: $r-lg;
+  padding: $s5;
+  background: rgba($bg-elevated, 0.42);
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.permissionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.permissionTile {
+  display: flex;
+  align-items: flex-start;
+  gap: $s3;
+  padding: $s3 $s4;
+  border: 1px solid $border;
+  border-radius: $r-md;
+  background: rgba($bg-muted, 0.55);
+  cursor: pointer;
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    accent-color: $emerald;
+    flex-shrink: 0;
+  }
+}
+
+.permissionTileDisabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.permissionCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.permissionLabel {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.permissionHint {
+  color: $text-muted;
+  font-size: 0.75rem;
 }
 
 .permissionsBox {

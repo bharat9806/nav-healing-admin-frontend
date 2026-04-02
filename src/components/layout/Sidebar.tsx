@@ -13,13 +13,17 @@ import s from './Sidebar.module.scss';
 type PermissionKey =
   | 'canViewDashboard'
   | 'canManageProducts'
+  | 'canManageProductSales'
   | 'canManageLeads'
+  | 'canManageSales'
   | 'canManageUsers';
 
 const allNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, permission: 'canViewDashboard' },
   { label: 'Products', href: '/products', icon: <ProductsIcon />, permission: 'canManageProducts' },
+  { label: 'Product Sales', href: '/product-sales', icon: <ProductSalesIcon />, permission: 'canManageProductSales' },
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
+  { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
   label: string;
@@ -129,6 +133,29 @@ function LeadsIcon() {
       <path d="M6 10h12" />
       <path d="M6 15h7" />
       <path d="M6 19h4" />
+    </IconShell>
+  );
+}
+
+function SalesIcon() {
+  return (
+    <IconShell>
+      <path d="M4 7h16" />
+      <path d="M4 12h10" />
+      <path d="M4 17h16" />
+      <circle cx="18" cy="12" r="2.5" />
+    </IconShell>
+  );
+}
+
+function ProductSalesIcon() {
+  return (
+    <IconShell>
+      <path d="M7 7h10" />
+      <path d="M7 12h6" />
+      <path d="M7 17h10" />
+      <path d="M17 10v6" />
+      <path d="M14 13h6" />
     </IconShell>
   );
 }

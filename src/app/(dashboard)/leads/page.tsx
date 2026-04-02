@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
+import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { Lead, Product, LeadStatus } from '@/types';
+import { Lead, Product, LeadStatus, User } from '@/types';
 import s from './leads.module.scss';
 
 const statuses: LeadStatus[] = [
@@ -68,10 +69,12 @@ export default function LeadsPage() {
   const [followUpPreset, setFollowUpPreset] = useState('');
   const [followUpFrom, setFollowUpFrom] = useState('');
   const [followUpTo, setFollowUpTo] = useState('');
+  const [showDateFilters, setShowDateFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -86,6 +89,53 @@ export default function LeadsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
+  const [showColMenu, setShowColMenu] = useState(false);
+  const colMenuRef = useRef<HTMLDivElement | null>(null);
+  const [visibleCols, setVisibleCols] = useState({
+    phone: true, altPhone: true, email: true, diseases: true,
+    products: true, doctor: true, status: true, tracking: true,
+    createdDate: true, deliveredDate: true, followUpDate: true,
+  });
+  const toggleCol = (col: keyof typeof visibleCols) =>
+    setVisibleCols(p => ({ ...p, [col]: !p[col] }));
+
+  const formatDate = (value?: string) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleDateString('en-GB');
+  };
+
+  const formatFollowUp = (lead: Lead) => {
+    if (!lead.nextFollowUpDate) return '-';
+
+    const followUpCode: Partial<Record<LeadStatus, string>> = {
+      FOLLOW_UP_1: 'F1',
+      FOLLOW_UP_2: 'F2',
+      FOLLOW_UP_3: 'F3',
+      HTU: 'HTU',
+    };
+
+    const prefix = followUpCode[lead.status];
+    const formattedDate = formatDate(lead.nextFollowUpDate);
+    return prefix ? `${prefix} - ${formattedDate}` : formattedDate;
+  };
+
+  useEffect(() => {
+    if (!showColMenu) return;
+
+    const handleOutsideInteraction = (event: MouseEvent | FocusEvent) => {
+      const target = event.target as Node | null;
+      if (!target || colMenuRef.current?.contains(target)) return;
+      setShowColMenu(false);
+    };
+
+    document.addEventListener('mousedown', handleOutsideInteraction);
+    document.addEventListener('focusin', handleOutsideInteraction);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideInteraction);
+      document.removeEventListener('focusin', handleOutsideInteraction);
+    };
+  }, [showColMenu]);
 
   const fetchData = (
     from = dateFrom, to = dateTo,
@@ -118,7 +168,10 @@ export default function LeadsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    fetchCurrentUser().then(setCurrentUser).catch(() => {});
+  }, []);
 
   // Search and status filtering is now done server-side
   const filtered = leads;
@@ -251,6 +304,7 @@ export default function LeadsPage() {
   };
 
   const handleExport = async () => {
+    if (currentUser && currentUser.role !== 'SUPER_ADMIN' && !currentUser.canExportLeads) return;
     // Fetch all leads (no pagination) for export
     const params = new URLSearchParams();
     if (dateFrom) params.set('dateFrom', dateFrom);
@@ -284,6 +338,11 @@ export default function LeadsPage() {
     }));
     exportToExcel(rows, `leads_${new Date().toISOString().slice(0, 10)}`);
   };
+
+  const hasActiveDateFilters = Boolean(
+    datePreset || deliveredPreset || followUpPreset
+    || dateFrom || dateTo || deliveredFrom || deliveredTo || followUpFrom || followUpTo,
+  );
 
   const LeadForm = () => (
     <form onSubmit={handleSubmit} className={s.inlineForm}>
@@ -414,15 +473,27 @@ export default function LeadsPage() {
       <div className={s.header}>
         <h1 className={s.pageTitle}>Leads</h1>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button onClick={handleExport} className={s.exportBtn}>↓ Export Excel</button>
+          {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportLeads) && (
+            <button onClick={handleExport} className={s.exportBtn}>↓ Export Excel</button>
+          )}
           <button onClick={openCreate} className={s.addBtn}>+ Add Lead</button>
         </div>
       </div>
 
-      <div className={s.filterPanel}>
+      <div className={`${s.filterPanel} ${showDateFilters || hasActiveDateFilters ? s.filterPanelExpanded : ''}`}>
         <div className={s.filterRow}>
           <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); } }} className={s.searchInput} />
           <button onClick={() => { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); }} className={s.searchBtn}>Search</button>
+          <button
+            type="button"
+            onClick={() => setShowDateFilters((prev) => !prev)}
+            className={`${s.moreFiltersBtn} ${showDateFilters || hasActiveDateFilters ? s.moreFiltersBtnActive : ''}`}
+          >
+            Date Filters
+            <span className={s.moreFiltersMeta}>
+              {hasActiveDateFilters ? 'Active' : showDateFilters ? 'Hide' : 'Show'}
+            </span>
+          </button>
           <div className={s.filterGroup}>
             <span className={s.filterIcon}>🏷️</span>
             <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.compactSelect}>
@@ -451,10 +522,65 @@ export default function LeadsPage() {
               {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
             </select>
           </div>
+          <div className={s.colMenuWrap}>
+            <button
+              onClick={() => setShowColMenu((p) => !p)}
+              className={`${s.colMenuBtn} ${showColMenu ? s.colMenuBtnActive : ''}`}
+              title="Toggle columns"
+              type="button"
+            >
+              âŠž Columns
+            </button>
+            {showColMenu && (
+              <div className={s.colMenu}>
+                {([
+                  ['phone', 'Phone'],
+                  ['altPhone', 'Alt. Number'],
+                  ['email', 'Email'],
+                  ['diseases', 'Diseases'],
+                  ['products', 'Products'],
+                  ['doctor', 'Doctor'],
+                  ['status', 'Status'],
+                  ['tracking', 'Tracking'],
+                ] as [keyof typeof visibleCols, string][]).map(([key, label]) => (
+                  <label key={key} className={s.colMenuItem}>
+                    <input type="checkbox" checked={visibleCols[key]} onChange={() => toggleCol(key)} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
+        {showDateFilters && (
+          <div className={s.dateFilterRow}>
+            <div className={s.filterGroup}>
+              <span className={s.filterIcon}>ðŸ“…</span>
+              <select value={datePreset} onChange={(e) => handlePreset(e.target.value)} className={s.compactSelect}>
+                <option value="">Created: All</option>
+                {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </div>
+            <div className={s.filterGroup}>
+              <span className={s.filterIcon}>ðŸ“¦</span>
+              <select value={deliveredPreset} onChange={(e) => handleDeliveredPreset(e.target.value)} className={s.compactSelect}>
+                <option value="">Delivered: All</option>
+                {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </div>
+            <div className={s.filterGroup}>
+              <span className={s.filterIcon}>ðŸ””</span>
+              <select value={followUpPreset} onChange={(e) => handleFollowUpPreset(e.target.value)} className={s.compactSelect}>
+                <option value="">Follow-Up: All</option>
+                {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+              </select>
+            </div>
+          </div>
+        )}
+
         {/* Custom date range pickers */}
-        {(datePreset === 'custom' || deliveredPreset === 'custom' || followUpPreset === 'custom') && (
+        {showDateFilters && (datePreset === 'custom' || deliveredPreset === 'custom' || followUpPreset === 'custom') && (
           <>
             {datePreset === 'custom' && (
               <div className={s.filterRow}>
@@ -503,18 +629,55 @@ export default function LeadsPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          <div className={s.tableToolbar}>
+            <div ref={colMenuRef} className={s.colMenuWrap}>
+              <button
+                onClick={() => setShowColMenu((p) => !p)}
+                className={`${s.colMenuBtn} ${showColMenu ? s.colMenuBtnActive : ''}`}
+                title="Toggle columns"
+                type="button"
+              >
+                ⊞ Columns
+              </button>
+              {showColMenu && (
+                <div className={s.colMenu}>
+                {([
+                    ['phone',    'Phone'],
+                    ['altPhone', 'Alt. Number'],
+                    ['email',    'Email'],
+                    ['diseases', 'Diseases'],
+                    ['products', 'Products'],
+                    ['doctor',   'Doctor'],
+                    ['createdDate', 'Created Date'],
+                    ['deliveredDate', 'Delivered Date'],
+                    ['followUpDate', 'Follow-Up'],
+                    ['status',   'Status'],
+                    ['tracking', 'Tracking'],
+                  ] as [keyof typeof visibleCols, string][]).map(([key, label]) => (
+                    <label key={key} className={s.colMenuItem}>
+                      <input type="checkbox" checked={visibleCols[key]} onChange={() => toggleCol(key)} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
                 <th className={s.th}>Name</th>
-                <th className={s.th}>Phone</th>
-                <th className={`${s.th} ${s.hideMd}`}>Alt. Number</th>
-                <th className={`${s.th} ${s.hideMd}`}>Email</th>
-                <th className={`${s.th} ${s.hideLg}`}>Diseases</th>
-                <th className={s.th}>Products</th>
-                <th className={`${s.th} ${s.hideLg}`}>Doctor</th>
-                <th className={s.th}>Status</th>
-                <th className={`${s.th} ${s.hideLg}`}>Tracking</th>
+                {visibleCols.phone    && <th className={s.th}>Phone</th>}
+                {visibleCols.altPhone && <th className={s.th}>Alt. Number</th>}
+                {visibleCols.email    && <th className={s.th}>Email</th>}
+                {visibleCols.diseases && <th className={s.th}>Diseases</th>}
+                {visibleCols.products && <th className={s.th}>Products</th>}
+                {visibleCols.doctor   && <th className={s.th}>Doctor</th>}
+                {visibleCols.createdDate && <th className={s.th}>Created Date</th>}
+                {visibleCols.deliveredDate && <th className={s.th}>Delivered Date</th>}
+                {visibleCols.followUpDate && <th className={s.th}>Follow-Up</th>}
+                {visibleCols.status   && <th className={s.th}>Status</th>}
+                {visibleCols.tracking && <th className={s.th}>Tracking</th>}
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>
             </thead>
@@ -525,19 +688,22 @@ export default function LeadsPage() {
                     <p className={s.leadName}>{l.name}</p>
                     {l.description && <p className={s.leadDesc}>{l.description}</p>}
                   </td>
-                  <td className={s.td}><span className={s.cellText}>{l.phone || '-'}</span></td>
-                  <td className={`${s.td} ${s.hideMd}`}><span className={s.cellText}>{l.alternatePhone || '-'}</span></td>
-                  <td className={`${s.td} ${s.hideMd}`}><span className={s.cellText}>{l.email || '-'}</span></td>
-                  <td className={`${s.td} ${s.hideLg}`}><span className={s.cellText}>{l.diseases || '-'}</span></td>
-                  <td className={s.td}><span className={s.cellText}>{l.items?.length || 0} items</span></td>
-                  <td className={`${s.td} ${s.hideLg}`}><span className={s.cellText}>{l.assignedDoctor ? `Dr. ${l.assignedDoctor.username}` : '-'}</span></td>
-                  <td className={s.td}>
+                  {visibleCols.phone    && <td className={s.td}><span className={s.cellText}>{l.phone || '-'}</span></td>}
+                  {visibleCols.altPhone && <td className={s.td}><span className={s.cellText}>{l.alternatePhone || '-'}</span></td>}
+                  {visibleCols.email    && <td className={s.td}><span className={s.cellText}>{l.email || '-'}</span></td>}
+                  {visibleCols.diseases && <td className={s.td}><span className={s.cellText}>{l.diseases || '-'}</span></td>}
+                  {visibleCols.products && <td className={s.td}><span className={s.cellText}>{l.items?.length || 0} items</span></td>}
+                  {visibleCols.doctor   && <td className={s.td}><span className={s.cellText}>{l.assignedDoctor ? `Dr. ${l.assignedDoctor.username}` : '-'}</span></td>}
+                  {visibleCols.createdDate && <td className={s.td}><span className={s.cellText}>{formatDate(l.createdAt)}</span></td>}
+                  {visibleCols.deliveredDate && <td className={s.td}><span className={s.cellText}>{formatDate(l.deliveredAt)}</span></td>}
+                  {visibleCols.followUpDate && <td className={s.td}><span className={s.cellText}>{formatFollowUp(l)}</span></td>}
+                  {visibleCols.status   && <td className={s.td}>
                     <select value={l.status} onChange={(e) => handleStatusChange(l.id, e.target.value as LeadStatus)}
                       className={`${s.statusSelect} ${statusCls(l.status)}`}>
                       {statuses.map((st) => <option key={st} value={st} style={{ backgroundColor: '#111827', color: '#fff' }}>{STATUS_LABELS[st]}</option>)}
                     </select>
-                  </td>
-                  <td className={`${s.td} ${s.hideLg}`}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>
+                  </td>}
+                  {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>
                     <button onClick={() => openEdit(l)} className={s.editBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(l)} className={s.deleteBtn}>Delete</button>

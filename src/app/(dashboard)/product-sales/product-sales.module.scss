@@ -1,0 +1,302 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page { padding: $s6; }
+
+.header {
+  @include flex-between;
+  margin-bottom: $s4;
+}
+
+.pageTitle {
+  color: $text-primary;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.addBtn {
+  @include btn-primary;
+  padding: $s2 $s4;
+}
+
+.exportBtn {
+  @include btn-ghost;
+  padding: $s2 $s4;
+  border: 1px solid $border;
+  &:hover { border-color: $text-muted; color: $text-primary; }
+}
+
+.filterPanel {
+  @include card;
+  padding: $s4;
+  margin-bottom: $s6;
+  display: grid;
+  grid-template-columns: minmax(18rem, 1.6fr) auto minmax(12rem, 1fr) auto auto;
+  gap: $s3;
+  align-items: center;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: minmax(16rem, 1fr) auto minmax(12rem, 1fr);
+  }
+
+  @media (max-width: ($lg - 1px)) {
+    grid-auto-rows: auto;
+  }
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.filterRowPrimary,
+.filterRowSecondary {
+  display: contents;
+}
+
+.searchInput {
+  @include input;
+  width: 100%;
+  min-width: 0;
+}
+
+.select {
+  @include input;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.dateInput {
+  @include input;
+  width: 10rem;
+  min-width: 0;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
+}
+
+.searchBtn {
+  @include btn-primary;
+  padding: $s2 $s4;
+  white-space: nowrap;
+}
+
+.inlineFormWrap {
+  @include card;
+  padding: $s6;
+  margin-bottom: $s6;
+}
+
+.inlineForm {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.inlineFormTitle {
+  color: $text-primary;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 $s2;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s4;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+
+  label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: $text-secondary;
+  }
+}
+
+.formInput { @include input; }
+.formSelect { @include input; cursor: pointer; }
+
+.formTextarea {
+  @include input;
+  resize: none;
+}
+
+.error {
+  background-color: rgba($red-light, 0.1);
+  border: 1px solid rgba($red-light, 0.3);
+  color: $red-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s3;
+}
+
+.cancelBtn { @include btn-ghost; padding: $s2 $s4; }
+.saveBtn { @include btn-primary; padding: $s2 $s4; }
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.skeletonRow {
+  height: 4rem;
+  background-color: $bg-elevated;
+  border-radius: $r-md;
+  @include animate-pulse;
+}
+
+.emptyBox {
+  @include card;
+  padding: $s6;
+}
+
+.emptyText {
+  text-align: center;
+  padding: $s8 0;
+  color: $text-subtle;
+}
+
+.tableWrap {
+  @include card;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thead tr {
+  border-bottom: 1px solid $border;
+}
+
+.th {
+  text-align: left;
+  color: $text-muted;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: $s3 $s4;
+}
+
+.thRight { text-align: right; }
+
+.tr {
+  border-bottom: 1px solid rgba($border, 0.5);
+  transition: background-color 0.15s;
+  &:last-child { border-bottom: none; }
+  &:hover { background-color: rgba($bg-elevated, 0.3); }
+}
+
+.td { padding: $s3 $s4; }
+.tdRight { text-align: right; }
+
+.productName {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.productSub {
+  color: $text-subtle;
+  font-size: 0.75rem;
+  margin-top: $s1;
+}
+
+.cellText {
+  color: $text-secondary;
+  font-size: 0.875rem;
+}
+
+.quantityText {
+  color: $emerald-light;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.editBtn {
+  @include btn-ghost;
+  margin-right: $s3;
+  &:hover { color: $text-primary; }
+}
+
+.deleteBtn {
+  @include btn-ghost;
+  &:hover { color: $red-light; }
+}
+
+.overlay { @include modal-overlay; }
+
+.deleteModal {
+  @include modal-card;
+  max-width: 24rem;
+  text-align: center;
+}
+
+.deleteTitle {
+  color: $text-primary;
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 $s2;
+}
+
+.deleteMsg {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin: 0 0 $s6;
+}
+
+.deleteActions {
+  display: flex;
+  justify-content: center;
+  gap: $s3;
+}
+
+.deleteCancelBtn { @include btn-ghost; padding: $s2 $s4; }
+.deleteConfirmBtn { @include btn-danger; padding: $s2 $s4; }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s3;
+  padding: $s4 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pageBtn {
+  padding: $s2 $s4;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}

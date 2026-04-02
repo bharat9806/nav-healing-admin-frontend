@@ -37,11 +37,51 @@
   gap: $s4;
 }
 
+.filterPanelExpanded {
+  gap: $s3;
+}
+
 .filterRow {
   display: flex;
   align-items: center;
   gap: $s3;
   flex-wrap: wrap;
+}
+
+.moreFiltersBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $s2;
+  min-height: 2.375rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $r-md;
+  background: rgba(255, 255, 255, 0.04);
+  color: $text-secondary;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: $text-primary;
+  }
+}
+
+.moreFiltersBtnActive {
+  background: rgba($emerald, 0.1);
+  border-color: rgba($emerald, 0.3);
+  color: $emerald-light;
+}
+
+.moreFiltersMeta {
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.6875rem;
+  line-height: 1.2;
 }
 
 .searchInput {
@@ -200,6 +240,181 @@
 .tableWrap {
   @include card;
   overflow: hidden;
+}
+
+.tableToolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: $s3 $s4;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.colMenuWrap {
+  position: relative;
+}
+
+.filterRow > .colMenuWrap {
+  display: none;
+}
+
+.filterRow > div:nth-of-type(2),
+.filterRow > div:nth-of-type(3),
+.filterRow > div:nth-of-type(4) {
+  display: none;
+}
+
+.dateFilterRow {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+  flex-wrap: wrap;
+}
+
+.dateFilterRow > .filterGroup {
+  flex: 0 0 auto;
+}
+
+.dateFilterRow .filterIcon {
+  font-size: 0;
+  color: transparent;
+}
+
+.dateFilterRow .filterIcon::after {
+  color: $text-secondary;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.dateFilterRow > .filterGroup:nth-child(1) .filterIcon::after {
+  content: 'CR';
+}
+
+.dateFilterRow > .filterGroup:nth-child(2) .filterIcon::after {
+  content: 'DL';
+}
+
+.dateFilterRow > .filterGroup:nth-child(3) .filterIcon::after {
+  content: 'FU';
+}
+
+.colMenuBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.375rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: $r-md;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: transparent;
+  font-size: 0;
+  line-height: 1;
+
+  &::before {
+    content: '';
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 0.2rem;
+    margin-right: $s2;
+    background:
+      linear-gradient(currentColor 0 0) left top / calc(50% - 1px) calc(50% - 1px) no-repeat,
+      linear-gradient(currentColor 0 0) right top / calc(50% - 1px) calc(50% - 1px) no-repeat,
+      linear-gradient(currentColor 0 0) left bottom / calc(50% - 1px) calc(50% - 1px) no-repeat,
+      linear-gradient(currentColor 0 0) right bottom / calc(50% - 1px) calc(50% - 1px) no-repeat;
+    color: $text-secondary;
+    opacity: 0.9;
+  }
+
+  &::after {
+    content: 'Columns';
+    color: $text-secondary;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  &:hover::before,
+  &:hover::after {
+    color: $text-primary;
+  }
+}
+
+.colMenuBtnActive {
+  background: rgba($emerald, 0.12);
+  border-color: rgba($emerald, 0.3);
+}
+
+.colMenuBtnActive::before,
+.colMenuBtnActive::after {
+  color: $emerald-light;
+}
+
+.colMenuIcon {
+  display: none;
+}
+
+.colMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 12rem;
+  max-height: 12.5rem;
+  padding: $s2;
+  border-radius: $r-lg;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111827;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  z-index: 20;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+
+  &::-webkit-scrollbar {
+    width: 0.45rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.colMenuItem {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  padding: 0.55rem 0.65rem;
+  border-radius: $r-md;
+  color: $text-secondary;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: $text-primary;
+  }
+
+  input {
+    accent-color: $emerald;
+  }
 }
 
 .table {
