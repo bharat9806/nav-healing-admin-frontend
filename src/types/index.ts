@@ -10,6 +10,7 @@ export interface User {
   id: number;
   email: string;
   username: string;
+  userCode: string;
   role: Role;
   isActive: boolean;
   canManageProducts: boolean;
@@ -39,12 +40,15 @@ export interface ApiError {
 
 export interface Product {
   id: number;
+  sku: string;
   name: string;
   description?: string;
   price: number;
   image?: string;
   category: string;
   isActive: boolean;
+  currentStock: number;
+  reorderLevel: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -80,9 +84,17 @@ export interface Lead {
   notes?: string;
   deliveredAt?: string;
   nextFollowUpDate?: string;
+  lastContactedAt?: string;
   items: LeadItem[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface LeadReminderStats {
+  scheduled: number;
+  overdue: number;
+  dueToday: number;
+  upcoming: number;
 }
 
 export interface Sale {

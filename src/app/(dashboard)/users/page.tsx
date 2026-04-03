@@ -17,6 +17,7 @@ const roleCls = (role: string) => {
 };
 
 interface EditForm {
+  userCode: string;
   role: string;
   isActive: boolean;
   isDoctor: boolean;
@@ -36,6 +37,7 @@ interface CreateForm {
   username: string;
   email: string;
   password: string;
+  userCode: string;
   role: string;
   isDoctor: boolean;
   canManageProducts: boolean;
@@ -88,6 +90,7 @@ type ExportPermissionKey = (typeof EXPORT_PERMISSIONS)[number]['key'];
 type ExportDependencyKey = (typeof EXPORT_PERMISSIONS)[number]['dependsOn'];
 
 const initialEditForm = (): EditForm => ({
+  userCode: '',
   role: 'ADMIN',
   isActive: true,
   isDoctor: false,
@@ -107,6 +110,7 @@ const initialCreateForm = (): CreateForm => ({
   username: '',
   email: '',
   password: '',
+  userCode: '',
   role: 'TEAM_MEMBER',
   isDoctor: false,
   canManageProducts: false,
@@ -263,6 +267,7 @@ export default function UsersPage() {
   const openEdit = (user: User) => {
     setEditingUser(user);
     setEditForm({
+      userCode: user.userCode,
       role: user.role,
       isActive: user.isActive,
       isDoctor: user.isDoctor,
@@ -402,6 +407,21 @@ export default function UsersPage() {
                         className={s.formInput}
                       />
                     </div>
+                    <div className={s.formGroup}>
+                      <label>User Code</label>
+                      <input
+                        type="text"
+                        value={createForm.userCode}
+                        onChange={(e) =>
+                          setCreateForm((p) => ({
+                            ...p,
+                            userCode: e.target.value.toUpperCase(),
+                          }))
+                        }
+                        className={s.formInput}
+                        placeholder="Auto-generated if left blank"
+                      />
+                    </div>
                   </div>
                   <div className={s.formGridTwo}>
                     <div className={s.formGroup}>
@@ -493,6 +513,20 @@ export default function UsersPage() {
                     </p>
                   </div>
                   <div className={s.formGridTwo}>
+                    <div className={s.formGroup}>
+                      <label>User Code</label>
+                      <input
+                        type="text"
+                        value={editForm.userCode}
+                        onChange={(e) =>
+                          setEditForm((p) => ({
+                            ...p,
+                            userCode: e.target.value.toUpperCase(),
+                          }))
+                        }
+                        className={s.formInput}
+                      />
+                    </div>
                     <div className={s.formGroup}>
                       <label>Role</label>
                       <select
@@ -611,6 +645,7 @@ export default function UsersPage() {
               <thead className={s.thead}>
                 <tr>
                   <th className={s.th}>User</th>
+                  <th className={s.th}>User Code</th>
                   <th className={s.th}>Role</th>
                   <th className={`${s.th} ${s.hideLg}`}>Joined</th>
                   <th className={s.th}>Status</th>
@@ -621,7 +656,7 @@ export default function UsersPage() {
                 {loading ? (
                   [...Array(4)].map((_, i) => (
                     <tr key={i} className={s.tr}>
-                      <td colSpan={5} className={s.td}>
+                      <td colSpan={6} className={s.td}>
                         <div
                           style={{
                             height: '2rem',
@@ -635,7 +670,7 @@ export default function UsersPage() {
                   ))
                 ) : filtered.length === 0 ? (
                   <tr className={s.emptyRow}>
-                    <td colSpan={5}>No users found</td>
+                    <td colSpan={6}>No users found</td>
                   </tr>
                 ) : (
                   filtered.map((user) => (
@@ -650,6 +685,9 @@ export default function UsersPage() {
                             <p className={s.email}>{user.email}</p>
                           </div>
                         </div>
+                      </td>
+                      <td className={s.td}>
+                        <span className={s.email}>{user.userCode}</span>
                       </td>
                       <td className={s.td}>
                         <span className={`${s.rolePill} ${roleCls(user.role)}`}>

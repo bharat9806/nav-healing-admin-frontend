@@ -27,6 +27,47 @@
   &:hover { border-color: $text-muted; color: $text-primary; }
 }
 
+.reminderCards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $s3;
+  margin-bottom: $s4;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reminderCard {
+  @include card;
+  padding: $s4;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.reminderCardActive {
+  border-color: rgba($emerald, 0.35);
+  background: rgba($emerald, 0.08);
+}
+
+.reminderLabel {
+  display: block;
+  color: $text-muted;
+  font-size: 0.8rem;
+  margin-bottom: $s1;
+}
+
+.reminderValue {
+  color: $text-primary;
+  font-size: 1.25rem;
+}
+
 // Filter panel
 .filterPanel {
   @include card;
@@ -443,6 +484,14 @@
   &:hover { background-color: rgba($bg-elevated, 0.3); }
 }
 
+.rowOverdue {
+  background-color: rgba(#ef4444, 0.04);
+}
+
+.rowDueToday {
+  background-color: rgba(#f59e0b, 0.05);
+}
+
 .td { padding: $s3 $s4; }
 .tdRight { text-align: right; }
 
@@ -463,6 +512,35 @@
 .cellText {
   color: $text-secondary;
   font-size: 0.875rem;
+}
+
+.followUpCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.reminderBadge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+}
+
+.reminderBadgeOverdue {
+  background: rgba(#ef4444, 0.14);
+  color: $red-light;
+}
+
+.reminderBadgeToday {
+  background: rgba(#f59e0b, 0.14);
+  color: $amber-light;
+}
+
+.reminderBadgeUpcoming {
+  background: rgba(#06b6d4, 0.14);
+  color: #67e8f9;
 }
 
 .tracking {

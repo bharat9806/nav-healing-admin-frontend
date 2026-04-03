@@ -140,6 +140,15 @@
   font-size: 0.875rem;
 }
 
+.stockHint {
+  padding: $s3 $s4;
+  border-radius: $r-md;
+  background: rgba($emerald, 0.08);
+  border: 1px solid rgba($emerald, 0.18);
+  color: $text-secondary;
+  font-size: 0.875rem;
+}
+
 .formActions {
   display: flex;
   justify-content: flex-end;

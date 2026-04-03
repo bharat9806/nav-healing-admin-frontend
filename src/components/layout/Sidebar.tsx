@@ -49,10 +49,12 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     clearCurrentUserCache();
-    clearFrontendAuthCookie();
     try {
       await api.post('/auth/logout');
+    } catch {
+      // If the backend is unreachable, still complete the local logout flow.
     } finally {
+      clearFrontendAuthCookie();
       router.push('/login?force=1');
     }
   };

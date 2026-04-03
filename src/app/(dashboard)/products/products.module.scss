@@ -8,6 +8,13 @@
   margin-bottom: $s6;
 }
 
+.headerActions {
+  display: flex;
+  gap: $s2;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .pageTitle {
   color: $text-primary;
   font-size: 1.25rem;
@@ -32,6 +39,43 @@
   display: flex;
   gap: $s3;
   margin-bottom: $s6;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s3;
+  margin-bottom: $s4;
+}
+
+.statCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+}
+
+.statLabel {
+  color: $text-muted;
+  font-size: 0.8125rem;
+}
+
+.statValue {
+  color: $text-primary;
+  font-size: 1.35rem;
+}
+
+.filterChip {
+  @include btn-ghost;
+  border: 1px solid $border;
+  padding: $s2 $s3;
+}
+
+.filterChipActive {
+  border-color: rgba(#f59e0b, 0.35);
+  color: $amber-light;
 }
 
 .searchInput {
@@ -156,6 +200,54 @@
   font-weight: 500;
 }
 
+.skuBadge {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: $text-primary;
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+.stockCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stockOk {
+  color: $emerald-light;
+  font-size: 0.95rem;
+}
+
+.stockLow {
+  color: $amber-light;
+  font-size: 0.95rem;
+}
+
+.stockMeta {
+  color: $text-muted;
+  font-size: 0.72rem;
+}
+
+.statusColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.lowStockBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(#f59e0b, 0.12);
+  color: $amber-light;
+  font-size: 0.72rem;
+}
+
 .statusBtn {
   @include status-badge;
   border: none;
@@ -238,6 +330,12 @@
   gap: $s4;
 }
 
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $s4;
+}
+
 .formInput  { @include input; }
 .formSelect { @include input; cursor: pointer; }
 
@@ -287,6 +385,22 @@
   border-radius: $r-md;
   padding: $s3 $s4;
   font-size: 0.875rem;
+}
+
+.importSuccess {
+  background-color: rgba($emerald, 0.1);
+  border: 1px solid rgba($emerald, 0.25);
+  color: $emerald-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+  margin-bottom: $s4;
+}
+
+.importHint {
+  color: $text-muted;
+  font-size: 0.875rem;
+  margin-bottom: $s4;
 }
 
 .formActions {

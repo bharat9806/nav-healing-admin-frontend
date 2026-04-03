@@ -53,6 +53,25 @@
   box-shadow: 0 20px 40px rgba(0,0,0,0.4);
 }
 
+.modeSwitch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s2;
+  margin-bottom: $s5;
+}
+
+.modeBtn {
+  @include btn-ghost;
+  border: 1px solid $border;
+  padding: $s2 $s3;
+}
+
+.modeBtnActive {
+  border-color: rgba($emerald, 0.35);
+  color: $emerald-light;
+  background: rgba($emerald, 0.08);
+}
+
 .form {
   display: flex;
   flex-direction: column;
@@ -85,6 +104,15 @@
   font-size: 0.875rem;
 }
 
+.info {
+  background-color: rgba($emerald, 0.1);
+  border: 1px solid rgba($emerald, 0.25);
+  color: $emerald-light;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  font-size: 0.875rem;
+}
+
 .submitBtn {
   @include btn-primary;
   width: 100%;
@@ -94,6 +122,12 @@
   align-items: center;
   justify-content: center;
   gap: $s2;
+}
+
+.secondaryBtn {
+  @include btn-ghost;
+  width: 100%;
+  padding: $s2 + 0.125rem $s4;
 }
 
 .spinner {

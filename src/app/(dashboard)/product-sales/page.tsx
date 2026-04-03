@@ -41,6 +41,7 @@ export default function ProductSalesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<ProductSaleItem | null>(null);
+  const selectedProduct = products.find((product) => String(product.id) === form.productId);
 
   const fetchProducts = () => {
     api.get('/products?limit=1000')
@@ -233,7 +234,7 @@ export default function ProductSalesPage() {
                 <select value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })} className={s.formSelect} required>
                   <option value="">Select product</option>
                   {products.filter((product) => product.isActive).map((product) => (
-                    <option key={product.id} value={product.id}>{product.name}</option>
+                    <option key={product.id} value={product.id}>{product.name} ({product.sku})</option>
                   ))}
                 </select>
               </div>
@@ -252,6 +253,11 @@ export default function ProductSalesPage() {
                 <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className={s.formTextarea} />
               </div>
             </div>
+            {selectedProduct && (
+              <div className={s.stockHint}>
+                <strong>{selectedProduct.name}</strong> stock: {selectedProduct.currentStock}. Reorder level: {selectedProduct.reorderLevel}.
+              </div>
+            )}
             <div className={s.formActions}>
               <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
               <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
@@ -276,6 +282,7 @@ export default function ProductSalesPage() {
                 <th className={s.th}>Date</th>
                 <th className={s.th}>Product</th>
                 <th className={s.th}>Quantity Sold</th>
+                <th className={s.th}>Stock Left</th>
                 <th className={s.th}>Notes</th>
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>
@@ -286,9 +293,10 @@ export default function ProductSalesPage() {
                   <td className={s.td}><span className={s.cellText}>{new Date(item.date).toLocaleDateString('en-GB')}</span></td>
                   <td className={s.td}>
                     <p className={s.productName}>{item.product?.name || '-'}</p>
-                    <p className={s.productSub}>{item.product?.category || ''}</p>
+                    <p className={s.productSub}>{item.product?.sku || ''} {item.product?.category ? `• ${item.product.category}` : ''}</p>
                   </td>
                   <td className={s.td}><span className={s.quantityText}>{item.quantity}</span></td>
+                  <td className={s.td}><span className={s.cellText}>{item.product?.currentStock ?? '-'}</span></td>
                   <td className={s.td}><span className={s.cellText}>{item.notes || '-'}</span></td>
                   <td className={`${s.td} ${s.tdRight}`}>
                     <button onClick={() => openEdit(item)} className={s.editBtn}>Edit</button>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { Lead, Product, LeadStatus, User } from '@/types';
+import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
 import s from './leads.module.scss';
 
 const statuses: LeadStatus[] = [
@@ -69,12 +69,19 @@ export default function LeadsPage() {
   const [followUpPreset, setFollowUpPreset] = useState('');
   const [followUpFrom, setFollowUpFrom] = useState('');
   const [followUpTo, setFollowUpTo] = useState('');
+  const [reminderFilter, setReminderFilter] = useState('');
   const [showDateFilters, setShowDateFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [reminderStats, setReminderStats] = useState<LeadReminderStats>({
+    scheduled: 0,
+    overdue: 0,
+    dueToday: 0,
+    upcoming: 0,
+  });
 
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -119,6 +126,22 @@ export default function LeadsPage() {
     return prefix ? `${prefix} - ${formattedDate}` : formattedDate;
   };
 
+  const getReminderState = (lead: Lead) => {
+    if (!lead.nextFollowUpDate) return 'none';
+    const followUp = new Date(lead.nextFollowUpDate);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    const upcomingEnd = new Date(end);
+    upcomingEnd.setDate(upcomingEnd.getDate() + 7);
+
+    if (followUp < start) return 'overdue';
+    if (followUp <= end) return 'today';
+    if (followUp <= upcomingEnd) return 'upcoming';
+    return 'scheduled';
+  };
+
   useEffect(() => {
     if (!showColMenu) return;
 
@@ -151,6 +174,7 @@ export default function LeadsPage() {
     if (delTo) params.set('deliveredTo', delTo);
     if (fuFrom) params.set('followUpFrom', fuFrom);
     if (fuTo) params.set('followUpTo', fuTo);
+    if (reminderFilter) params.set('reminderStatus', reminderFilter);
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     params.set('page', String(p));
@@ -161,6 +185,7 @@ export default function LeadsPage() {
         setLeads(leadsRes.data.data);
         setTotalPages(leadsRes.data.meta.totalPages);
         setTotal(leadsRes.data.meta.total);
+        setReminderStats(leadsRes.data.reminders || { scheduled: 0, overdue: 0, dueToday: 0, upcoming: 0 });
         setProducts(productsRes.data.data);
         setDoctors(doctorsRes.data);
       })
@@ -340,7 +365,7 @@ export default function LeadsPage() {
   };
 
   const hasActiveDateFilters = Boolean(
-    datePreset || deliveredPreset || followUpPreset
+    reminderFilter || datePreset || deliveredPreset || followUpPreset
     || dateFrom || dateTo || deliveredFrom || deliveredTo || followUpFrom || followUpTo,
   );
 
@@ -480,6 +505,25 @@ export default function LeadsPage() {
         </div>
       </div>
 
+      <div className={s.reminderCards}>
+        <button type="button" onClick={() => { setReminderFilter('overdue'); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${reminderFilter === 'overdue' ? s.reminderCardActive : ''}`}>
+          <span className={s.reminderLabel}>Overdue</span>
+          <strong className={s.reminderValue}>{reminderStats.overdue}</strong>
+        </button>
+        <button type="button" onClick={() => { setReminderFilter('today'); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${reminderFilter === 'today' ? s.reminderCardActive : ''}`}>
+          <span className={s.reminderLabel}>Due Today</span>
+          <strong className={s.reminderValue}>{reminderStats.dueToday}</strong>
+        </button>
+        <button type="button" onClick={() => { setReminderFilter('upcoming'); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${reminderFilter === 'upcoming' ? s.reminderCardActive : ''}`}>
+          <span className={s.reminderLabel}>Next 7 Days</span>
+          <strong className={s.reminderValue}>{reminderStats.upcoming}</strong>
+        </button>
+        <button type="button" onClick={() => { setReminderFilter(''); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${!reminderFilter ? s.reminderCardActive : ''}`}>
+          <span className={s.reminderLabel}>All Scheduled</span>
+          <strong className={s.reminderValue}>{reminderStats.scheduled}</strong>
+        </button>
+      </div>
+
       <div className={`${s.filterPanel} ${showDateFilters || hasActiveDateFilters ? s.filterPanelExpanded : ''}`}>
         <div className={s.filterRow}>
           <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); } }} className={s.searchInput} />
@@ -520,6 +564,17 @@ export default function LeadsPage() {
             <select value={followUpPreset} onChange={(e) => handleFollowUpPreset(e.target.value)} className={s.compactSelect}>
               <option value="">Follow-Up: All</option>
               {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
+            </select>
+          </div>
+          <div className={s.filterGroup}>
+            <span className={s.filterIcon}>!</span>
+            <select value={reminderFilter} onChange={(e) => { setReminderFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.compactSelect}>
+              <option value="">Reminder: All</option>
+              <option value="overdue">Overdue</option>
+              <option value="today">Due Today</option>
+              <option value="upcoming">Next 7 Days</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="none">No Follow-Up</option>
             </select>
           </div>
           <div className={s.colMenuWrap}>
@@ -682,8 +737,10 @@ export default function LeadsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((l) => (
-                <tr key={l.id} className={s.tr}>
+              {filtered.map((l) => {
+                const reminderState = getReminderState(l);
+                return (
+                <tr key={l.id} className={`${s.tr} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
                   <td className={s.td}>
                     <p className={s.leadName}>{l.name}</p>
                     {l.description && <p className={s.leadDesc}>{l.description}</p>}
@@ -696,7 +753,16 @@ export default function LeadsPage() {
                   {visibleCols.doctor   && <td className={s.td}><span className={s.cellText}>{l.assignedDoctor ? `Dr. ${l.assignedDoctor.username}` : '-'}</span></td>}
                   {visibleCols.createdDate && <td className={s.td}><span className={s.cellText}>{formatDate(l.createdAt)}</span></td>}
                   {visibleCols.deliveredDate && <td className={s.td}><span className={s.cellText}>{formatDate(l.deliveredAt)}</span></td>}
-                  {visibleCols.followUpDate && <td className={s.td}><span className={s.cellText}>{formatFollowUp(l)}</span></td>}
+                  {visibleCols.followUpDate && <td className={s.td}>
+                    <div className={s.followUpCell}>
+                      <span className={s.cellText}>{formatFollowUp(l)}</span>
+                      {reminderState !== 'none' && (
+                        <span className={`${s.reminderBadge} ${reminderState === 'overdue' ? s.reminderBadgeOverdue : reminderState === 'today' ? s.reminderBadgeToday : s.reminderBadgeUpcoming}`}>
+                          {reminderState === 'overdue' ? 'Overdue' : reminderState === 'today' ? 'Today' : reminderState === 'upcoming' ? 'Soon' : 'Scheduled'}
+                        </span>
+                      )}
+                    </div>
+                  </td>}
                   {visibleCols.status   && <td className={s.td}>
                     <select value={l.status} onChange={(e) => handleStatusChange(l.id, e.target.value as LeadStatus)}
                       className={`${s.statusSelect} ${statusCls(l.status)}`}>
@@ -709,7 +775,7 @@ export default function LeadsPage() {
                     <button onClick={() => setDeleteTarget(l)} className={s.deleteBtn}>Delete</button>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
 
