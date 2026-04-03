@@ -142,7 +142,7 @@ export default function LoginPage() {
                     setError('');
                     setInfo('');
                   }}
-                  placeholder="NH-SA-0001"
+                  placeholder="Enter your user code"
                   required
                   className={s.input}
                 />
