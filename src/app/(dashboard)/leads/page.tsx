@@ -160,50 +160,58 @@ export default function LeadsPage() {
     };
   }, [showColMenu]);
 
-  const fetchData = (
-    from = dateFrom, to = dateTo,
-    delFrom = deliveredFrom, delTo = deliveredTo,
-    fuFrom = followUpFrom, fuTo = followUpTo,
-    p = page,
-  ) => {
+  const fetchStats = () => {
+    api.get('/leads/stats')
+      .then((res) => {
+        if (res.data.reminders) {
+          setReminderStats(res.data.reminders);
+        }
+      })
+      .catch(() => {});
+  };
+
+  const fetchData = (p = page) => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (from) params.set('dateFrom', from);
-    if (to) params.set('dateTo', to);
-    if (delFrom) params.set('deliveredFrom', delFrom);
-    if (delTo) params.set('deliveredTo', delTo);
-    if (fuFrom) params.set('followUpFrom', fuFrom);
-    if (fuTo) params.set('followUpTo', fuTo);
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    if (deliveredFrom) params.set('deliveredFrom', deliveredFrom);
+    if (deliveredTo) params.set('deliveredTo', deliveredTo);
+    if (followUpFrom) params.set('followUpFrom', followUpFrom);
+    if (followUpTo) params.set('followUpTo', followUpTo);
     if (reminderFilter) params.set('reminderStatus', reminderFilter);
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     params.set('page', String(p));
     params.set('limit', '20');
     const query = `?${params.toString()}`;
-    Promise.all([api.get(`/leads${query}`), api.get('/products?limit=100'), api.get('/users/doctors')])
-      .then(([leadsRes, productsRes, doctorsRes]) => {
+    api.get(`/leads${query}`)
+      .then((leadsRes) => {
         setLeads(leadsRes.data.data);
         setTotalPages(leadsRes.data.meta.totalPages);
         setTotal(leadsRes.data.meta.total);
-        setReminderStats(leadsRes.data.reminders || { scheduled: 0, overdue: 0, dueToday: 0, upcoming: 0 });
-        setProducts(productsRes.data.data);
-        setDoctors(doctorsRes.data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchData();
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
+    // Fetch products, doctors, and stats once on mount — these don't change with filters
+    api.get('/products/options').then((res) => setProducts(res.data)).catch(() => {});
+    api.get('/users/doctors').then((res) => setDoctors(res.data)).catch(() => {});
+    fetchStats();
   }, []);
+
+  useEffect(() => {
+    fetchData(page);
+  }, [statusFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page]);
 
   // Search and status filtering is now done server-side
   const filtered = leads;
 
   const goToPage = (p: number) => {
     setPage(p);
-    fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, p);
   };
 
   const openCreate = () => {
@@ -270,6 +278,7 @@ export default function LeadsPage() {
       else { await api.post('/leads', payload); }
       setShowInlineForm(false); setEditing(null);
       fetchData();
+      fetchStats();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save lead');
     } finally { setSaving(false); }
@@ -278,6 +287,7 @@ export default function LeadsPage() {
   const handleStatusChange = async (id: number, status: LeadStatus) => {
     await api.patch(`/leads/${id}/status`, { status });
     fetchData();
+    fetchStats();
   };
 
   const handleDelete = async () => {
@@ -285,34 +295,30 @@ export default function LeadsPage() {
     await api.delete(`/leads/${deleteTarget.id}`);
     setDeleteTarget(null);
     fetchData();
+    fetchStats();
   };
 
   const handlePreset = (key: string) => {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
     setDatePreset(key);
-    if (!key) { setDateFrom(''); setDateTo(''); fetchData('', ''); }
-    else if (key === 'today') { const d = fmt(today); setDateFrom(d); setDateTo(d); fetchData(d, d); }
-    else if (key === 'yesterday') { const d = fmt(new Date(Date.now() - 86400000)); setDateFrom(d); setDateTo(d); fetchData(d, d); }
-    else if (key === 'week') { const start = new Date(today); start.setDate(today.getDate() - today.getDay()); const from = fmt(start); const to = fmt(today); setDateFrom(from); setDateTo(to); fetchData(from, to); }
-    else if (key === 'month') { const from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); const to = fmt(today); setDateFrom(from); setDateTo(to); fetchData(from, to); }
+    if (!key) { setDateFrom(''); setDateTo(''); }
+    else if (key === 'today') { const d = fmt(today); setDateFrom(d); setDateTo(d); }
+    else if (key === 'yesterday') { const d = fmt(new Date(Date.now() - 86400000)); setDateFrom(d); setDateTo(d); }
+    else if (key === 'week') { const start = new Date(today); start.setDate(today.getDate() - today.getDay()); const from = fmt(start); const to = fmt(today); setDateFrom(from); setDateTo(to); }
+    else if (key === 'month') { const from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); const to = fmt(today); setDateFrom(from); setDateTo(to); }
     else { setDateFrom(''); setDateTo(''); }
-  };
-
-  const applyDateRange = (from: string, to: string, field: 'delivered' | 'followUp') => {
-    if (field === 'delivered') fetchData(dateFrom, dateTo, from, to, followUpFrom, followUpTo);
-    else fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, from, to);
   };
 
   const handleDeliveredPreset = (key: string) => {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
     setDeliveredPreset(key);
-    if (!key) { setDeliveredFrom(''); setDeliveredTo(''); applyDateRange('', '', 'delivered'); }
-    else if (key === 'today') { const d = fmt(today); setDeliveredFrom(d); setDeliveredTo(d); applyDateRange(d, d, 'delivered'); }
-    else if (key === 'yesterday') { const d = fmt(new Date(Date.now() - 86400000)); setDeliveredFrom(d); setDeliveredTo(d); applyDateRange(d, d, 'delivered'); }
-    else if (key === 'week') { const start = new Date(today); start.setDate(today.getDate() - today.getDay()); const from = fmt(start); const to = fmt(today); setDeliveredFrom(from); setDeliveredTo(to); applyDateRange(from, to, 'delivered'); }
-    else if (key === 'month') { const from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); const to = fmt(today); setDeliveredFrom(from); setDeliveredTo(to); applyDateRange(from, to, 'delivered'); }
+    if (!key) { setDeliveredFrom(''); setDeliveredTo(''); }
+    else if (key === 'today') { const d = fmt(today); setDeliveredFrom(d); setDeliveredTo(d); }
+    else if (key === 'yesterday') { const d = fmt(new Date(Date.now() - 86400000)); setDeliveredFrom(d); setDeliveredTo(d); }
+    else if (key === 'week') { const start = new Date(today); start.setDate(today.getDate() - today.getDay()); const from = fmt(start); const to = fmt(today); setDeliveredFrom(from); setDeliveredTo(to); }
+    else if (key === 'month') { const from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); const to = fmt(today); setDeliveredFrom(from); setDeliveredTo(to); }
     else { setDeliveredFrom(''); setDeliveredTo(''); }
   };
 
@@ -320,11 +326,11 @@ export default function LeadsPage() {
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
     setFollowUpPreset(key);
-    if (!key) { setFollowUpFrom(''); setFollowUpTo(''); applyDateRange('', '', 'followUp'); }
-    else if (key === 'today') { const d = fmt(today); setFollowUpFrom(d); setFollowUpTo(d); applyDateRange(d, d, 'followUp'); }
-    else if (key === 'yesterday') { const d = fmt(new Date(Date.now() - 86400000)); setFollowUpFrom(d); setFollowUpTo(d); applyDateRange(d, d, 'followUp'); }
-    else if (key === 'week') { const start = new Date(today); start.setDate(today.getDate() - today.getDay()); const from = fmt(start); const to = fmt(today); setFollowUpFrom(from); setFollowUpTo(to); applyDateRange(from, to, 'followUp'); }
-    else if (key === 'month') { const from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); const to = fmt(today); setFollowUpFrom(from); setFollowUpTo(to); applyDateRange(from, to, 'followUp'); }
+    if (!key) { setFollowUpFrom(''); setFollowUpTo(''); }
+    else if (key === 'today') { const d = fmt(today); setFollowUpFrom(d); setFollowUpTo(d); }
+    else if (key === 'yesterday') { const d = fmt(new Date(Date.now() - 86400000)); setFollowUpFrom(d); setFollowUpTo(d); }
+    else if (key === 'week') { const start = new Date(today); start.setDate(today.getDate() - today.getDay()); const from = fmt(start); const to = fmt(today); setFollowUpFrom(from); setFollowUpTo(to); }
+    else if (key === 'month') { const from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); const to = fmt(today); setFollowUpFrom(from); setFollowUpTo(to); }
     else { setFollowUpFrom(''); setFollowUpTo(''); }
   };
 
@@ -506,19 +512,19 @@ export default function LeadsPage() {
       </div>
 
       <div className={s.reminderCards}>
-        <button type="button" onClick={() => { setReminderFilter('overdue'); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${reminderFilter === 'overdue' ? s.reminderCardActive : ''}`}>
+        <button type="button" onClick={() => { setReminderFilter('overdue'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'overdue' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>Overdue</span>
           <strong className={s.reminderValue}>{reminderStats.overdue}</strong>
         </button>
-        <button type="button" onClick={() => { setReminderFilter('today'); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${reminderFilter === 'today' ? s.reminderCardActive : ''}`}>
+        <button type="button" onClick={() => { setReminderFilter('today'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'today' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>Due Today</span>
           <strong className={s.reminderValue}>{reminderStats.dueToday}</strong>
         </button>
-        <button type="button" onClick={() => { setReminderFilter('upcoming'); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${reminderFilter === 'upcoming' ? s.reminderCardActive : ''}`}>
+        <button type="button" onClick={() => { setReminderFilter('upcoming'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'upcoming' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>Next 7 Days</span>
           <strong className={s.reminderValue}>{reminderStats.upcoming}</strong>
         </button>
-        <button type="button" onClick={() => { setReminderFilter(''); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={`${s.reminderCard} ${!reminderFilter ? s.reminderCardActive : ''}`}>
+        <button type="button" onClick={() => { setReminderFilter(''); setPage(1); }} className={`${s.reminderCard} ${!reminderFilter ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>All Scheduled</span>
           <strong className={s.reminderValue}>{reminderStats.scheduled}</strong>
         </button>
@@ -526,8 +532,13 @@ export default function LeadsPage() {
 
       <div className={`${s.filterPanel} ${showDateFilters || hasActiveDateFilters ? s.filterPanelExpanded : ''}`}>
         <div className={s.filterRow}>
-          <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); } }} className={s.searchInput} />
-          <button onClick={() => { setPage(1); fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1); }} className={s.searchBtn}>Search</button>
+          <div className={s.searchWrapper}>
+            <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { if (page === 1) fetchData(1); else setPage(1); } }} className={s.searchInput} />
+            {search && (
+              <button type="button" className={s.searchClear} onClick={() => { setSearch(''); if (page === 1) fetchData(1); else setPage(1); }}>✕</button>
+            )}
+          </div>
+          <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
           <button
             type="button"
             onClick={() => setShowDateFilters((prev) => !prev)}
@@ -540,7 +551,7 @@ export default function LeadsPage() {
           </button>
           <div className={s.filterGroup}>
             <span className={s.filterIcon}>🏷️</span>
-            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.compactSelect}>
+            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className={s.compactSelect}>
               <option value="">All Statuses</option>
               {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
             </select>
@@ -568,7 +579,7 @@ export default function LeadsPage() {
           </div>
           <div className={s.filterGroup}>
             <span className={s.filterIcon}>!</span>
-            <select value={reminderFilter} onChange={(e) => { setReminderFilter(e.target.value); setPage(1); setTimeout(() => fetchData(dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, 1), 0); }} className={s.compactSelect}>
+            <select value={reminderFilter} onChange={(e) => { setReminderFilter(e.target.value); setPage(1); }} className={s.compactSelect}>
               <option value="">Reminder: All</option>
               <option value="overdue">Overdue</option>
               <option value="today">Due Today</option>
@@ -643,7 +654,7 @@ export default function LeadsPage() {
                 <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={s.dateInput} />
                 <span className={s.sep}>—</span>
                 <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.dateInput} />
-                <button onClick={() => fetchData(dateFrom, dateTo)} disabled={!dateFrom && !dateTo} className={s.applyBtn}>Apply</button>
+                <button onClick={() => fetchData()} disabled={!dateFrom && !dateTo} className={s.applyBtn}>Apply</button>
               </div>
             )}
             {deliveredPreset === 'custom' && (
@@ -652,7 +663,7 @@ export default function LeadsPage() {
                 <input type="date" value={deliveredFrom} onChange={(e) => setDeliveredFrom(e.target.value)} className={s.dateInput} />
                 <span className={s.sep}>—</span>
                 <input type="date" value={deliveredTo} onChange={(e) => setDeliveredTo(e.target.value)} className={s.dateInput} />
-                <button onClick={() => applyDateRange(deliveredFrom, deliveredTo, 'delivered')} disabled={!deliveredFrom && !deliveredTo} className={s.applyBtn}>Apply</button>
+                <button onClick={() => fetchData()} disabled={!deliveredFrom && !deliveredTo} className={s.applyBtn}>Apply</button>
               </div>
             )}
             {followUpPreset === 'custom' && (
@@ -661,7 +672,7 @@ export default function LeadsPage() {
                 <input type="date" value={followUpFrom} onChange={(e) => setFollowUpFrom(e.target.value)} className={s.dateInput} />
                 <span className={s.sep}>—</span>
                 <input type="date" value={followUpTo} onChange={(e) => setFollowUpTo(e.target.value)} className={s.dateInput} />
-                <button onClick={() => applyDateRange(followUpFrom, followUpTo, 'followUp')} disabled={!followUpFrom && !followUpTo} className={s.applyBtn}>Apply</button>
+                <button onClick={() => fetchData()} disabled={!followUpFrom && !followUpTo} className={s.applyBtn}>Apply</button>
               </div>
             )}
           </>

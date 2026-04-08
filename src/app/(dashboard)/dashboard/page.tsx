@@ -40,11 +40,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchCurrentUser(), api.get('/dashboard/stats'), api.get('/leads')])
+    Promise.all([fetchCurrentUser(), api.get('/dashboard/stats'), api.get('/leads?limit=5')])
       .then(([me, statsRes, leadsRes]) => {
         setUser(me);
         setStats(statsRes.data);
-        setRecentLeads(leadsRes.data.slice(0, 5));
+        setRecentLeads(leadsRes.data.data?.slice(0, 5) || leadsRes.data.slice(0, 5));
       })
       .catch(() => {})
       .finally(() => setLoading(false));

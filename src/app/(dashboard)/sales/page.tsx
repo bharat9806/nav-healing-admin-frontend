@@ -79,21 +79,27 @@ export default function SalesPage() {
         setSales(res.data.data);
         setTotalPages(res.data.meta.totalPages);
         setTotal(res.data.meta.total);
-        setPaymentModes((res.data.filters?.paymentModes?.length ? res.data.filters.paymentModes : defaultPaymentModes) as string[]);
-        setStatuses((res.data.filters?.statuses?.length ? res.data.filters.statuses : defaultStatuses) as string[]);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    fetchSales();
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
+    api.get('/sales/filters')
+      .then((res) => {
+        if (res.data.paymentModes?.length) setPaymentModes(res.data.paymentModes);
+        if (res.data.statuses?.length) setStatuses(res.data.statuses);
+      })
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchSales(page);
+  }, [paymentModeFilter, statusFilter, dateFrom, dateTo, page]);
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
-    fetchSales(nextPage);
   };
 
   const openCreate = () => {
@@ -205,25 +211,39 @@ export default function SalesPage() {
 
       {!showInlineForm && (
         <div className={s.filterPanel}>
-          <input
-            type="text"
-            placeholder="Search by patient name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                setPage(1);
-                fetchSales(1);
-              }
-            }}
-            className={s.searchInput}
-          />
+          <div className={s.searchWrapper}>
+            <input
+              type="text"
+              placeholder="Search by patient name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setPage(1);
+                  fetchSales(1);
+                }
+              }}
+              className={s.searchInput}
+            />
+            {search && (
+              <button
+                type="button"
+                className={s.searchClear}
+                onClick={() => {
+                  setSearch('');
+                  setPage(1);
+                  fetchSales(1);
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <select
             value={paymentModeFilter}
             onChange={(e) => {
               setPaymentModeFilter(e.target.value);
               setPage(1);
-              setTimeout(() => fetchSales(1), 0);
             }}
             className={s.select}
           >
@@ -235,7 +255,6 @@ export default function SalesPage() {
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
-              setTimeout(() => fetchSales(1), 0);
             }}
             className={s.select}
           >
@@ -246,8 +265,8 @@ export default function SalesPage() {
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.dateInput} />
           <button
             onClick={() => {
-              setPage(1);
-              fetchSales(1);
+              if (page === 1) fetchSales(1);
+              else setPage(1);
             }}
             className={s.searchBtn}
           >

@@ -201,13 +201,15 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts();
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetchProducts(page);
+  }, [catFilter, page]);
+
   const goToPage = (p: number) => {
     setPage(p);
-    fetchProducts(p);
   };
 
   const openCreate = () => {
@@ -475,25 +477,38 @@ export default function ProductsPage() {
 
       {!showInlineForm && (
         <div className={s.filters}>
-          <input
-            type="text"
-            placeholder="Search by name or SKU..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                setPage(1);
-                fetchProducts(1);
-              }
-            }}
-            className={s.searchInput}
-          />
+          <div className={s.searchWrapper}>
+            <input
+              type="text"
+              placeholder="Search by name or SKU..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (page === 1) fetchProducts(1); else setPage(1);
+                }
+              }}
+              className={s.searchInput}
+            />
+            {search && (
+              <button
+                type="button"
+                className={s.searchClear}
+                onClick={() => {
+                  setSearch('');
+                  if (page === 1) fetchProducts(1); else setPage(1);
+                }}
+                aria-label="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <select
             value={catFilter}
             onChange={(e) => {
               setCatFilter(e.target.value);
               setPage(1);
-              setTimeout(() => fetchProducts(1), 0);
             }}
             className={s.select}
           >

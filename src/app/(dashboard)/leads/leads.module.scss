@@ -125,10 +125,39 @@
   line-height: 1.2;
 }
 
-.searchInput {
-  @include input;
+.searchWrapper {
+  position: relative;
   flex: 1;
   min-width: 12rem;
+}
+
+.searchInput {
+  @include input;
+  width: 100%;
+  padding-right: 2.2rem;
+}
+
+.searchClear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+  }
 }
 
 .select {

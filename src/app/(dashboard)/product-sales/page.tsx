@@ -1,7 +1,7 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
@@ -21,6 +21,100 @@ const initialForm = (): ProductSaleFormState => ({
   quantity: '1',
   notes: '',
 });
+
+function SearchableProductSelect({
+  products,
+  value,
+  onChange,
+}: {
+  products: Product[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selected = products.find((p) => String(p.id) === value);
+  const filtered = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(query.toLowerCase()) ||
+      p.sku.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className={s.formGroup} ref={wrapRef}>
+      <label>Product *</label>
+      <div className={s.comboWrap}>
+        <input
+          ref={inputRef}
+          type="text"
+          className={s.formInput}
+          placeholder="Search product..."
+          value={open ? query : selected ? `${selected.name} (${selected.sku})` : ''}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => {
+            setOpen(true);
+            setQuery('');
+          }}
+          required={!value}
+          autoComplete="off"
+        />
+        {value && !open && (
+          <button
+            type="button"
+            className={s.comboClear}
+            onClick={() => {
+              onChange('');
+              setQuery('');
+              setOpen(true);
+              inputRef.current?.focus();
+            }}
+          >
+            ✕
+          </button>
+        )}
+        {open && (
+          <ul className={s.comboList}>
+            {filtered.length === 0 ? (
+              <li className={s.comboEmpty}>No products found</li>
+            ) : (
+              filtered.map((p) => (
+                <li
+                  key={p.id}
+                  className={`${s.comboItem} ${String(p.id) === value ? s.comboItemActive : ''}`}
+                  onMouseDown={() => {
+                    onChange(String(p.id));
+                    setOpen(false);
+                    setQuery('');
+                  }}
+                >
+                  <span className={s.comboItemName}>{p.name}</span>
+                  <span className={s.comboItemSku}>{p.sku} • Stock: {p.currentStock}</span>
+                </li>
+              ))
+            )}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function ProductSalesPage() {
   const [items, setItems] = useState<ProductSaleItem[]>([]);
@@ -44,9 +138,9 @@ export default function ProductSalesPage() {
   const selectedProduct = products.find((product) => String(product.id) === form.productId);
 
   const fetchProducts = () => {
-    api.get('/products?limit=1000')
+    api.get('/products/options')
       .then((res) => {
-        setProducts(res.data.data || []);
+        setProducts(res.data || []);
       })
       .catch(() => {
         setProducts([]);
@@ -79,13 +173,15 @@ export default function ProductSalesPage() {
 
   useEffect(() => {
     fetchProducts();
-    fetchData();
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    fetchData(page);
+  }, [productFilter, dateFrom, dateTo, page]);
+
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
-    fetchData(nextPage);
   };
 
   const openCreate = () => {
@@ -187,20 +283,31 @@ export default function ProductSalesPage() {
       {!showInlineForm && (
         <div className={s.filterPanel}>
           <div className={s.filterRowPrimary}>
-            <input
-              type="text"
-              placeholder="Search by product name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setPage(1);
-                  fetchData(1);
-                }
-              }}
-              className={s.searchInput}
-            />
-            <button onClick={() => { setPage(1); fetchData(1); }} className={s.searchBtn}>Search</button>
+            <div className={s.searchWrapper}>
+              <input
+                type="text"
+                placeholder="Search by product name..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (page === 1) fetchData(1); else setPage(1);
+                  }
+                }}
+                className={s.searchInput}
+              />
+              {search && (
+                <button
+                  type="button"
+                  className={s.searchClear}
+                  onClick={() => { setSearch(''); if (page === 1) fetchData(1); else setPage(1); }}
+                  aria-label="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
           </div>
           <div className={s.filterRowSecondary}>
             <select
@@ -208,7 +315,6 @@ export default function ProductSalesPage() {
               onChange={(e) => {
                 setProductFilter(e.target.value);
                 setPage(1);
-                setTimeout(() => fetchData(1), 0);
               }}
               className={s.select}
             >
@@ -229,15 +335,11 @@ export default function ProductSalesPage() {
             <h2 className={s.inlineFormTitle}>{editing ? 'Edit Product Sale' : 'New Product Sale'}</h2>
             {error && <div className={s.error}>{error}</div>}
             <div className={s.grid2}>
-              <div className={s.formGroup}>
-                <label>Product *</label>
-                <select value={form.productId} onChange={(e) => setForm({ ...form, productId: e.target.value })} className={s.formSelect} required>
-                  <option value="">Select product</option>
-                  {products.filter((product) => product.isActive).map((product) => (
-                    <option key={product.id} value={product.id}>{product.name} ({product.sku})</option>
-                  ))}
-                </select>
-              </div>
+              <SearchableProductSelect
+                products={products.filter((p) => p.isActive)}
+                value={form.productId}
+                onChange={(id) => setForm({ ...form, productId: id })}
+              />
               <div className={s.formGroup}>
                 <label>Date *</label>
                 <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={s.formInput} required />
