@@ -424,22 +424,24 @@ export default function UsersPage() {
                     </div>
                   </div>
                   <div className={s.formGridTwo}>
-                    <div className={s.formGroup}>
-                      <label>Password</label>
-                      <input
-                        type="password"
-                        required
-                        minLength={6}
-                        value={createForm.password}
-                        onChange={(e) =>
-                          setCreateForm((p) => ({
-                            ...p,
-                            password: e.target.value,
-                          }))
-                        }
-                        className={s.formInput}
-                      />
-                    </div>
+                    {createForm.role === 'SUPER_ADMIN' && (
+                      <div className={s.formGroup}>
+                        <label>Password</label>
+                        <input
+                          type="password"
+                          required
+                          minLength={6}
+                          value={createForm.password}
+                          onChange={(e) =>
+                            setCreateForm((p) => ({
+                              ...p,
+                              password: e.target.value,
+                            }))
+                          }
+                          className={s.formInput}
+                        />
+                      </div>
+                    )}
                     <div className={s.formGroup}>
                       <label>Role</label>
                       <select
