@@ -297,7 +297,9 @@ export default function UsersPage() {
     setSaving(true);
     setFormError('');
     try {
-      await api.post('/users', createForm);
+      const { password, ...rest } = createForm;
+      const payload = createForm.role === 'SUPER_ADMIN' ? createForm : rest;
+      await api.post('/users', payload);
       setShowInlineForm(false);
       setCreateForm(initialCreateForm());
       fetchUsers();
