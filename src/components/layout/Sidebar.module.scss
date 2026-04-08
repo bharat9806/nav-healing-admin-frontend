@@ -78,6 +78,19 @@
   }
 }
 
+.navSkeleton {
+  height: 2.25rem;
+  border-radius: $r-md;
+  background: $bg-elevated;
+  opacity: 0.4;
+  animation: shimmer 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes shimmer {
+  0% { opacity: 0.25; }
+  100% { opacity: 0.45; }
+}
+
 .footer {
   padding: $s4 $s3;
   border-top: 1px solid $border;

@@ -42,7 +42,7 @@ export default function Sidebar() {
   }, []);
 
   const navItems = allNavItems.filter((item) => {
-    if (!user) return true;
+    if (!user) return false;
     if (user.role === 'SUPER_ADMIN') return true;
     return user[item.permission] === true;
   });
@@ -69,22 +69,28 @@ export default function Sidebar() {
       </div>
 
       <nav className={s.nav}>
-        {navItems.map((item) => {
-          const isActive = item.href === '/dashboard'
-            ? pathname === item.href
-            : pathname.startsWith(item.href);
+        {!user ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={s.navSkeleton} />
+          ))
+        ) : (
+          navItems.map((item) => {
+            const isActive = item.href === '/dashboard'
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${s.navItem} ${isActive ? s.navItemActive : ''}`}
-            >
-              <span className={s.icon}>{item.icon}</span>
-              {item.label}
-            </Link>
-          );
-        })}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`${s.navItem} ${isActive ? s.navItemActive : ''}`}
+              >
+                <span className={s.icon}>{item.icon}</span>
+                {item.label}
+              </Link>
+            );
+          })
+        )}
       </nav>
 
       <div className={s.footer}>
