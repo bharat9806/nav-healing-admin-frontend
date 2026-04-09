@@ -98,6 +98,12 @@
 .panelHeader {
   @include flex-between;
   margin-bottom: $s4;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s2;
+    flex-direction: column;
+  }
 }
 
 .panelTitle {
@@ -125,6 +131,12 @@
   padding: $s2 0;
   border-bottom: 1px solid $border;
   &:last-child { border-bottom: none; }
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s2;
+    flex-direction: column;
+  }
 }
 
 .leadName {
@@ -187,6 +199,12 @@
   border-radius: $r-md;
   font-size: $fs-xs;
   color: $text-subtle;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s2;
+    flex-direction: column;
+  }
 }
 
 .statusDot {

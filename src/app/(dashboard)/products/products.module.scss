@@ -9,6 +9,12 @@
 .header {
   @include flex-between;
   margin-bottom: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s3;
+    flex-direction: column;
+  }
 }
 
 .headerActions {
@@ -90,6 +96,10 @@
   position: relative;
   flex: 1;
   min-width: 14rem;
+
+  @media (max-width: ($md - 1px)) {
+    min-width: 0;
+  }
 }
 
 .searchInput {
@@ -124,6 +134,10 @@
   @include input;
   width: auto;
   cursor: pointer;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 // Skeleton
@@ -174,6 +188,10 @@
   font-size: 0.75rem;
   font-weight: 500;
   padding: $s3 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
 }
 
 .thRight { text-align: right; }
@@ -192,7 +210,13 @@
   &:hover { background-color: rgba($bg-elevated, 0.3); }
 }
 
-.td { padding: $s3 $s4; }
+.td {
+  padding: $s3 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
+}
 .tdRight { text-align: right; }
 
 .productCell {
@@ -373,12 +397,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: $s4;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .grid3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: $s4;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .formInput  { @include input; }
@@ -453,6 +485,10 @@
   justify-content: flex-end;
   gap: $s3;
   padding-top: $s2;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
 }
 
 .cancelBtn { @include btn-ghost; padding: $s2 $s4; }
@@ -482,6 +518,10 @@
   display: flex;
   justify-content: center;
   gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
 }
 
 .deleteCancelBtn { @include btn-ghost; padding: $s2 $s4; }
@@ -539,4 +579,9 @@
   font-size: 0.85rem;
   margin-left: auto;
   &:focus { outline: none; border-color: rgba(255, 255, 255, 0.2); }
+
+  @media (max-width: ($md - 1px)) {
+    margin-left: 0;
+    width: 100%;
+  }
 }

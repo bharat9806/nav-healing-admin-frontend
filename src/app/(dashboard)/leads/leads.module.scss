@@ -11,6 +11,11 @@
   margin-bottom: $s4;
   flex-wrap: wrap;
   gap: $s2;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s3;
+  }
 }
 
 .pageTitle {
@@ -134,6 +139,10 @@
   position: relative;
   flex: 1;
   min-width: 12rem;
+
+  @media (max-width: ($md - 1px)) {
+    min-width: 0;
+  }
 }
 
 .searchInput {
@@ -169,6 +178,10 @@
   @include input;
   width: 10rem;
   cursor: pointer;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .filterGroup {
@@ -180,6 +193,10 @@
   overflow: hidden;
   flex-shrink: 0;
   height: 2.375rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .filterIcon {
@@ -203,6 +220,10 @@
   height: 100%;
   min-width: 0;
   width: auto;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 
   option { background-color: $bg-elevated; color: $text-primary; }
 
@@ -245,6 +266,10 @@
   width: 8.5rem;
   padding: 0.3125rem $s3;
   font-size: 0.75rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .sep { color: $text-subtle; font-size: 0.75rem; }
@@ -323,6 +348,10 @@
   justify-content: flex-end;
   padding: $s3 $s4;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
 }
 
 .colMenuWrap {
@@ -507,6 +536,10 @@
   font-size: 0.75rem;
   font-weight: 500;
   padding: $s3 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
 }
 
 .thRight { text-align: right; }
@@ -534,7 +567,13 @@
   background-color: rgba(#f59e0b, 0.05);
 }
 
-.td { padding: $s3 $s4; }
+.td {
+  padding: $s3 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
+}
 .tdRight { text-align: right; }
 
 .leadName {
@@ -660,8 +699,25 @@
   }
 }
 
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: $s4; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: $s4; }
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s4;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: $s4;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
 
 .formInput    { @include input; }
 .formSelect   { @include input; cursor: pointer; }
@@ -722,6 +778,11 @@
   display: flex;
   gap: $s2;
   align-items: center;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }
 
 .itemSearchWrap {
@@ -777,7 +838,14 @@
   font-size: 0.875rem;
 }
 
-.itemQty    { @include input; width: 5rem; }
+.itemQty {
+  @include input;
+  width: 5rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
+}
 
 .removeItemBtn {
   @include btn-ghost;
@@ -791,6 +859,10 @@
   justify-content: flex-end;
   gap: $s3;
   padding-top: $s2;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
 }
 
 .cancelBtn { @include btn-ghost; padding: $s2 $s4; }
@@ -816,7 +888,15 @@
   margin: 0 0 $s6;
 }
 
-.deleteActions { display: flex; justify-content: center; gap: $s3; }
+.deleteActions {
+  display: flex;
+  justify-content: center;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
+}
 .deleteCancelBtn  { @include btn-ghost; padding: $s2 $s4; }
 .deleteConfirmBtn { @include btn-danger; padding: $s2 $s4; }
 

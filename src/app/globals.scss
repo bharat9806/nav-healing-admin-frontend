@@ -6,6 +6,7 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
+  max-width: 100%;
 }
 
 body {
@@ -14,11 +15,13 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
 input, select, textarea { font-family: inherit; }
+img, svg, video, canvas { max-width: 100%; }
 
 // Date input color fix for dark theme
 input[type="date"]::-webkit-calendar-picker-indicator {

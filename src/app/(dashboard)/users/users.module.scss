@@ -15,6 +15,12 @@
 
 .header {
   @include flex-between;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s3;
+    flex-direction: column;
+  }
 }
 
 .pageTitle {
@@ -72,6 +78,10 @@
   padding: $s3 $s6;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
 }
 
 .thRight { text-align: right; }
@@ -92,13 +102,20 @@
   &:hover { background-color: rgba($bg-elevated, 0.4); }
 }
 
-.td { padding: $s4 $s6; }
+.td {
+  padding: $s4 $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
+}
 .tdRight { text-align: right; }
 
 .userCell {
   display: flex;
   align-items: center;
   gap: $s3;
+  min-width: 0;
 }
 
 .avatar {
@@ -324,6 +341,10 @@
   justify-content: flex-end;
   gap: $s3;
   padding-top: $s2;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
 }
 
 .cancelBtn { @include btn-ghost; padding: $s2 $s4; }
@@ -487,6 +508,10 @@
   display: flex;
   gap: $s3;
   padding-top: $s2;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
 }
 
 .cancelBtn {
@@ -538,7 +563,14 @@
   margin: 0 0 $s6;
 }
 
-.deleteActions { display: flex; gap: $s3; }
+.deleteActions {
+  display: flex;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
+}
 .deleteCancelBtn {
   flex: 1;
   padding: $s2 + 0.125rem $s4;
