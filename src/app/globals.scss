@@ -33,6 +33,15 @@
   --shell-control-bg: rgba(255, 255, 255, 0.05);
   --shell-control-bg-strong: rgba(255, 255, 255, 0.09);
   --shell-scrollbar: rgba(255, 255, 255, 0.22);
+  --shell-card-bg: #111827;
+  --shell-input-bg: #1f2937;
+  --shell-input-border: #374151;
+  --shell-table-border: rgba(31, 41, 55, 0.5);
+  --shell-table-divider: rgba(255, 255, 255, 0.06);
+  --shell-row-hover: rgba(31, 41, 55, 0.3);
+  --shell-pill-bg: rgba(255, 255, 255, 0.08);
+  --shell-soft-bg: rgba(255, 255, 255, 0.03);
+  --shell-soft-bg-strong: rgba(255, 255, 255, 0.06);
 }
 
 :root[data-theme='light'] {
@@ -65,6 +74,15 @@
   --shell-control-bg: rgba(15, 23, 42, 0.03);
   --shell-control-bg-strong: rgba(15, 23, 42, 0.06);
   --shell-scrollbar: rgba(15, 23, 42, 0.18);
+  --shell-card-bg: #ffffff;
+  --shell-input-bg: #f8fafc;
+  --shell-input-border: rgba(148, 163, 184, 0.45);
+  --shell-table-border: rgba(148, 163, 184, 0.35);
+  --shell-table-divider: rgba(148, 163, 184, 0.28);
+  --shell-row-hover: rgba(15, 23, 42, 0.03);
+  --shell-pill-bg: rgba(15, 23, 42, 0.06);
+  --shell-soft-bg: rgba(15, 23, 42, 0.025);
+  --shell-soft-bg-strong: rgba(15, 23, 42, 0.05);
 }
 
 html, body {

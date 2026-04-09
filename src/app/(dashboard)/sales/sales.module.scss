@@ -3,6 +3,7 @@
 
 .page {
   padding: $s6;
+  color: var(--shell-text-primary);
   @media (max-width: ($md - 1px)) { padding: $s3; }
 }
 
@@ -32,7 +33,7 @@
 }
 
 .pageTitle {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: $fs-xl;
   font-weight: 700;
   margin: 0;
@@ -50,8 +51,8 @@
 .exportBtn {
   @include btn-ghost;
   padding: $s2 $s4;
-  border: 1px solid $border;
-  &:hover { border-color: $text-muted; color: $text-primary; }
+  border: 1px solid var(--shell-border);
+  &:hover { border-color: var(--shell-border-strong); color: var(--shell-text-primary); }
 
   @media (max-width: ($md - 1px)) {
     width: 100%;
@@ -97,7 +98,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--shell-text-muted);
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0.25rem;
@@ -191,7 +192,7 @@
 }
 
 .thead tr {
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid var(--shell-border);
 }
 
 .th {
@@ -406,7 +407,7 @@
 }
 
 .inlineFormTitle {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 $s2;
@@ -474,7 +475,7 @@
 }
 
 .deleteTitle {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 1.125rem;
   font-weight: 700;
   margin: 0 0 $s2;
@@ -505,7 +506,7 @@
   justify-content: center;
   gap: $s3;
   padding: $s4 $s3;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--shell-table-divider);
   flex-wrap: wrap;
 
   @media (max-width: ($md - 1px)) {
@@ -516,17 +517,17 @@
 
 .pageBtn {
   padding: $s2 $s4;
-  background: rgba(255, 255, 255, 0.06);
-  color: #d1d5db;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--shell-control-bg);
+  color: var(--shell-text-secondary);
+  border: 1px solid var(--shell-border);
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
   transition: all 0.15s;
 
   &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.12);
-    color: #fff;
+    background: var(--shell-control-bg-strong);
+    color: var(--shell-text-primary);
   }
 
   &:disabled {
@@ -541,7 +542,7 @@
 }
 
 .pageInfo {
-  color: #9ca3af;
+  color: var(--shell-text-muted);
   font-size: 0.85rem;
 
   @media (max-width: ($md - 1px)) {

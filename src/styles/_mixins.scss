@@ -13,16 +13,17 @@
 }
 
 @mixin card {
-  background-color: $bg-surface;
-  border: 1px solid $border;
+  background-color: var(--shell-card-bg);
+  border: 1px solid var(--shell-border);
   border-radius: $r-lg;
+  box-shadow: var(--shell-shadow-soft);
 }
 
 @mixin input {
   width: 100%;
-  background-color: $bg-elevated;
-  border: 1px solid $border-input;
-  color: $text-primary;
+  background-color: var(--shell-input-bg);
+  border: 1px solid var(--shell-input-border);
+  color: var(--shell-text-primary);
   border-radius: $r-md;
   padding: $s2 $s4;
   font-size: $fs-body;
@@ -30,13 +31,13 @@
   transition: box-shadow 0.15s, border-color 0.15s;
   resize: none;
 
-  &::placeholder { color: $text-subtle; }
-  &:focus { box-shadow: 0 0 0 2px $emerald-hover; border-color: transparent; }
+  &::placeholder { color: var(--shell-text-subtle); }
+  &:focus { box-shadow: 0 0 0 2px var(--shell-focus-ring); border-color: var(--brand-primary); }
 }
 
 @mixin btn-primary {
-  background-color: $emerald;
-  color: $text-primary;
+  background-color: var(--brand-primary);
+  color: var(--brand-on-primary);
   border: none;
   border-radius: $r-md;
   padding: $s2 $s4;
@@ -45,7 +46,7 @@
   cursor: pointer;
   transition: background-color 0.15s;
 
-  &:hover:not(:disabled) { background-color: $emerald-hover; }
+  &:hover:not(:disabled) { background-color: var(--brand-primary-hover); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
@@ -66,18 +67,18 @@
 @mixin btn-ghost {
   background: none;
   border: none;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: $fs-body;
   cursor: pointer;
   transition: color 0.15s;
 
-  &:hover { color: $text-primary; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 @mixin modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: var(--shell-overlay);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -91,7 +92,6 @@
   border-radius: $r-xl;
   padding: $s6;
   width: 100%;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.5);
 }
 
 @mixin truncate {
