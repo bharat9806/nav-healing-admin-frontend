@@ -15,6 +15,7 @@ type Props = {
   placeholder?: string;
   className?: string;
   align?: 'left' | 'right';
+  direction?: 'up' | 'down';
   minWidth?: string;
 };
 
@@ -25,6 +26,7 @@ export function CustomSelect({
   placeholder = 'Select...',
   className = '',
   align = 'right',
+  direction = 'down',
   minWidth,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -71,7 +73,7 @@ export function CustomSelect({
 
       {open && (
         <ul
-          className={`${s.list} ${align === 'left' ? s.listLeft : s.listRight}`}
+          className={`${s.list} ${align === 'left' ? s.listLeft : s.listRight} ${direction === 'up' ? s.listUp : s.listDown}`}
           style={minWidth ? { minWidth } : undefined}
           role="listbox"
           aria-label="Options"

@@ -616,6 +616,7 @@ export default function ProductsPage() {
                 fetchProducts(1, lowStockOnly, next);
               }}
               align="right"
+              direction="up"
             />
           </div>
         </div>
