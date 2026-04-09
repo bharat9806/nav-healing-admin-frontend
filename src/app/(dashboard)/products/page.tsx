@@ -162,6 +162,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -193,14 +194,14 @@ export default function ProductsPage() {
     setPage(1);
   };
 
-  const fetchProducts = (p = page, nextLowStockOnly = lowStockOnly) => {
+  const fetchProducts = (p = page, nextLowStockOnly = lowStockOnly, nextPageSize = pageSize) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (catFilter) params.set('category', catFilter);
     if (nextLowStockOnly) params.set('lowStock', 'true');
     params.set('page', String(p));
-    params.set('limit', '20');
+    params.set('limit', String(nextPageSize));
     params.set('sortBy', sortField);
     params.set('order', sortOrder);
     api.get(`/products?${params.toString()}`)
@@ -220,7 +221,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts(page);
-  }, [catFilter, page, sortField, sortOrder]);
+  }, [catFilter, page, pageSize, sortField, sortOrder]);
 
   const goToPage = (p: number) => {
     setPage(p);
@@ -598,19 +599,31 @@ export default function ProductsPage() {
             </tbody>
           </table>
 
-          {totalPages > 1 && (
-            <div className={s.pagination}>
-              <button onClick={() => goToPage(page - 1)} disabled={page <= 1} className={s.pageBtn}>
-                Prev
-              </button>
-              <span className={s.pageInfo}>
-                Page {page} of {totalPages} ({total} products)
-              </span>
-              <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className={s.pageBtn}>
-                Next
-              </button>
-            </div>
-          )}
+          <div className={s.pagination}>
+            <button onClick={() => goToPage(page - 1)} disabled={page <= 1} className={s.pageBtn}>
+              Prev
+            </button>
+            <span className={s.pageInfo}>
+              Page {page} of {totalPages} ({total} products)
+            </span>
+            <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className={s.pageBtn}>
+              Next
+            </button>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                setPageSize(next);
+                setPage(1);
+                fetchProducts(1, lowStockOnly, next);
+              }}
+              className={s.pageSizeSelect}
+            >
+              {[10, 20, 30, 50].map((n) => (
+                <option key={n} value={n}>{n} / page</option>
+              ))}
+            </select>
+          </div>
         </div>
       ))}
 
