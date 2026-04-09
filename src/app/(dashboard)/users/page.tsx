@@ -214,6 +214,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [error, setError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -361,6 +363,23 @@ export default function UsersPage() {
       u.username.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase()),
   );
+  const totalFiltered = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
+  const paginatedUsers = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, pageSize]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const goToPage = (nextPage: number) => {
+    setPage(nextPage);
+  };
 
   return (
     <div className={s.page}>
@@ -692,7 +711,7 @@ export default function UsersPage() {
                     <td colSpan={6}>No users found</td>
                   </tr>
                 ) : (
-                  filtered.map((user) => (
+                  paginatedUsers.map((user) => (
                     <tr key={user.id} className={s.tr}>
                       <td className={s.td}>
                         <div className={s.userCell}>
@@ -759,6 +778,36 @@ export default function UsersPage() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className={s.pagination}>
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 1}
+              className={s.pageBtn}
+            >
+              Prev
+            </button>
+            <span className={s.pageInfo}>
+              Page {page} of {totalPages} ({totalFiltered} users)
+            </span>
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= totalPages}
+              className={s.pageBtn}
+            >
+              Next
+            </button>
+            <CustomSelect
+              options={[10, 20, 30, 50].map((n) => ({ label: `${n} / page`, value: n }))}
+              value={pageSize}
+              onChange={(val) => {
+                const next = Number(val);
+                setPageSize(next);
+                setPage(1);
+              }}
+              align="right"
+              direction="up"
+            />
           </div>
         </div>
       )}

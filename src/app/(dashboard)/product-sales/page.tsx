@@ -125,6 +125,7 @@ export default function ProductSalesPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -160,7 +161,7 @@ export default function ProductSalesPage() {
     setPage(1);
   };
 
-  const fetchData = (nextPage = page) => {
+  const fetchData = (nextPage = page, nextPageSize = pageSize) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set('search', search);
@@ -168,7 +169,7 @@ export default function ProductSalesPage() {
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
     params.set('page', String(nextPage));
-    params.set('limit', '20');
+    params.set('limit', String(nextPageSize));
     params.set('sortBy', sortField);
     params.set('order', sortOrder);
 
@@ -193,7 +194,7 @@ export default function ProductSalesPage() {
 
   useEffect(() => {
     fetchData(page);
-  }, [productFilter, dateFrom, dateTo, page, sortField, sortOrder]);
+  }, [productFilter, dateFrom, dateTo, page, pageSize, sortField, sortOrder]);
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
@@ -418,13 +419,23 @@ export default function ProductSalesPage() {
             </tbody>
           </table>
 
-          {totalPages > 1 && (
-            <div className={s.pagination}>
-              <button onClick={() => goToPage(page - 1)} disabled={page <= 1} className={s.pageBtn}>Prev</button>
-              <span className={s.pageInfo}>Page {page} of {totalPages} ({total} entries)</span>
-              <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className={s.pageBtn}>Next</button>
-            </div>
-          )}
+          <div className={s.pagination}>
+            <button onClick={() => goToPage(page - 1)} disabled={page <= 1} className={s.pageBtn}>Prev</button>
+            <span className={s.pageInfo}>Page {page} of {totalPages} ({total} entries)</span>
+            <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className={s.pageBtn}>Next</button>
+            <CustomSelect
+              options={[10, 20, 30, 50].map((n) => ({ label: `${n} / page`, value: n }))}
+              value={pageSize}
+              onChange={(val) => {
+                const next = Number(val);
+                setPageSize(next);
+                setPage(1);
+                fetchData(1, next);
+              }}
+              align="right"
+              direction="up"
+            />
+          </div>
         </div>
       ))}
 

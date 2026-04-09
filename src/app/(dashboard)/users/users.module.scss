@@ -209,6 +209,41 @@
   color: $text-subtle;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s3;
+  padding: $s4 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pageBtn {
+  padding: $s2 $s4;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d1d5db;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
+.pageInfo {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
 // Inline form
 .inlineFormWrap {
   @include card;

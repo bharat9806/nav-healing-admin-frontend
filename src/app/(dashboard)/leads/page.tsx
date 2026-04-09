@@ -73,6 +73,7 @@ export default function LeadsPage() {
   const [reminderFilter, setReminderFilter] = useState('');
   const [showDateFilters, setShowDateFilters] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -183,7 +184,7 @@ export default function LeadsPage() {
     setPage(1);
   };
 
-  const fetchData = (p = page) => {
+  const fetchData = (p = page, nextPageSize = pageSize) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (dateFrom) params.set('dateFrom', dateFrom);
@@ -196,7 +197,7 @@ export default function LeadsPage() {
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     params.set('page', String(p));
-    params.set('limit', '20');
+    params.set('limit', String(nextPageSize));
     params.set('sortBy', sortField);
     params.set('order', sortOrder);
     const query = `?${params.toString()}`;
@@ -220,7 +221,7 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchData(page);
-  }, [statusFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, sortField, sortOrder]);
+  }, [statusFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, pageSize, sortField, sortOrder]);
 
   // Search and status filtering is now done server-side
   const filtered = leads;
@@ -563,6 +564,18 @@ export default function LeadsPage() {
             {search && (
               <button type="button" className={s.searchClear} onClick={() => { setSearch(''); if (page === 1) fetchData(1); else setPage(1); }}>✕</button>
             )}
+            <CustomSelect
+              options={[10, 20, 30, 50].map((n) => ({ label: `${n} / page`, value: n }))}
+              value={pageSize}
+              onChange={(val) => {
+                const next = Number(val);
+                setPageSize(next);
+                setPage(1);
+                fetchData(1, next);
+              }}
+              align="right"
+              direction="up"
+            />
           </div>
           <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
           <button
@@ -838,6 +851,18 @@ export default function LeadsPage() {
             >
               Next →
             </button>
+            <CustomSelect
+              options={[10, 20, 30, 50].map((n) => ({ label: `${n} / page`, value: n }))}
+              value={pageSize}
+              onChange={(val) => {
+                const next = Number(val);
+                setPageSize(next);
+                setPage(1);
+                fetchData(1, next);
+              }}
+              align="right"
+              direction="up"
+            />
           </div>
         </div>
       ))}
