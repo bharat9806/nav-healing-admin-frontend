@@ -4,6 +4,11 @@
 .wrap {
   position: relative;
   display: inline-block;
+
+  @media (max-width: 767px) {
+    display: block;
+    width: 100%;
+  }
 }
 
 // ── Trigger Button ────────────────────────────────────────────────
@@ -23,6 +28,10 @@
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
   outline: none;
+
+  @media (max-width: 767px) {
+    width: 100%;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.09);
@@ -83,6 +92,10 @@
   margin: 0;
   animation: dropIn 0.14s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top center;
+
+  @media (max-width: 767px) {
+    width: 100%;
+  }
 }
 
 .listDown {

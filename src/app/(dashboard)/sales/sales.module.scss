@@ -402,6 +402,10 @@
 // ── Combo (searchable product select) ────────────────────────────
 .comboWrap {
   position: relative;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .comboList {
@@ -419,6 +423,10 @@
   padding: $s1 0;
   margin: 0;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .comboItem {

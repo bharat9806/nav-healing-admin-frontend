@@ -788,6 +788,10 @@
 .itemSearchWrap {
   position: relative;
   flex: 1;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .itemSearchInput {
@@ -807,6 +811,10 @@
   max-height: 12rem;
   overflow-y: auto;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .productOption {

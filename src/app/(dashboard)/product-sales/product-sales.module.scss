@@ -175,6 +175,10 @@
 /* Searchable product dropdown */
 .comboWrap {
   position: relative;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .comboClear {
@@ -205,8 +209,12 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  max-height: 220px;
+  max-height: min(20rem, 45vh);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
   background: $bg-surface;
   border: 1px solid $border;
   border-radius: $r-md;
@@ -215,6 +223,28 @@
   padding: 4px;
   list-style: none;
   margin: 0;
+
+  &::-webkit-scrollbar {
+    width: 0.55rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    max-height: min(18rem, 50vh);
+  }
 }
 
 .comboItem {
