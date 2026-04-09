@@ -678,6 +678,79 @@ export default function UsersPage() {
 
       {!showInlineForm && (
         <div className={s.tableWrap}>
+          <div className={s.mobileList}>
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className={s.mobileSkeletonCard} />
+              ))
+            ) : filtered.length === 0 ? (
+              <div className={s.emptyBox}>
+                <div className={s.emptyText}>No users found</div>
+              </div>
+            ) : (
+              paginatedUsers.map((user) => (
+                <article key={`mobile-${user.id}`} className={s.mobileCard}>
+                  <div className={s.mobileCardHeader}>
+                    <div className={s.userCell}>
+                      <div className={s.avatar}>
+                        <span>{user.username.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <div>
+                        <p className={s.username}>{user.username}</p>
+                        <p className={s.email}>{user.email}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleToggle(user.id)}
+                      className={`${s.statusBtn} ${user.isActive ? s.statusActive : s.statusInactive}`}
+                    >
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </button>
+                  </div>
+
+                  <div className={s.mobileRoleRow}>
+                    <span className={`${s.rolePill} ${roleCls(user.role)}`}>
+                      {user.role.replace(/_/g, ' ')}
+                    </span>
+                    {user.isDoctor && <span className={s.doctorBadge}>Doctor</span>}
+                  </div>
+
+                  <div className={s.mobileMetaGrid}>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>User Code</span>
+                      <span className={s.email}>{user.userCode || '-'}</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Joined</span>
+                      <span className={s.joinedDate}>
+                        {new Date(user.createdAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={s.mobileActions}>
+                    <button onClick={() => openEdit(user)} className={s.mobileEditBtn}>
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeletingId(user.id);
+                        setShowDeleteModal(true);
+                      }}
+                      className={s.mobileDeleteBtn}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+
           <div className={s.tableScroll}>
             <table className={s.table}>
               <thead className={s.thead}>

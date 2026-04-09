@@ -23,6 +23,15 @@
   }
 }
 
+.addBtn {
+  @include btn-primary;
+  padding: $s2 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
+}
+
 .pageTitle {
   color: $text-primary;
   font-size: 1.5rem;
@@ -48,7 +57,7 @@
 // Search box
 .searchBox {
   @include card;
-  padding: $s4;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
 }
 
 .searchInput { @include input; }
@@ -58,9 +67,21 @@
   @include card;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+
+  @media (max-width: ($md - 1px)) {
+    overflow: visible;
+    background: transparent;
+    border: none;
+  }
 }
 
-.tableScroll { overflow-x: auto; }
+.tableScroll {
+  overflow-x: auto;
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
+}
 
 .table {
   width: 100%;
@@ -227,6 +248,91 @@
   &:hover { color: $red-light; background-color: rgba($red, 0.1); }
 }
 
+.mobileList {
+  display: none;
+
+  @media (max-width: ($md - 1px)) {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.75rem, 2.6vw, 1rem);
+  }
+}
+
+.mobileCard {
+  @include card;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.9rem, 3.5vw, 1.15rem);
+}
+
+.mobileSkeletonCard {
+  height: 10rem;
+  border-radius: $r-lg;
+  background-color: $bg-elevated;
+  @include animate-pulse;
+}
+
+.mobileCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.7rem, 2.8vw, 0.9rem);
+}
+
+.mobileRoleRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s2;
+}
+
+.mobileMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mobileMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  min-width: 0;
+}
+
+.mobileMetaLabel {
+  color: $text-subtle;
+  font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobileActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+}
+
+.mobileEditBtn {
+  color: $text-primary;
+  font-size: 0.875rem;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  padding: $s2 + 0.125rem $s4;
+  border-radius: $r-md;
+  border: 1px solid $border;
+  background: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mobileDeleteBtn {
+  @include btn-danger;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  font-weight: 600;
+}
+
 .emptyRow td {
   padding: $s6;
   text-align: center;
@@ -242,7 +348,10 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-wrap: wrap;
 
-  @media (max-width: ($md - 1px)) { gap: $s2; }
+  @media (max-width: ($md - 1px)) {
+    gap: $s2;
+    justify-content: stretch;
+  }
 }
 
 .pageBtn {
@@ -264,11 +373,22 @@
     opacity: 0.35;
     cursor: not-allowed;
   }
+
+  @media (max-width: ($md - 1px)) {
+    flex: 1 1 calc(50% - #{$s2});
+    min-height: clamp(2.75rem, 8vw, 3rem);
+  }
 }
 
 .pageInfo {
   color: #9ca3af;
   font-size: 0.85rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
 }
 
 // Inline form
@@ -276,6 +396,10 @@
   @include card;
   padding: $s6;
   margin-bottom: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: clamp(0.9rem, 3.5vw, 1.1rem);
+  }
 }
 
 .inlineForm {
@@ -407,7 +531,6 @@
   font-size: 0.875rem;
   margin-bottom: $s2;
 }
-.addBtn { @include btn-primary; padding: $s2 $s4; }
 
 .checkboxRow {
   display: flex;

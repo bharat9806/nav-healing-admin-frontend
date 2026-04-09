@@ -2,8 +2,8 @@
 
 .header {
   height: 4rem;
-  background-color: $bg-surface;
-  border-bottom: 1px solid $border;
+  background-color: var(--shell-surface);
+  border-bottom: 1px solid var(--shell-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -29,15 +29,15 @@
   justify-content: center;
   background: none;
   border: none;
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   cursor: pointer;
   padding: $s1;
   border-radius: $r-sm;
   transition: color 0.15s, background-color 0.15s;
 
   &:hover {
-    color: $text-primary;
-    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--shell-text-primary);
+    background-color: var(--shell-hover);
   }
 
   @media (max-width: ($lg - 1px)) {
@@ -46,7 +46,7 @@
 }
 
 .title {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-weight: 600;
   font-size: $fs-lg;
   margin: 0;
@@ -67,6 +67,32 @@
   min-width: 0;
 }
 
+.themeToggle {
+  width: clamp(2.35rem, 2.15rem + 0.8vw, 2.75rem);
+  height: clamp(2.35rem, 2.15rem + 0.8vw, 2.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-control-bg);
+  color: var(--shell-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: var(--shell-hover);
+    color: var(--shell-text-primary);
+    border-color: var(--shell-border-strong);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--shell-focus-ring);
+  }
+}
+
 .userInfo {
   text-align: right;
 
@@ -76,7 +102,7 @@
 }
 
 .username {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: $fs-body;
   font-weight: 500;
   margin: 0;
@@ -108,13 +134,13 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 9999px;
-  background-color: $emerald;
+  background-color: var(--brand-primary);
   display: flex;
   align-items: center;
   justify-content: center;
 
   span {
-    color: $text-primary;
+    color: var(--brand-on-primary);
     font-size: $fs-body;
     font-weight: 700;
   }

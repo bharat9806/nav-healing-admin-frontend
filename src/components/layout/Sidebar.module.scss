@@ -3,8 +3,8 @@
 
 .sidebar {
   width: 16rem;
-  background-color: $bg-surface;
-  border-right: 1px solid $border;
+  background-color: var(--shell-surface);
+  border-right: 1px solid var(--shell-border);
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -19,24 +19,24 @@
   align-items: center;
   gap: $s3;
   padding: $s5 $s6;
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid var(--shell-border);
 }
 
 .brandIcon {
   width: 2rem;
   height: 2rem;
   border-radius: $r-sm;
-  background-color: $emerald;
+  background-color: var(--brand-primary);
   @include flex-center;
   span {
-    color: $text-primary;
+    color: var(--brand-on-primary);
     font-size: $fs-body;
     font-weight: 700;
   }
 }
 
 .brandName {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-weight: 700;
   font-size: $fs-lg;
   min-width: 0;
@@ -60,30 +60,30 @@
   font-size: $fs-body;
   font-weight: 500;
   transition: color 0.15s, background-color 0.15s;
-  color: $text-muted;
+  color: var(--shell-text-muted);
 
   &:hover {
-    color: $text-primary;
-    background-color: $bg-elevated;
+    color: var(--shell-text-primary);
+    background-color: var(--shell-elevated);
   }
 
   .icon { font-size: $fs-md; }
 }
 
 .navItemActive {
-  background-color: $emerald;
-  color: $text-primary;
+  background-color: var(--brand-primary);
+  color: var(--brand-on-primary);
 
   &:hover {
-    background-color: $emerald;
-    color: $text-primary;
+    background-color: var(--brand-primary);
+    color: var(--brand-on-primary);
   }
 }
 
 .navSkeleton {
   height: 2.25rem;
   border-radius: $r-md;
-  background: $bg-elevated;
+  background: var(--shell-elevated);
   opacity: 0.4;
   animation: shimmer 1.2s ease-in-out infinite alternate;
 }
@@ -95,7 +95,7 @@
 
 .footer {
   padding: $s4 $s3;
-  border-top: 1px solid $border;
+  border-top: 1px solid var(--shell-border);
 }
 
 .logoutBtn {
@@ -109,7 +109,7 @@
   font-weight: 500;
   background: none;
   border: none;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   cursor: pointer;
   transition: color 0.15s, background-color 0.15s;
 

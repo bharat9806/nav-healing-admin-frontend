@@ -18,6 +18,18 @@
   }
 }
 
+.headerActions {
+  display: flex;
+  gap: $s2;
+  flex-wrap: wrap;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .pageTitle {
   color: $text-primary;
   font-size: 1.25rem;
@@ -28,6 +40,10 @@
 .addBtn {
   @include btn-primary;
   padding: $s2 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .exportBtn {
@@ -35,6 +51,12 @@
   padding: $s2 $s4;
   border: 1px solid $border;
   &:hover { border-color: $text-muted; color: $text-primary; }
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    min-height: clamp(2.75rem, 8vw, 3rem);
+    text-align: center;
+  }
 }
 
 .reminderCards {
@@ -81,7 +103,7 @@
 // Filter panel
 .filterPanel {
   @include card;
-  padding: $s4;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
   margin-bottom: $s6;
   display: flex;
   flex-direction: column;
@@ -113,6 +135,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    justify-content: center;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
@@ -234,6 +261,11 @@
   @include btn-primary;
   padding: $s2 $s4;
   white-space: nowrap;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    min-height: clamp(2.75rem, 8vw, 3rem);
+  }
 }
 
 .filterDivider {
@@ -341,6 +373,12 @@
   @include card;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+
+  @media (max-width: ($md - 1px)) {
+    overflow: visible;
+    background: transparent;
+    border: none;
+  }
 }
 
 .tableToolbar {
@@ -350,7 +388,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 
   @media (max-width: ($md - 1px)) {
-    padding: $s3;
+    display: none;
   }
 }
 
@@ -526,6 +564,10 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 50rem;
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
 }
 
 .thead tr { border-bottom: 1px solid $border; }
@@ -655,11 +697,112 @@
 .editBtn   { @include btn-ghost; margin-right: $s3; &:hover { color: $text-primary; } }
 .deleteBtn { @include btn-ghost; &:hover { color: $red-light; } }
 
+.mobileList {
+  display: none;
+
+  @media (max-width: ($md - 1px)) {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.75rem, 2.6vw, 1rem);
+  }
+}
+
+.mobileCard {
+  @include card;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.9rem, 3.5vw, 1.15rem);
+}
+
+.mobileCardTop {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.mobileCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.mobileBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $s2;
+}
+
+.mobileDoctor {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(#8b5cf6, 0.14);
+  color: #c4b5fd;
+  font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
+}
+
+.mobileMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mobileMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  min-width: 0;
+}
+
+.mobileMetaLabel {
+  color: $text-subtle;
+  font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobileNotes {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+}
+
+.mobileActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+}
+
+.mobileEditBtn {
+  @include btn-ghost;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  border: 1px solid $border;
+  color: $text-primary;
+  font-weight: 600;
+}
+
+.mobileDeleteBtn {
+  @include btn-danger;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  font-weight: 600;
+}
+
 // Inline form
 .inlineFormWrap {
   @include card;
   padding: $s6;
   margin-bottom: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: clamp(0.9rem, 3.5vw, 1.1rem);
+  }
 }
 
 .inlineForm { display: flex; flex-direction: column; gap: $s4; }
@@ -918,7 +1061,10 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-wrap: wrap;
 
-  @media (max-width: ($md - 1px)) { gap: $s2; }
+  @media (max-width: ($md - 1px)) {
+    gap: $s2;
+    justify-content: stretch;
+  }
 }
 
 .pageBtn {
@@ -940,9 +1086,20 @@
     opacity: 0.35;
     cursor: not-allowed;
   }
+
+  @media (max-width: ($md - 1px)) {
+    flex: 1 1 calc(50% - #{$s2});
+    min-height: clamp(2.75rem, 8vw, 3rem);
+  }
 }
 
 .pageInfo {
   color: #9ca3af;
   font-size: 0.85rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
 }

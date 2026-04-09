@@ -407,16 +407,16 @@
   @media (max-width: ($md - 1px)) {
     display: flex;
     flex-direction: column;
-    gap: $s3;
+    gap: clamp(0.75rem, 2.6vw, 1rem);
   }
 }
 
 .mobileCard {
   @include card;
-  padding: $s4;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
   display: flex;
   flex-direction: column;
-  gap: $s4;
+  gap: clamp(0.9rem, 3.5vw, 1.15rem);
 }
 
 .mobileCardTop {
@@ -428,7 +428,11 @@
 .mobileMetaGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $s3;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mobileMetaItem {
@@ -440,7 +444,7 @@
 
 .mobileMetaLabel {
   color: $text-subtle;
-  font-size: $fs-xs;
+  font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -459,19 +463,21 @@
 .mobileActions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: $s3;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
 }
 
 .mobileEditBtn {
   @include btn-ghost;
-  min-height: 2.75rem;
+  min-height: clamp(2.75rem, 8vw, 3rem);
   border: 1px solid $border;
   color: $text-primary;
+  font-weight: 600;
 }
 
 .mobileDeleteBtn {
   @include btn-danger;
-  min-height: 2.75rem;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  font-weight: 600;
 }
 
 // Inline form
@@ -481,7 +487,7 @@
   margin-bottom: $s6;
 
   @media (max-width: ($md - 1px)) {
-    padding: $s4;
+    padding: clamp(0.9rem, 3.5vw, 1.1rem);
   }
 }
 

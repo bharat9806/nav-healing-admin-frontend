@@ -530,7 +530,7 @@ export default function LeadsPage() {
     <div className={s.page}>
       <div className={s.header}>
         <h1 className={s.pageTitle}>Leads</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className={s.headerActions}>
           {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportLeads) && (
             <button onClick={handleExport} className={s.exportBtn}>↓ Export Excel</button>
           )}
@@ -725,6 +725,83 @@ export default function LeadsPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          <div className={s.mobileList}>
+            {filtered.map((l) => {
+              const reminderState = getReminderState(l);
+              return (
+                <article key={`mobile-${l.id}`} className={`${s.mobileCard} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
+                  <div className={s.mobileCardTop}>
+                    <div className={s.mobileCardHeader}>
+                      <div>
+                        <p className={s.leadName}>{l.name}</p>
+                        {l.description && <p className={s.leadDesc}>{l.description}</p>}
+                      </div>
+                      <select
+                        value={l.status}
+                        onChange={(e) => handleStatusChange(l.id, e.target.value as LeadStatus)}
+                        className={`${s.statusSelect} ${statusCls(l.status)}`}
+                      >
+                        {statuses.map((st) => <option key={st} value={st} style={{ backgroundColor: '#111827', color: '#fff' }}>{STATUS_LABELS[st]}</option>)}
+                      </select>
+                    </div>
+
+                    <div className={s.mobileBadgeRow}>
+                      {reminderState !== 'none' && (
+                        <span className={`${s.reminderBadge} ${reminderState === 'overdue' ? s.reminderBadgeOverdue : reminderState === 'today' ? s.reminderBadgeToday : s.reminderBadgeUpcoming}`}>
+                          {reminderState === 'overdue' ? 'Overdue' : reminderState === 'today' ? 'Today' : reminderState === 'upcoming' ? 'Soon' : 'Scheduled'}
+                        </span>
+                      )}
+                      {l.assignedDoctor && <span className={s.mobileDoctor}>Dr. {l.assignedDoctor.username}</span>}
+                    </div>
+                  </div>
+
+                  <div className={s.mobileMetaGrid}>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Phone</span>
+                      <span className={s.cellText}>{l.phone || '-'}</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Email</span>
+                      <span className={s.cellText}>{l.email || '-'}</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Products</span>
+                      <span className={s.cellText}>{l.items?.length || 0} items</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Follow-Up</span>
+                      <span className={s.cellText}>{formatFollowUp(l)}</span>
+                    </div>
+                  </div>
+
+                  <div className={s.mobileMetaGrid}>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Created</span>
+                      <span className={s.cellText}>{formatDate(l.createdAt)}</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Delivered</span>
+                      <span className={s.cellText}>{formatDate(l.deliveredAt)}</span>
+                    </div>
+                  </div>
+
+                  <div className={s.mobileNotes}>
+                    <span className={s.mobileMetaLabel}>Diseases / Tracking</span>
+                    <span className={s.cellText}>
+                      {l.diseases || '-'}
+                      {l.trackingNumber ? ` • ${l.trackingNumber}` : ''}
+                    </span>
+                  </div>
+
+                  <div className={s.mobileActions}>
+                    <button onClick={() => openEdit(l)} className={s.mobileEditBtn}>Edit</button>
+                    <button onClick={() => setDeleteTarget(l)} className={s.mobileDeleteBtn}>Delete</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
           <div className={s.tableToolbar}>
             <div ref={colMenuRef} className={s.colMenuWrap}>
               <button

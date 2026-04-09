@@ -2,8 +2,11 @@
 
 .shell {
   min-height: 100vh;
-  background-color: $bg-base;
+  background:
+    radial-gradient(circle at top right, rgba(5, 150, 105, 0.08), transparent 28%),
+    var(--shell-base);
   display: flex;
+  transition: background-color 0.2s ease;
 }
 
 // ── Sidebar wrapper ───────────────────────────────────────────────
@@ -42,7 +45,7 @@
     position: fixed;
     inset: 0;
     z-index: 899;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--shell-overlay);
     backdrop-filter: blur(2px);
     animation: fadeIn 0.2s ease;
   }
@@ -69,4 +72,5 @@
   flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  background: transparent;
 }

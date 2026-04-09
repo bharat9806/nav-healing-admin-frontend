@@ -2,6 +2,71 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+:root {
+  color-scheme: dark;
+  --app-bg: #030712;
+  --app-text: #ffffff;
+  --app-text-muted: #9ca3af;
+  --app-link: inherit;
+
+  --shell-base: #030712;
+  --shell-surface: #111827;
+  --shell-elevated: #1f2937;
+  --shell-muted: #374151;
+  --shell-border: #1f2937;
+  --shell-border-strong: rgba(255, 255, 255, 0.16);
+  --shell-text-primary: #ffffff;
+  --shell-text-secondary: #d1d5db;
+  --shell-text-muted: #9ca3af;
+  --shell-text-subtle: #6b7280;
+  --shell-hover: rgba(255, 255, 255, 0.07);
+  --shell-overlay: rgba(0, 0, 0, 0.6);
+  --shell-shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.35);
+  --shell-focus-ring: rgba(5, 150, 105, 0.3);
+
+  --brand-primary: #059669;
+  --brand-primary-hover: #10b981;
+  --brand-primary-soft: rgba(5, 150, 105, 0.12);
+  --brand-primary-soft-strong: rgba(5, 150, 105, 0.18);
+  --brand-on-primary: #ffffff;
+
+  --shell-control-bg: rgba(255, 255, 255, 0.05);
+  --shell-control-bg-strong: rgba(255, 255, 255, 0.09);
+  --shell-scrollbar: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --app-bg: #f3f7f6;
+  --app-text: #0f172a;
+  --app-text-muted: #475569;
+
+  --shell-base: #eef4f1;
+  --shell-surface: #ffffff;
+  --shell-elevated: #f8fafc;
+  --shell-muted: #e2e8f0;
+  --shell-border: rgba(15, 23, 42, 0.1);
+  --shell-border-strong: rgba(15, 23, 42, 0.18);
+  --shell-text-primary: #0f172a;
+  --shell-text-secondary: #334155;
+  --shell-text-muted: #64748b;
+  --shell-text-subtle: #94a3b8;
+  --shell-hover: rgba(15, 23, 42, 0.05);
+  --shell-overlay: rgba(15, 23, 42, 0.28);
+  --shell-shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.08);
+  --shell-focus-ring: rgba(5, 150, 105, 0.22);
+
+  --brand-primary: #059669;
+  --brand-primary-hover: #047857;
+  --brand-primary-soft: rgba(5, 150, 105, 0.1);
+  --brand-primary-soft-strong: rgba(5, 150, 105, 0.16);
+  --brand-on-primary: #ffffff;
+
+  --shell-control-bg: rgba(15, 23, 42, 0.03);
+  --shell-control-bg-strong: rgba(15, 23, 42, 0.06);
+  --shell-scrollbar: rgba(15, 23, 42, 0.18);
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -10,20 +75,24 @@ html, body {
 }
 
 body {
-  background-color: $bg-base;
-  color: $text-primary;
+  background-color: var(--app-bg);
+  color: var(--app-text);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-a { color: inherit; text-decoration: none; }
+a { color: var(--app-link); text-decoration: none; }
 button { font-family: inherit; }
 input, select, textarea { font-family: inherit; }
 img, svg, video, canvas { max-width: 100%; }
 
-// Date input color fix for dark theme
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
+  filter: var(--date-picker-filter, invert(1));
+}
+
+:root[data-theme='light'] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: none;
 }

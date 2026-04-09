@@ -350,7 +350,7 @@ export default function SalesPage() {
     <div className={s.page}>
       <div className={s.header}>
         <h1 className={s.pageTitle}>Sales</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className={s.headerActions}>
           {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportSales) && (
             <button onClick={handleExport} className={s.exportBtn}>Export Excel</button>
           )}
@@ -555,6 +555,58 @@ export default function SalesPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          <div className={s.mobileList}>
+            {sales.map((sale) => (
+              <article key={`mobile-${sale.id}`} className={s.mobileCard}>
+                <div className={s.mobileCardTop}>
+                  <div className={s.mobileCardHeader}>
+                    <div>
+                      <p className={s.patientName}>{sale.patientName}</p>
+                      <p className={s.noteText}>{sale.date.slice(0, 10)}</p>
+                    </div>
+                    <span className={statusClass(sale.status)}>{sale.status}</span>
+                  </div>
+
+                  <div className={s.mobileAmountRow}>
+                    <span className={s.amountText}>{currency(sale.amount)}</span>
+                    <span className={s.pendingText}>Pending {currency(sale.pendingAmount)}</span>
+                  </div>
+                </div>
+
+                <div className={s.mobileMetaGrid}>
+                  <div className={s.mobileMetaItem}>
+                    <span className={s.mobileMetaLabel}>Payment</span>
+                    <span className={s.cellText}>{sale.paymentMode}</span>
+                  </div>
+                  <div className={s.mobileMetaItem}>
+                    <span className={s.mobileMetaLabel}>Product</span>
+                    <span className={s.cellText}>{sale.product?.name || 'No product'}</span>
+                  </div>
+                </div>
+
+                {sale.product && (
+                  <div className={s.mobileProductBlock}>
+                    <p className={s.productName}>{sale.product.name}</p>
+                    <p className={s.productSub}>
+                      {sale.product.sku}
+                      {sale.therapyPrice ? ` • Therapy: ${currency(sale.therapyPrice)}` : ''}
+                    </p>
+                  </div>
+                )}
+
+                <div className={s.mobileNotes}>
+                  <span className={s.mobileMetaLabel}>Notes</span>
+                  <span className={s.cellText}>{sale.notes || '-'}</span>
+                </div>
+
+                <div className={s.mobileActions}>
+                  <button onClick={() => openEdit(sale)} className={s.mobileEditBtn}>Edit</button>
+                  <button onClick={() => setDeleteTarget(sale)} className={s.mobileDeleteBtn}>Delete</button>
+                </div>
+              </article>
+            ))}
+          </div>
+
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>

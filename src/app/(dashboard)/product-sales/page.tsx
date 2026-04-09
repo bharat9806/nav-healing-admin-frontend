@@ -288,7 +288,7 @@ export default function ProductSalesPage() {
     <div className={s.page}>
       <div className={s.header}>
         <h1 className={s.pageTitle}>Product Sales</h1>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className={s.headerActions}>
           {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportProductSales) && (
             <button onClick={handleExport} className={s.exportBtn}>Export Excel</button>
           )}
@@ -388,6 +388,49 @@ export default function ProductSalesPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          <div className={s.mobileList}>
+            {items.map((item) => (
+              <article key={`mobile-${item.id}`} className={s.mobileCard}>
+                <div className={s.mobileCardTop}>
+                  <div className={s.mobileCardHeader}>
+                    <div>
+                      <p className={s.productName}>{item.product?.name || '-'}</p>
+                      <p className={s.productSub}>
+                        {new Date(item.date).toLocaleDateString('en-GB')}
+                        {item.product?.sku ? ` • ${item.product.sku}` : ''}
+                      </p>
+                    </div>
+                    <span className={s.quantityBadge}>{item.quantity} sold</span>
+                  </div>
+                  {item.product?.category && (
+                    <span className={s.mobileCategory}>{item.product.category}</span>
+                  )}
+                </div>
+
+                <div className={s.mobileMetaGrid}>
+                  <div className={s.mobileMetaItem}>
+                    <span className={s.mobileMetaLabel}>Stock Left</span>
+                    <span className={s.cellText}>{item.product?.currentStock ?? '-'}</span>
+                  </div>
+                  <div className={s.mobileMetaItem}>
+                    <span className={s.mobileMetaLabel}>Created</span>
+                    <span className={s.cellText}>{new Date(item.createdAt).toLocaleDateString('en-GB')}</span>
+                  </div>
+                </div>
+
+                <div className={s.mobileNotes}>
+                  <span className={s.mobileMetaLabel}>Notes</span>
+                  <span className={s.cellText}>{item.notes || '-'}</span>
+                </div>
+
+                <div className={s.mobileActions}>
+                  <button onClick={() => openEdit(item)} className={s.mobileEditBtn}>Edit</button>
+                  <button onClick={() => setDeleteTarget(item)} className={s.mobileDeleteBtn}>Delete</button>
+                </div>
+              </article>
+            ))}
+          </div>
+
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>

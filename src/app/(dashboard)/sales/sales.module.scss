@@ -11,6 +11,24 @@
   margin-bottom: $s4;
   flex-wrap: wrap;
   gap: $s2;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    gap: $s3;
+    flex-direction: column;
+  }
+}
+
+.headerActions {
+  display: flex;
+  gap: $s2;
+  flex-wrap: wrap;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .pageTitle {
@@ -23,6 +41,10 @@
 .addBtn {
   @include btn-primary;
   padding: $s2 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .exportBtn {
@@ -30,11 +52,17 @@
   padding: $s2 $s4;
   border: 1px solid $border;
   &:hover { border-color: $text-muted; color: $text-primary; }
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    min-height: clamp(2.75rem, 8vw, 3rem);
+    text-align: center;
+  }
 }
 
 .filterPanel {
   @include card;
-  padding: $s4;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
   margin-bottom: $s6;
   display: flex;
   flex-wrap: wrap;
@@ -112,6 +140,7 @@
 
   @media (max-width: ($md - 1px)) {
     width: 100%;
+    min-height: clamp(2.75rem, 8vw, 3rem);
   }
 }
 
@@ -143,12 +172,22 @@
   @include card;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+
+  @media (max-width: ($md - 1px)) {
+    overflow: visible;
+    background: transparent;
+    border: none;
+  }
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   min-width: 44rem;
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
 }
 
 .thead tr {
@@ -255,10 +294,109 @@
   &:hover { color: $red-light; }
 }
 
+.mobileList {
+  display: none;
+
+  @media (max-width: ($md - 1px)) {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.75rem, 2.6vw, 1rem);
+  }
+}
+
+.mobileCard {
+  @include card;
+  padding: clamp(0.9rem, 3.5vw, 1.1rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.9rem, 3.5vw, 1.15rem);
+}
+
+.mobileCardTop {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.mobileCardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $s3;
+}
+
+.mobileAmountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+  flex-wrap: wrap;
+}
+
+.mobileMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mobileMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  min-width: 0;
+}
+
+.mobileMetaLabel {
+  color: $text-subtle;
+  font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobileProductBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+}
+
+.mobileNotes {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+}
+
+.mobileActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(0.65rem, 2.8vw, 0.9rem);
+}
+
+.mobileEditBtn {
+  @include btn-ghost;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  border: 1px solid $border;
+  color: $text-primary;
+  font-weight: 600;
+}
+
+.mobileDeleteBtn {
+  @include btn-danger;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  font-weight: 600;
+}
+
 .inlineFormWrap {
   @include card;
   padding: $s6;
   margin-bottom: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: clamp(0.9rem, 3.5vw, 1.1rem);
+  }
 }
 
 .inlineForm {
@@ -370,7 +508,10 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-wrap: wrap;
 
-  @media (max-width: ($md - 1px)) { gap: $s2; }
+  @media (max-width: ($md - 1px)) {
+    gap: $s2;
+    justify-content: stretch;
+  }
 }
 
 .pageBtn {
@@ -392,11 +533,22 @@
     opacity: 0.35;
     cursor: not-allowed;
   }
+
+  @media (max-width: ($md - 1px)) {
+    flex: 1 1 calc(50% - #{$s2});
+    min-height: clamp(2.75rem, 8vw, 3rem);
+  }
 }
 
 .pageInfo {
   color: #9ca3af;
   font-size: 0.85rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
 }
 
 // ── Combo (searchable product select) ────────────────────────────
