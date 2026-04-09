@@ -564,18 +564,6 @@ export default function LeadsPage() {
             {search && (
               <button type="button" className={s.searchClear} onClick={() => { setSearch(''); if (page === 1) fetchData(1); else setPage(1); }}>✕</button>
             )}
-            <CustomSelect
-              options={[10, 20, 30, 50].map((n) => ({ label: `${n} / page`, value: n }))}
-              value={pageSize}
-              onChange={(val) => {
-                const next = Number(val);
-                setPageSize(next);
-                setPage(1);
-                fetchData(1, next);
-              }}
-              align="right"
-              direction="up"
-            />
           </div>
           <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
           <button
