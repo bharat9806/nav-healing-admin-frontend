@@ -23,21 +23,21 @@
 
 .bannerTitle {
   color: $text-primary;
-  font-size: 1.25rem;
+  font-size: $fs-xl;
   font-weight: 700;
   margin: 0;
 }
 
 .bannerDate {
   color: $text-muted;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   margin-top: $s1;
 }
 
 .rolePill {
   display: inline-block;
   margin-top: $s2;
-  font-size: 0.75rem;
+  font-size: $fs-xs;
   padding: $s1 $s2 + 0.125rem;
   border-radius: $r-full;
   font-weight: 500;
@@ -63,7 +63,7 @@
 
 .statLabel {
   color: $text-muted;
-  font-size: 0.75rem;
+  font-size: $fs-xs;
   font-weight: 500;
   margin: 0;
 }
@@ -108,14 +108,14 @@
 
 .panelLink {
   color: $emerald-light;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   transition: color 0.15s;
   &:hover { color: $emerald-hover; }
 }
 
 .emptyText {
   color: $text-subtle;
-  font-size: 0.875rem;
+  font-size: $fs-body;
 }
 
 .leadRow {
@@ -129,14 +129,14 @@
 
 .leadName {
   color: $text-primary;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   font-weight: 500;
   margin: 0;
 }
 
 .leadSub {
   color: $text-subtle;
-  font-size: 0.75rem;
+  font-size: $fs-xs;
 }
 
 // Status badges
@@ -159,7 +159,7 @@
   gap: $s3;
   padding: $s2 + 0.125rem $s3;
   border-radius: $r-md;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   color: $text-secondary;
   transition: background-color 0.15s;
   &:hover { background-color: $bg-elevated; }
@@ -185,7 +185,7 @@
   background-color: rgba($bg-surface, 0.5);
   border: 1px solid $border;
   border-radius: $r-md;
-  font-size: 0.75rem;
+  font-size: $fs-xs;
   color: $text-subtle;
 }
 

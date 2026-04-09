@@ -29,7 +29,7 @@
   @include flex-center;
   span {
     color: $text-primary;
-    font-size: 0.875rem;
+    font-size: $fs-body;
     font-weight: 700;
   }
 }
@@ -37,7 +37,7 @@
 .brandName {
   color: $text-primary;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: $fs-lg;
 }
 
 .nav {
@@ -55,7 +55,7 @@
   gap: $s3;
   padding: $s2 + 0.125rem $s3;
   border-radius: $r-md;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   font-weight: 500;
   transition: color 0.15s, background-color 0.15s;
   color: $text-muted;
@@ -65,7 +65,7 @@
     background-color: $bg-elevated;
   }
 
-  .icon { font-size: 1rem; }
+  .icon { font-size: $fs-md; }
 }
 
 .navItemActive {
@@ -103,7 +103,7 @@
   width: 100%;
   padding: $s2 + 0.125rem $s3;
   border-radius: $r-md;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   font-weight: 500;
   background: none;
   border: none;

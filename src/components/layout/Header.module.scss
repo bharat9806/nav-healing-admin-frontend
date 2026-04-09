@@ -47,11 +47,11 @@
 .title {
   color: $text-primary;
   font-weight: 600;
-  font-size: 1.125rem;
+  font-size: $fs-lg;
   margin: 0;
 
   @media (max-width: ($md - 1px)) {
-    font-size: 1rem;
+    font-size: $fs-md;
   }
 }
 
@@ -71,13 +71,13 @@
 
 .username {
   color: $text-primary;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   font-weight: 500;
   margin: 0;
 }
 
 .roleBadge {
-  font-size: 0.75rem;
+  font-size: $fs-xs;
   padding: 0.125rem $s2;
   border-radius: 9999px;
   font-weight: 500;
@@ -109,7 +109,7 @@
 
   span {
     color: $text-primary;
-    font-size: 0.875rem;
+    font-size: $fs-body;
     font-weight: 700;
   }
 }

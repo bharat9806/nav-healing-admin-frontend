@@ -25,7 +25,7 @@
   color: $text-primary;
   border-radius: $r-md;
   padding: $s2 $s4;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   outline: none;
   transition: box-shadow 0.15s, border-color 0.15s;
   resize: none;
@@ -40,7 +40,7 @@
   border: none;
   border-radius: $r-md;
   padding: $s2 $s4;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.15s;
@@ -55,7 +55,7 @@
   border: none;
   border-radius: $r-md;
   padding: $s2 $s4;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.15s;
@@ -67,7 +67,7 @@
   background: none;
   border: none;
   color: $text-muted;
-  font-size: 0.875rem;
+  font-size: $fs-body;
   cursor: pointer;
   transition: color 0.15s;
 
@@ -101,7 +101,7 @@
 }
 
 @mixin status-badge {
-  font-size: 0.75rem;
+  font-size: $fs-xs;
   padding: $s1 $s3 - 0.125rem;
   border-radius: $r-full;
   font-weight: 500;

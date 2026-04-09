@@ -20,7 +20,7 @@
 
 .pageTitle {
   color: $text-primary;
-  font-size: 1.25rem;
+  font-size: $fs-xl;
   font-weight: 700;
   margin: 0;
 }
@@ -67,7 +67,7 @@
 
 .statLabel {
   color: $text-muted;
-  font-size: 0.8125rem;
+  font-size: $fs-sm;
 }
 
 .statValue {
