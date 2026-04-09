@@ -69,6 +69,12 @@
 
 .thRight { text-align: right; }
 .hideLg  { @media (max-width: ($lg - 1px)) { display: none; } }
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  &:hover { color: $text; }
+}
 
 .tbody { }
 

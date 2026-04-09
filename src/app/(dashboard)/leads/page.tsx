@@ -76,6 +76,8 @@ export default function LeadsPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [reminderStats, setReminderStats] = useState<LeadReminderStats>({
     scheduled: 0,
     overdue: 0,
@@ -170,6 +172,16 @@ export default function LeadsPage() {
       .catch(() => {});
   };
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
   const fetchData = (p = page) => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -184,6 +196,8 @@ export default function LeadsPage() {
     if (statusFilter) params.set('status', statusFilter);
     params.set('page', String(p));
     params.set('limit', '20');
+    params.set('sortBy', sortField);
+    params.set('order', sortOrder);
     const query = `?${params.toString()}`;
     api.get(`/leads${query}`)
       .then((leadsRes) => {
@@ -205,7 +219,7 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchData(page);
-  }, [statusFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page]);
+  }, [statusFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, sortField, sortOrder]);
 
   // Search and status filtering is now done server-side
   const filtered = leads;
@@ -732,17 +746,17 @@ export default function LeadsPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
-                <th className={s.th}>Name</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('name')}>Name{sortField === 'name' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 {visibleCols.phone    && <th className={s.th}>Phone</th>}
                 {visibleCols.altPhone && <th className={s.th}>Alt. Number</th>}
                 {visibleCols.email    && <th className={s.th}>Email</th>}
                 {visibleCols.diseases && <th className={s.th}>Diseases</th>}
                 {visibleCols.products && <th className={s.th}>Products</th>}
                 {visibleCols.doctor   && <th className={s.th}>Doctor</th>}
-                {visibleCols.createdDate && <th className={s.th}>Created Date</th>}
-                {visibleCols.deliveredDate && <th className={s.th}>Delivered Date</th>}
-                {visibleCols.followUpDate && <th className={s.th}>Follow-Up</th>}
-                {visibleCols.status   && <th className={s.th}>Status</th>}
+                {visibleCols.createdDate && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('createdAt')}>Created Date{sortField === 'createdAt' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.deliveredDate && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('deliveredAt')}>Delivered Date{sortField === 'deliveredAt' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.followUpDate && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('nextFollowUpDate')}>Follow-Up{sortField === 'nextFollowUpDate' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.status   && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
                 {visibleCols.tracking && <th className={s.th}>Tracking</th>}
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>

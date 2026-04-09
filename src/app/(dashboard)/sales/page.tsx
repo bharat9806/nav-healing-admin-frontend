@@ -62,6 +62,18 @@ export default function SalesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
+  const [sortField, setSortField] = useState('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
 
   const fetchSales = (nextPage = page) => {
     setLoading(true);
@@ -73,6 +85,8 @@ export default function SalesPage() {
     if (dateTo) params.set('dateTo', dateTo);
     params.set('page', String(nextPage));
     params.set('limit', '20');
+    params.set('sortBy', sortField);
+    params.set('order', sortOrder);
 
     api.get(`/sales?${params.toString()}`)
       .then((res) => {
@@ -96,7 +110,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     fetchSales(page);
-  }, [paymentModeFilter, statusFilter, dateFrom, dateTo, page]);
+  }, [paymentModeFilter, statusFilter, dateFrom, dateTo, page, sortField, sortOrder]);
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
@@ -339,11 +353,11 @@ export default function SalesPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
-                <th className={s.th}>Date</th>
-                <th className={s.th}>Patient Name</th>
-                <th className={s.th}>Amount</th>
-                <th className={s.th}>Payment Mode</th>
-                <th className={s.th}>Status</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('date')}>Date{sortField === 'date' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('patientName')}>Patient Name{sortField === 'patientName' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('amount')}>Amount{sortField === 'amount' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('paymentMode')}>Payment Mode{sortField === 'paymentMode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={s.th}>Pending Amount</th>
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>

@@ -135,6 +135,8 @@ export default function ProductSalesPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<ProductSaleItem | null>(null);
+  const [sortField, setSortField] = useState('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const selectedProduct = products.find((product) => String(product.id) === form.productId);
 
   const fetchProducts = () => {
@@ -147,6 +149,16 @@ export default function ProductSalesPage() {
       });
   };
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
   const fetchData = (nextPage = page) => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -156,6 +168,8 @@ export default function ProductSalesPage() {
     if (dateTo) params.set('dateTo', dateTo);
     params.set('page', String(nextPage));
     params.set('limit', '20');
+    params.set('sortBy', sortField);
+    params.set('order', sortOrder);
 
     api.get(`/product-sales?${params.toString()}`)
       .then((salesRes) => {
@@ -178,7 +192,7 @@ export default function ProductSalesPage() {
 
   useEffect(() => {
     fetchData(page);
-  }, [productFilter, dateFrom, dateTo, page]);
+  }, [productFilter, dateFrom, dateTo, page, sortField, sortOrder]);
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
@@ -381,9 +395,9 @@ export default function ProductSalesPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
-                <th className={s.th}>Date</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('date')}>Date{sortField === 'date' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={s.th}>Product</th>
-                <th className={s.th}>Quantity Sold</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('quantity')}>Quantity Sold{sortField === 'quantity' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={s.th}>Stock Left</th>
                 <th className={s.th}>Notes</th>
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>

@@ -167,6 +167,8 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [lowStockCount, setLowStockCount] = useState(0);
 
   const [showInlineForm, setShowInlineForm] = useState(false);
@@ -181,6 +183,16 @@ export default function ProductsPage() {
   const [importMessage, setImportMessage] = useState('');
   const [importError, setImportError] = useState('');
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
   const fetchProducts = (p = page, nextLowStockOnly = lowStockOnly) => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -189,6 +201,8 @@ export default function ProductsPage() {
     if (nextLowStockOnly) params.set('lowStock', 'true');
     params.set('page', String(p));
     params.set('limit', '20');
+    params.set('sortBy', sortField);
+    params.set('order', sortOrder);
     api.get(`/products?${params.toString()}`)
       .then((res) => {
         setProducts(res.data.data);
@@ -206,7 +220,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts(page);
-  }, [catFilter, page]);
+  }, [catFilter, page, sortField, sortOrder]);
 
   const goToPage = (p: number) => {
     setPage(p);
@@ -531,11 +545,11 @@ export default function ProductsPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
-                <th className={s.th}>Product</th>
-                <th className={s.th}>SKU</th>
-                <th className={`${s.th} ${s.hideMd}`}>Category</th>
-                <th className={s.th}>Price</th>
-                <th className={s.th}>Inventory</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('name')}>Product{sortField === 'name' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('sku')}>SKU{sortField === 'sku' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.hideMd} ${s.thSortable}`} onClick={() => handleSort('category')}>Category{sortField === 'category' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('price')}>Price{sortField === 'price' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('currentStock')}>Inventory{sortField === 'currentStock' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={s.th}>Status</th>
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>

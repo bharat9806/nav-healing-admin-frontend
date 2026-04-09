@@ -222,11 +222,25 @@ export default function UsersPage() {
   const [saving, setSaving] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>(initialCreateForm());
   const [formError, setFormError] = useState('');
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/users');
+      const params = new URLSearchParams();
+      params.set('sortBy', sortField);
+      params.set('order', sortOrder);
+      const res = await api.get(`/users?${params.toString()}`);
       setUsers(res.data);
     } catch {
       setError('Failed to load users');
@@ -237,7 +251,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [sortField, sortOrder]);
 
   const handleToggle = async (id: number) => {
     try {
@@ -648,10 +662,10 @@ export default function UsersPage() {
             <table className={s.table}>
               <thead className={s.thead}>
                 <tr>
-                  <th className={s.th}>User</th>
-                  <th className={s.th}>User Code</th>
-                  <th className={s.th}>Role</th>
-                  <th className={`${s.th} ${s.hideLg}`}>Joined</th>
+                  <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('username')}>User{sortField === 'username' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                  <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('userCode')}>User Code{sortField === 'userCode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                  <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('role')}>Role{sortField === 'role' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                  <th className={`${s.th} ${s.hideLg} ${s.thSortable}`} onClick={() => handleSort('createdAt')}>Joined{sortField === 'createdAt' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                   <th className={s.th}>Status</th>
                   <th className={`${s.th} ${s.thRight}`}>Actions</th>
                 </tr>

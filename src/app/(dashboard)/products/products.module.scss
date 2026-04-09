@@ -167,6 +167,12 @@
 }
 
 .thRight { text-align: right; }
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  &:hover { color: $text; }
+}
 .hideMd  { @media (max-width: ($md - 1px)) { display: none; } }
 
 .tr {

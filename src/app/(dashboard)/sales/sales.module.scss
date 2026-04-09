@@ -136,6 +136,12 @@
 }
 
 .thRight { text-align: right; }
+.thSortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  &:hover { color: $text; }
+}
 
 .tr {
   border-bottom: 1px solid rgba($border, 0.5);
