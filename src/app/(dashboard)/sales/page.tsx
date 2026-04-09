@@ -1,7 +1,7 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
@@ -11,9 +11,20 @@ import s from './sales.module.scss';
 const defaultPaymentModes = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque'];
 const defaultStatuses = ['Paid', 'Pending', 'Partial', 'Cancelled'];
 
+type ProductOption = {
+  id: number;
+  name: string;
+  sku: string;
+  price: number;
+  currentStock: number;
+  reorderLevel: number;
+};
+
 type SaleFormState = {
   date: string;
   patientName: string;
+  productId: string;
+  therapyPrice: string;
   amount: string;
   paymentMode: string;
   status: string;
@@ -24,6 +35,8 @@ type SaleFormState = {
 const initialForm = (): SaleFormState => ({
   date: new Date().toISOString().slice(0, 10),
   patientName: '',
+  productId: '',
+  therapyPrice: '',
   amount: '',
   paymentMode: 'Cash',
   status: 'Paid',
@@ -41,8 +54,112 @@ const statusClass = (status: string) => {
   return s.statusBadge;
 };
 
+function SearchableProductSelect({
+  products,
+  value,
+  onChange,
+}: {
+  products: ProductOption[];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const selected = products.find((p) => String(p.id) === value);
+  const filtered = products.filter(
+    (p) =>
+      p.name.toLowerCase().includes(query.toLowerCase()) ||
+      p.sku.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className={s.formGroup} ref={wrapRef}>
+      <label>Product (optional)</label>
+      <div className={s.comboWrap}>
+        <input
+          ref={inputRef}
+          type="text"
+          className={s.formInput}
+          placeholder="Search product..."
+          value={open ? query : selected ? `${selected.name} (${selected.sku})` : ''}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => {
+            setOpen(true);
+            setQuery('');
+          }}
+          autoComplete="off"
+        />
+        {value && !open && (
+          <button
+            type="button"
+            className={s.comboClear}
+            onClick={() => {
+              onChange('');
+              setQuery('');
+              setOpen(true);
+              inputRef.current?.focus();
+            }}
+          >
+            ✕
+          </button>
+        )}
+        {open && (
+          <ul className={s.comboList}>
+            <li
+              className={s.comboItem}
+              onMouseDown={() => {
+                onChange('');
+                setOpen(false);
+                setQuery('');
+              }}
+            >
+              <span className={s.comboItemName}>— No product —</span>
+            </li>
+            {filtered.length === 0 ? (
+              <li className={s.comboEmpty}>No products found</li>
+            ) : (
+              filtered.map((p) => (
+                <li
+                  key={p.id}
+                  className={`${s.comboItem} ${String(p.id) === value ? s.comboItemActive : ''}`}
+                  onMouseDown={() => {
+                    onChange(String(p.id));
+                    setOpen(false);
+                    setQuery('');
+                  }}
+                >
+                  <span className={s.comboItemName}>{p.name}</span>
+                  <span className={s.comboItemSku}>{p.sku} • Rs. {Number(p.price).toFixed(2)}</span>
+                </li>
+              ))
+            )}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
+  const [products, setProducts] = useState<ProductOption[]>([]);
   const [search, setSearch] = useState('');
   const [paymentModeFilter, setPaymentModeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -64,6 +181,14 @@ export default function SalesPage() {
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Derived: selected product and computed amount
+  const selectedProduct = products.find((p) => String(p.id) === form.productId);
+  const productPrice = selectedProduct ? Number(selectedProduct.price) : 0;
+  const therapyPrice = Number(form.therapyPrice || 0);
+  const computedAmount = selectedProduct
+    ? productPrice + therapyPrice
+    : Number(form.amount || 0);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -100,6 +225,7 @@ export default function SalesPage() {
 
   useEffect(() => {
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
+    api.get('/products/options').then((res) => setProducts(res.data || [])).catch(() => {});
     api.get('/sales/filters')
       .then((res) => {
         if (res.data.paymentModes?.length) setPaymentModes(res.data.paymentModes);
@@ -128,6 +254,8 @@ export default function SalesPage() {
     setForm({
       date: sale.date.slice(0, 10),
       patientName: sale.patientName,
+      productId: sale.productId ? String(sale.productId) : '',
+      therapyPrice: sale.therapyPrice ? String(sale.therapyPrice) : '',
       amount: String(sale.amount),
       paymentMode: sale.paymentMode,
       status: sale.status,
@@ -152,7 +280,9 @@ export default function SalesPage() {
     const payload = {
       date: form.date,
       patientName: form.patientName,
-      amount: Number(form.amount),
+      productId: form.productId ? Number(form.productId) : undefined,
+      therapyPrice: form.therapyPrice ? Number(form.therapyPrice) : undefined,
+      amount: computedAmount,
       paymentMode: form.paymentMode,
       status: form.status,
       pendingAmount: Number(form.pendingAmount || 0),
@@ -200,6 +330,9 @@ export default function SalesPage() {
     const rows = (res.data.data as Sale[]).map((sale) => ({
       Date: sale.date.slice(0, 10),
       'Patient Name': sale.patientName,
+      Product: sale.product?.name || '',
+      'Product Price': sale.product ? Number(sale.product.price).toFixed(2) : '',
+      'Therapy Price': sale.therapyPrice ? Number(sale.therapyPrice).toFixed(2) : '',
       Amount: Number(sale.amount).toFixed(2),
       'Payment Mode': sale.paymentMode,
       Status: sale.status,
@@ -294,6 +427,8 @@ export default function SalesPage() {
           <form onSubmit={handleSubmit} className={s.inlineForm}>
             <h2 className={s.inlineFormTitle}>{editing ? 'Edit Sale' : 'New Sale'}</h2>
             {error && <div className={s.error}>{error}</div>}
+
+            {/* Row 1: Date + Patient */}
             <div className={s.grid2}>
               <div className={s.formGroup}>
                 <label>Date *</label>
@@ -304,16 +439,63 @@ export default function SalesPage() {
                 <input type="text" required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className={s.formInput} />
               </div>
             </div>
+
+            {/* Row 2: Product + Therapy Price */}
             <div className={s.grid2}>
+              <SearchableProductSelect
+                products={products}
+                value={form.productId}
+                onChange={(id) => setForm({ ...form, productId: id })}
+              />
               <div className={s.formGroup}>
-                <label>Amount *</label>
-                <input type="number" min="0" step="0.01" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={s.formInput} />
-              </div>
-              <div className={s.formGroup}>
-                <label>Pending Amount</label>
-                <input type="number" min="0" step="0.01" value={form.pendingAmount} onChange={(e) => setForm({ ...form, pendingAmount: e.target.value })} className={s.formInput} />
+                <label>Therapy Price (optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={form.therapyPrice}
+                  onChange={(e) => setForm({ ...form, therapyPrice: e.target.value })}
+                  className={s.formInput}
+                />
               </div>
             </div>
+
+            {/* Amount breakdown */}
+            <div className={s.amountBreakdown}>
+              {selectedProduct && (
+                <div className={s.breakdownRow}>
+                  <span>Product ({selectedProduct.name})</span>
+                  <span>{currency(productPrice)}</span>
+                </div>
+              )}
+              {therapyPrice > 0 && (
+                <div className={s.breakdownRow}>
+                  <span>Therapy</span>
+                  <span>{currency(therapyPrice)}</span>
+                </div>
+              )}
+              <div className={`${s.breakdownRow} ${s.breakdownTotal}`}>
+                <span>Total Amount</span>
+                <span>{currency(computedAmount)}</span>
+              </div>
+              {!selectedProduct && (
+                <div className={s.formGroup} style={{ marginTop: '0.5rem' }}>
+                  <label>Amount * <small>(enter manually — no product selected)</small></label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    required
+                    value={form.amount}
+                    onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                    className={s.formInput}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Row 3: Payment Mode + Status */}
             <div className={s.grid2}>
               <div className={s.formGroup}>
                 <label>Payment Mode *</label>
@@ -328,13 +510,34 @@ export default function SalesPage() {
                 </select>
               </div>
             </div>
+
+            {/* Pending Amount */}
+            <div className={s.formGroup}>
+              <label>Pending Amount</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.pendingAmount}
+                onChange={(e) => setForm({ ...form, pendingAmount: e.target.value })}
+                className={s.formInput}
+              />
+            </div>
+
             <div className={s.formGroup}>
               <label>Notes</label>
               <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className={s.formTextarea} />
             </div>
+
             <div className={s.formActions}>
               <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
-              <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
+              <button
+                type="submit"
+                disabled={saving || (!selectedProduct && !form.amount)}
+                className={s.saveBtn}
+              >
+                {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
+              </button>
             </div>
           </form>
         </div>
@@ -355,10 +558,11 @@ export default function SalesPage() {
               <tr>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('date')}>Date{sortField === 'date' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('patientName')}>Patient Name{sortField === 'patientName' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
+                <th className={s.th}>Product</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('amount')}>Amount{sortField === 'amount' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('paymentMode')}>Payment Mode{sortField === 'paymentMode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
-                <th className={s.th}>Pending Amount</th>
+                <th className={s.th}>Pending</th>
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>
             </thead>
@@ -369,6 +573,16 @@ export default function SalesPage() {
                   <td className={s.td}>
                     <p className={s.patientName}>{sale.patientName}</p>
                     {sale.notes && <p className={s.noteText}>{sale.notes}</p>}
+                  </td>
+                  <td className={s.td}>
+                    {sale.product ? (
+                      <>
+                        <p className={s.productName}>{sale.product.name}</p>
+                        <p className={s.productSub}>{sale.product.sku}{sale.therapyPrice ? ` + Therapy: ${currency(sale.therapyPrice)}` : ''}</p>
+                      </>
+                    ) : (
+                      <span className={s.cellText}>—</span>
+                    )}
                   </td>
                   <td className={s.td}><span className={s.amountText}>{currency(sale.amount)}</span></td>
                   <td className={s.td}><span className={s.cellText}>{sale.paymentMode}</span></td>

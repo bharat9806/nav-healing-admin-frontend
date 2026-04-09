@@ -101,6 +101,9 @@ export interface Sale {
   id: number;
   date: string;
   patientName: string;
+  productId?: number;
+  product?: { id: number; name: string; sku: string; price: number; category: string };
+  therapyPrice?: number;
   amount: number;
   paymentMode: string;
   status: string;

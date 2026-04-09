@@ -349,3 +349,113 @@
   color: #9ca3af;
   font-size: 0.85rem;
 }
+
+// ── Combo (searchable product select) ────────────────────────────
+.comboWrap {
+  position: relative;
+}
+
+.comboList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: $bg-elevated;
+  border: 1px solid $border;
+  border-radius: $r-md;
+  max-height: 14rem;
+  overflow-y: auto;
+  z-index: 50;
+  list-style: none;
+  padding: $s1 0;
+  margin: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.comboItem {
+  padding: $s2 $s3;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  &:hover { background: rgba(255, 255, 255, 0.06); }
+}
+
+.comboItemActive { background: rgba($primary, 0.15); }
+
+.comboItemName {
+  font-size: 0.875rem;
+  color: $text-primary;
+  font-weight: 500;
+}
+
+.comboItemSku {
+  font-size: 0.75rem;
+  color: $text-muted;
+}
+
+.comboEmpty {
+  padding: $s3;
+  color: $text-subtle;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.comboClear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+}
+
+// ── Amount breakdown ──────────────────────────────────────────────
+.amountBreakdown {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid $border;
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.breakdownRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: $text-secondary;
+}
+
+.breakdownTotal {
+  border-top: 1px solid $border;
+  padding-top: $s2;
+  font-weight: 700;
+  color: $text-primary;
+  font-size: 1rem;
+}
+
+// ── Product cell in table ─────────────────────────────────────────
+.productName {
+  color: $text-primary;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.productSub {
+  color: $text-subtle;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
