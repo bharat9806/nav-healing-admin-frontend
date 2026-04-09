@@ -79,6 +79,7 @@
   position: absolute;
   z-index: 200;
   min-width: 100%;
+  max-height: min(20rem, 45vh);
   background: #1f2937;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.5rem;
@@ -86,15 +87,38 @@
     0 4px 6px -1px rgba(0, 0, 0, 0.4),
     0 16px 48px rgba(0, 0, 0, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
   list-style: none;
   padding: 0.3rem;
   margin: 0;
   animation: dropIn 0.14s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: top center;
 
+  &::-webkit-scrollbar {
+    width: 0.55rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
   @media (max-width: 767px) {
     width: 100%;
+    max-height: min(18rem, 50vh);
   }
 }
 
