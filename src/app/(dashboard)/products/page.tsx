@@ -7,6 +7,7 @@ import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Product, User } from '@/types';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './products.module.scss';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
@@ -63,13 +64,13 @@ function ProductForm({
         </div>
         <div className={s.formGroup}>
           <label>Category *</label>
-          <select
+          <CustomSelect
+            options={categories.map((c) => ({ label: c, value: c }))}
             value={form.category}
-            onChange={(e) => onFormChange({ ...form, category: e.target.value })}
-            className={s.formSelect}
-          >
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+            onChange={(val) => onFormChange({ ...form, category: String(val) })}
+            align="left"
+            minWidth="100%"
+          />
         </div>
       </div>
       <div className={s.formGroup}>
@@ -519,17 +520,13 @@ export default function ProductsPage() {
               </button>
             )}
           </div>
-          <select
+          <CustomSelect
+            options={[{ label: 'All Categories', value: '' }, ...categories.map((c) => ({ label: c, value: c }))]}
             value={catFilter}
-            onChange={(e) => {
-              setCatFilter(e.target.value);
-              setPage(1);
-            }}
-            className={s.select}
-          >
-            <option value="">All Categories</option>
-            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+            onChange={(val) => { setCatFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="10rem"
+          />
         </div>
       )}
 
@@ -609,20 +606,17 @@ export default function ProductsPage() {
             <button onClick={() => goToPage(page + 1)} disabled={page >= totalPages} className={s.pageBtn}>
               Next
             </button>
-            <select
+            <CustomSelect
+              options={[10, 20, 30, 50].map((n) => ({ label: `${n} / page`, value: n }))}
               value={pageSize}
-              onChange={(e) => {
-                const next = Number(e.target.value);
+              onChange={(val) => {
+                const next = Number(val);
                 setPageSize(next);
                 setPage(1);
                 fetchProducts(1, lowStockOnly, next);
               }}
-              className={s.pageSizeSelect}
-            >
-              {[10, 20, 30, 50].map((n) => (
-                <option key={n} value={n}>{n} / page</option>
-              ))}
-            </select>
+              align="right"
+            />
           </div>
         </div>
       ))}

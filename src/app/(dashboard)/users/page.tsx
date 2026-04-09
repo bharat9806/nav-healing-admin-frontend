@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { User } from '@/types';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './users.module.scss';
 
 const roleCls = (role: string) => {
@@ -460,17 +461,17 @@ export default function UsersPage() {
                     )}
                     <div className={s.formGroup}>
                       <label>Role</label>
-                      <select
+                      <CustomSelect
+                        options={[
+                          { label: 'Super Admin', value: 'SUPER_ADMIN' },
+                          { label: 'Admin', value: 'ADMIN' },
+                          { label: 'Team Member', value: 'TEAM_MEMBER' },
+                        ]}
                         value={createForm.role}
-                        onChange={(e) =>
-                          setCreateForm((p) => ({ ...p, role: e.target.value }))
-                        }
-                        className={s.formSelect}
-                      >
-                        <option value="SUPER_ADMIN">Super Admin</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="TEAM_MEMBER">Team Member</option>
-                      </select>
+                        onChange={(val) => setCreateForm((p) => ({ ...p, role: String(val) }))}
+                        align="left"
+                        minWidth="100%"
+                      />
                     </div>
                   </div>
                   <div className={s.checkboxRow}>
@@ -547,17 +548,17 @@ export default function UsersPage() {
                     </div>
                     <div className={s.formGroup}>
                       <label>Role</label>
-                      <select
+                      <CustomSelect
+                        options={[
+                          { label: 'Super Admin', value: 'SUPER_ADMIN' },
+                          { label: 'Admin', value: 'ADMIN' },
+                          { label: 'Team Member', value: 'TEAM_MEMBER' },
+                        ]}
                         value={editForm.role}
-                        onChange={(e) =>
-                          setEditForm((p) => ({ ...p, role: e.target.value }))
-                        }
-                        className={s.formSelect}
-                      >
-                        <option value="SUPER_ADMIN">Super Admin</option>
-                        <option value="ADMIN">Admin</option>
-                        <option value="TEAM_MEMBER">Team Member</option>
-                      </select>
+                        onChange={(val) => setEditForm((p) => ({ ...p, role: String(val) }))}
+                        align="left"
+                        minWidth="100%"
+                      />
                     </div>
                   </div>
                   <div className={s.formInlineChecks}>

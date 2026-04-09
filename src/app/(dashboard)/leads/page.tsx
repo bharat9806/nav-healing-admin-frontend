@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './leads.module.scss';
 
 const statuses: LeadStatus[] = [
@@ -400,10 +401,13 @@ export default function LeadsPage() {
       <div className={s.grid2}>
         <div className={s.formGroup}><label>Alternate Number</label><input type="tel" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value })} className={s.formInput} placeholder="Optional" /></div>
         <div className={s.formGroup}><label>Assign Doctor</label>
-          <select value={form.assignedDoctorId} onChange={(e) => setForm({ ...form, assignedDoctorId: e.target.value })} className={s.formSelect}>
-            <option value="">No doctor assigned</option>
-            {doctors.map((d) => <option key={d.id} value={d.id}>Dr. {d.username}</option>)}
-          </select>
+          <CustomSelect
+            options={[{ label: 'No doctor assigned', value: '' }, ...doctors.map((d) => ({ label: `Dr. ${d.username}`, value: d.id }))]}
+            value={form.assignedDoctorId}
+            onChange={(val) => setForm({ ...form, assignedDoctorId: String(val) })}
+            align="left"
+            minWidth="100%"
+          />
         </div>
       </div>
       <div className={s.grid2}>
@@ -413,9 +417,13 @@ export default function LeadsPage() {
       <div className={s.grid3}>
         <div className={s.formGroup}><label>Age</label><input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className={s.formInput} /></div>
         <div className={s.formGroup}><label>Gender</label>
-          <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} className={s.formSelect}>
-            <option value="">Select...</option><option>Male</option><option>Female</option><option>Other</option>
-          </select>
+          <CustomSelect
+            options={[{ label: 'Select...', value: '' }, { label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]}
+            value={form.gender}
+            onChange={(val) => setForm({ ...form, gender: String(val) })}
+            align="left"
+            minWidth="100%"
+          />
         </div>
         <div className={s.formGroup}><label>Pin Code</label><input type="text" value={form.pinCode} onChange={(e) => setForm({ ...form, pinCode: e.target.value })} className={s.formInput} /></div>
       </div>
@@ -441,9 +449,13 @@ export default function LeadsPage() {
       <div className={s.grid2}>
         <div className={s.formGroup}><label>Tracking Number</label><input type="text" value={form.trackingNumber} onChange={(e) => setForm({ ...form, trackingNumber: e.target.value })} className={s.formInput} /></div>
         <div className={s.formGroup}><label>Status</label>
-          <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as LeadStatus })} className={s.formSelect}>
-            {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
-          </select>
+          <CustomSelect
+            options={statuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))}
+            value={form.status}
+            onChange={(val) => setForm({ ...form, status: val as LeadStatus })}
+            align="left"
+            minWidth="100%"
+          />
         </div>
       </div>
       <div className={s.grid2}>
@@ -563,45 +575,48 @@ export default function LeadsPage() {
               {hasActiveDateFilters ? 'Active' : showDateFilters ? 'Hide' : 'Show'}
             </span>
           </button>
-          <div className={s.filterGroup}>
-            <span className={s.filterIcon}>🏷️</span>
-            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className={s.compactSelect}>
-              <option value="">All Statuses</option>
-              {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
-            </select>
-          </div>
-          <div className={s.filterGroup}>
-            <span className={s.filterIcon}>📅</span>
-            <select value={datePreset} onChange={(e) => handlePreset(e.target.value)} className={s.compactSelect}>
-              <option value="">Created: All</option>
-              {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-            </select>
-          </div>
-          <div className={s.filterGroup}>
-            <span className={s.filterIcon}>📦</span>
-            <select value={deliveredPreset} onChange={(e) => handleDeliveredPreset(e.target.value)} className={s.compactSelect}>
-              <option value="">Delivered: All</option>
-              {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-            </select>
-          </div>
-          <div className={s.filterGroup}>
-            <span className={s.filterIcon}>🔔</span>
-            <select value={followUpPreset} onChange={(e) => handleFollowUpPreset(e.target.value)} className={s.compactSelect}>
-              <option value="">Follow-Up: All</option>
-              {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-            </select>
-          </div>
-          <div className={s.filterGroup}>
-            <span className={s.filterIcon}>!</span>
-            <select value={reminderFilter} onChange={(e) => { setReminderFilter(e.target.value); setPage(1); }} className={s.compactSelect}>
-              <option value="">Reminder: All</option>
-              <option value="overdue">Overdue</option>
-              <option value="today">Due Today</option>
-              <option value="upcoming">Next 7 Days</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="none">No Follow-Up</option>
-            </select>
-          </div>
+          <CustomSelect
+            options={[{ label: 'All Statuses', value: '' }, ...statuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))]}
+            value={statusFilter}
+            onChange={(val) => { setStatusFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="11rem"
+          />
+          <CustomSelect
+            options={[{ label: 'Created: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
+            value={datePreset}
+            onChange={(val) => handlePreset(String(val))}
+            align="left"
+            minWidth="10rem"
+          />
+          <CustomSelect
+            options={[{ label: 'Delivered: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
+            value={deliveredPreset}
+            onChange={(val) => handleDeliveredPreset(String(val))}
+            align="left"
+            minWidth="10rem"
+          />
+          <CustomSelect
+            options={[{ label: 'Follow-Up: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
+            value={followUpPreset}
+            onChange={(val) => handleFollowUpPreset(String(val))}
+            align="left"
+            minWidth="10rem"
+          />
+          <CustomSelect
+            options={[
+              { label: 'Reminder: All', value: '' },
+              { label: 'Overdue', value: 'overdue' },
+              { label: 'Due Today', value: 'today' },
+              { label: 'Next 7 Days', value: 'upcoming' },
+              { label: 'Scheduled', value: 'scheduled' },
+              { label: 'No Follow-Up', value: 'none' },
+            ]}
+            value={reminderFilter}
+            onChange={(val) => { setReminderFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="10rem"
+          />
           <div className={s.colMenuWrap}>
             <button
               onClick={() => setShowColMenu((p) => !p)}
@@ -635,27 +650,27 @@ export default function LeadsPage() {
 
         {showDateFilters && (
           <div className={s.dateFilterRow}>
-            <div className={s.filterGroup}>
-              <span className={s.filterIcon}>ðŸ“…</span>
-              <select value={datePreset} onChange={(e) => handlePreset(e.target.value)} className={s.compactSelect}>
-                <option value="">Created: All</option>
-                {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-              </select>
-            </div>
-            <div className={s.filterGroup}>
-              <span className={s.filterIcon}>ðŸ“¦</span>
-              <select value={deliveredPreset} onChange={(e) => handleDeliveredPreset(e.target.value)} className={s.compactSelect}>
-                <option value="">Delivered: All</option>
-                {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-              </select>
-            </div>
-            <div className={s.filterGroup}>
-              <span className={s.filterIcon}>ðŸ””</span>
-              <select value={followUpPreset} onChange={(e) => handleFollowUpPreset(e.target.value)} className={s.compactSelect}>
-                <option value="">Follow-Up: All</option>
-                {DATE_PRESETS.map(({ label, key }) => <option key={key} value={key}>{label}</option>)}
-              </select>
-            </div>
+            <CustomSelect
+              options={[{ label: 'Created: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
+              value={datePreset}
+              onChange={(val) => handlePreset(String(val))}
+              align=”left”
+              minWidth=”10rem”
+            />
+            <CustomSelect
+              options={[{ label: 'Delivered: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
+              value={deliveredPreset}
+              onChange={(val) => handleDeliveredPreset(String(val))}
+              align=”left”
+              minWidth=”10rem”
+            />
+            <CustomSelect
+              options={[{ label: 'Follow-Up: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
+              value={followUpPreset}
+              onChange={(val) => handleFollowUpPreset(String(val))}
+              align=”left”
+              minWidth=”10rem”
+            />
           </div>
         )}
 

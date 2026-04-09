@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Sale, User } from '@/types';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './sales.module.scss';
 
 const defaultPaymentModes = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque'];
@@ -386,28 +387,20 @@ export default function SalesPage() {
               </button>
             )}
           </div>
-          <select
+          <CustomSelect
+            options={[{ label: 'All Payment Modes', value: '' }, ...paymentModes.map((m) => ({ label: m, value: m }))]}
             value={paymentModeFilter}
-            onChange={(e) => {
-              setPaymentModeFilter(e.target.value);
-              setPage(1);
-            }}
-            className={s.select}
-          >
-            <option value="">All Payment Modes</option>
-            {paymentModes.map((mode) => <option key={mode} value={mode}>{mode}</option>)}
-          </select>
-          <select
+            onChange={(val) => { setPaymentModeFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="11rem"
+          />
+          <CustomSelect
+            options={[{ label: 'All Statuses', value: '' }, ...statuses.map((st) => ({ label: st, value: st }))]}
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className={s.select}
-          >
-            <option value="">All Statuses</option>
-            {statuses.map((status) => <option key={status} value={status}>{status}</option>)}
-          </select>
+            onChange={(val) => { setStatusFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="9rem"
+          />
           <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={s.dateInput} />
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.dateInput} />
           <button
@@ -499,15 +492,23 @@ export default function SalesPage() {
             <div className={s.grid2}>
               <div className={s.formGroup}>
                 <label>Payment Mode *</label>
-                <select value={form.paymentMode} onChange={(e) => setForm({ ...form, paymentMode: e.target.value })} className={s.formSelect}>
-                  {[...new Set([...defaultPaymentModes, ...paymentModes])].map((mode) => <option key={mode} value={mode}>{mode}</option>)}
-                </select>
+                <CustomSelect
+                  options={[...new Set([...defaultPaymentModes, ...paymentModes])].map((m) => ({ label: m, value: m }))}
+                  value={form.paymentMode}
+                  onChange={(val) => setForm({ ...form, paymentMode: String(val) })}
+                  align="left"
+                  minWidth="100%"
+                />
               </div>
               <div className={s.formGroup}>
                 <label>Status *</label>
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className={s.formSelect}>
-                  {[...new Set([...defaultStatuses, ...statuses])].map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
+                <CustomSelect
+                  options={[...new Set([...defaultStatuses, ...statuses])].map((st) => ({ label: st, value: st }))}
+                  value={form.status}
+                  onChange={(val) => setForm({ ...form, status: String(val) })}
+                  align="left"
+                  minWidth="100%"
+                />
               </div>
             </div>
 

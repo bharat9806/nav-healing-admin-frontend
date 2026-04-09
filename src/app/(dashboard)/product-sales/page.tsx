@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Product, ProductSaleItem, User } from '@/types';
+import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './product-sales.module.scss';
 
 type ProductSaleFormState = {
@@ -324,19 +325,13 @@ export default function ProductSalesPage() {
             <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
           </div>
           <div className={s.filterRowSecondary}>
-            <select
+            <CustomSelect
+              options={[{ label: 'All Products', value: '' }, ...products.map((p) => ({ label: p.name, value: p.id }))]}
               value={productFilter}
-              onChange={(e) => {
-                setProductFilter(e.target.value);
-                setPage(1);
-              }}
-              className={s.select}
-            >
-              <option value="">All Products</option>
-              {products.map((product) => (
-                <option key={product.id} value={product.id}>{product.name}</option>
-              ))}
-            </select>
+              onChange={(val) => { setProductFilter(String(val)); setPage(1); }}
+              align="left"
+              minWidth="12rem"
+            />
             <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={s.dateInput} />
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.dateInput} />
           </div>

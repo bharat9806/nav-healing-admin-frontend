@@ -1,0 +1,150 @@
+// ── Custom Select Dropdown ─────────────────────────────────────────
+// Dark-theme admin dashboard select component
+
+.wrap {
+  position: relative;
+  display: inline-block;
+}
+
+// ── Trigger Button ────────────────────────────────────────────────
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  color: #d1d5db;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  user-select: none;
+  outline: none;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+  }
+
+  &:focus-visible {
+    border-color: #059669;
+    box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3);
+    color: #fff;
+  }
+}
+
+.triggerOpen {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.triggerLabel {
+  flex: 1;
+}
+
+// ── Chevron Icon ──────────────────────────────────────────────────
+.chevron {
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
+  transition: transform 0.2s ease, color 0.15s ease;
+  flex-shrink: 0;
+
+  .trigger:hover & {
+    color: #9ca3af;
+  }
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  color: #9ca3af;
+}
+
+// ── Dropdown List ─────────────────────────────────────────────────
+.list {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 200;
+  min-width: 100%;
+  background: #1f2937;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  overflow: hidden;
+  list-style: none;
+  padding: 0.3rem;
+  margin: 0;
+  animation: dropIn 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top center;
+}
+
+.listRight {
+  right: 0;
+}
+
+.listLeft {
+  left: 0;
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ── List Items ────────────────────────────────────────────────────
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #d1d5db;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+  }
+}
+
+.itemActive {
+  color: #34d399;
+  background: rgba(5, 150, 105, 0.12);
+  font-weight: 500;
+
+  &:hover {
+    background: rgba(5, 150, 105, 0.18);
+    color: #34d399;
+  }
+}
+
+.itemLabel {
+  flex: 1;
+}
+
+// ── Check Icon ────────────────────────────────────────────────────
+.check {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  color: #34d399;
+}
