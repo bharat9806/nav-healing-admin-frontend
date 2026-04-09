@@ -100,18 +100,18 @@
 }
 
 .statLabel {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: $fs-sm;
 }
 
 .statValue {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 1.35rem;
 }
 
 .filterChip {
   @include btn-ghost;
-  border: 1px solid $border;
+  border: 1px solid var(--shell-border);
   padding: $s2 $s3;
 
   @media (max-width: ($md - 1px)) {
@@ -198,7 +198,7 @@
 .emptyText {
   text-align: center;
   padding: $s8 0;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
 }
 
 // Table
@@ -230,7 +230,7 @@
 
 .th {
   text-align: left;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.75rem;
   font-weight: 500;
   padding: $s3 $s4;
@@ -245,15 +245,15 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  &:hover { color: $text-muted; }
+  &:hover { color: var(--shell-text-primary); }
 }
 .hideMd  { @media (max-width: ($md - 1px)) { display: none; } }
 
 .tr {
-  border-bottom: 1px solid rgba($border, 0.5);
+  border-bottom: 1px solid var(--shell-table-border);
   transition: background-color 0.15s;
   &:last-child { border-bottom: none; }
-  &:hover { background-color: rgba($bg-elevated, 0.3); }
+  &:hover { background-color: var(--shell-row-hover); }
 }
 
 .td {
@@ -284,9 +284,9 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: $r-md;
-  background-color: $bg-elevated;
+  background-color: var(--shell-elevated);
   @include flex-center;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.75rem;
   flex-shrink: 0;
 }
@@ -299,7 +299,7 @@
 }
 
 .productDesc {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.75rem;
   @include truncate;
   max-width: 12.5rem;
@@ -314,12 +314,12 @@
 }
 
 .categoryText {
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   font-size: 0.875rem;
 }
 
 .price {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -328,8 +328,8 @@
   display: inline-flex;
   padding: 0.2rem 0.55rem;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: $text-primary;
+  background: var(--shell-pill-bg);
+  color: var(--shell-text-primary);
   font-size: 0.75rem;
   font-family: monospace;
 }
@@ -351,7 +351,7 @@
 }
 
 .stockMeta {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.72rem;
 }
 
@@ -394,7 +394,7 @@
 .editBtn {
   @include btn-ghost;
   margin-right: $s3;
-  &:hover { color: $text-primary; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .deleteBtn {
@@ -444,7 +444,7 @@
 }
 
 .mobileMetaLabel {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -470,8 +470,8 @@
 .mobileEditBtn {
   @include btn-ghost;
   min-height: clamp(2.75rem, 8vw, 3rem);
-  border: 1px solid $border;
-  color: $text-primary;
+  border: 1px solid var(--shell-border);
+  color: var(--shell-text-primary);
   font-weight: 600;
 }
 
@@ -527,7 +527,7 @@
   label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: $text-secondary;
+    color: var(--shell-text-secondary);
   }
 }
 
@@ -561,7 +561,7 @@
 
 .fileInput {
   width: 100%;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
 
   &::file-selector-button {
@@ -570,11 +570,11 @@
     border-radius: $r-md;
     border: none;
     font-size: 0.875rem;
-    background-color: $bg-elevated;
-    color: $text-secondary;
+    background-color: var(--shell-input-bg);
+    color: var(--shell-text-secondary);
     cursor: pointer;
     transition: background-color 0.15s;
-    &:hover { background-color: $bg-muted; }
+    &:hover { background-color: var(--shell-muted); }
   }
 }
 
@@ -589,7 +589,7 @@
   display: flex;
   align-items: center;
   gap: $s2;
-  label { font-size: 0.875rem; color: $text-secondary; }
+  label { font-size: 0.875rem; color: var(--shell-text-secondary); }
   input { accent-color: $emerald; }
 }
 
@@ -613,7 +613,7 @@
 }
 
 .importHint {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   margin-bottom: $s4;
 }
@@ -647,7 +647,7 @@
 }
 
 .deleteMsg {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   margin: 0 0 $s6;
 }

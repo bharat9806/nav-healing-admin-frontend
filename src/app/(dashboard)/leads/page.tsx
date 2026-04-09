@@ -741,7 +741,7 @@ export default function LeadsPage() {
                         onChange={(e) => handleStatusChange(l.id, e.target.value as LeadStatus)}
                         className={`${s.statusSelect} ${statusCls(l.status)}`}
                       >
-                        {statuses.map((st) => <option key={st} value={st} style={{ backgroundColor: '#111827', color: '#fff' }}>{STATUS_LABELS[st]}</option>)}
+                        {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
                       </select>
                     </div>
 
@@ -884,7 +884,7 @@ export default function LeadsPage() {
                   {visibleCols.status   && <td className={s.td}>
                     <select value={l.status} onChange={(e) => handleStatusChange(l.id, e.target.value as LeadStatus)}
                       className={`${s.statusSelect} ${statusCls(l.status)}`}>
-                      {statuses.map((st) => <option key={st} value={st} style={{ backgroundColor: '#111827', color: '#fff' }}>{STATUS_LABELS[st]}</option>)}
+                      {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
                     </select>
                   </td>}
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}

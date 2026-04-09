@@ -153,7 +153,7 @@
 
 .skeletonRow {
   height: 4rem;
-  background-color: $bg-elevated;
+  background-color: var(--shell-elevated);
   border-radius: $r-md;
   @include animate-pulse;
 }
@@ -166,7 +166,7 @@
 .emptyText {
   text-align: center;
   padding: $s8 0;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
 }
 
 .tableWrap {
@@ -197,7 +197,7 @@
 
 .th {
   text-align: left;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.75rem;
   font-weight: 500;
   padding: $s3 $s4;
@@ -212,14 +212,14 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  &:hover { color: $text-muted; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .tr {
-  border-bottom: 1px solid rgba($border, 0.5);
+  border-bottom: 1px solid var(--shell-table-border);
   transition: background-color 0.15s;
   &:last-child { border-bottom: none; }
-  &:hover { background-color: rgba($bg-elevated, 0.3); }
+  &:hover { background-color: var(--shell-row-hover); }
 }
 
 .td {
@@ -232,26 +232,26 @@
 .tdRight { text-align: right; }
 
 .patientName {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
 }
 
 .noteText {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.75rem;
   margin-top: $s1;
   max-width: 16rem;
 }
 
 .cellText {
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   font-size: 0.875rem;
 }
 
 .amountText {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 600;
 }
@@ -287,7 +287,7 @@
 .editBtn {
   @include btn-ghost;
   margin-right: $s3;
-  &:hover { color: $text-primary; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .deleteBtn {
@@ -352,7 +352,7 @@
 }
 
 .mobileMetaLabel {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -379,8 +379,8 @@
 .mobileEditBtn {
   @include btn-ghost;
   min-height: clamp(2.75rem, 8vw, 3rem);
-  border: 1px solid $border;
-  color: $text-primary;
+  border: 1px solid var(--shell-border);
+  color: var(--shell-text-primary);
   font-weight: 600;
 }
 
@@ -421,7 +421,7 @@
   label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: $text-secondary;
+    color: var(--shell-text-secondary);
   }
 }
 
@@ -482,7 +482,7 @@
 }
 
 .deleteMsg {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   margin: 0 0 $s6;
 }
@@ -566,8 +566,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: $bg-elevated;
-  border: 1px solid $border;
+  background: var(--shell-elevated);
+  border: 1px solid var(--shell-border);
   border-radius: $r-md;
   max-height: 14rem;
   overflow-y: auto;
@@ -588,25 +588,25 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  &:hover { background: rgba(255, 255, 255, 0.06); }
+  &:hover { background: var(--shell-hover); }
 }
 
 .comboItemActive { background: rgba($emerald, 0.15); }
 
 .comboItemName {
   font-size: 0.875rem;
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-weight: 500;
 }
 
 .comboItemSku {
   font-size: 0.75rem;
-  color: $text-muted;
+  color: var(--shell-text-muted);
 }
 
 .comboEmpty {
   padding: $s3;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.875rem;
   text-align: center;
 }
@@ -618,7 +618,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--shell-text-muted);
   font-size: 0.85rem;
   cursor: pointer;
   padding: 0.25rem;
@@ -632,8 +632,8 @@
 
 // ── Amount breakdown ──────────────────────────────────────────────
 .amountBreakdown {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid $border;
+  background: var(--shell-soft-bg);
+  border: 1px solid var(--shell-border);
   border-radius: $r-md;
   padding: $s3 $s4;
   display: flex;
@@ -645,27 +645,27 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.875rem;
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
 }
 
 .breakdownTotal {
-  border-top: 1px solid $border;
+  border-top: 1px solid var(--shell-border);
   padding-top: $s2;
   font-weight: 700;
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 1rem;
 }
 
 // ── Product cell in table ─────────────────────────────────────────
 .productName {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
 }
 
 .productSub {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.75rem;
   margin-top: 2px;
 }

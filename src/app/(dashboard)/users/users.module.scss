@@ -94,7 +94,7 @@
 
 .th {
   text-align: left;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.75rem;
   font-weight: 500;
   padding: $s3 $s6;
@@ -112,16 +112,16 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  &:hover { color: $text-muted; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .tbody { }
 
 .tr {
-  border-bottom: 1px solid $border;
+  border-bottom: 1px solid var(--shell-table-border);
   transition: background-color 0.15s;
   &:last-child { border-bottom: none; }
-  &:hover { background-color: rgba($bg-elevated, 0.4); }
+  &:hover { background-color: var(--shell-row-hover); }
 }
 
 .td {
@@ -151,14 +151,14 @@
 }
 
 .username {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
 }
 
 .email {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.75rem;
 }
 
@@ -195,7 +195,7 @@
 }
 
 .joinedDate {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
 }
 
@@ -213,9 +213,9 @@
 }
 
 .statusInactive {
-  background-color: $bg-muted;
-  color: $text-muted;
-  &:hover { background-color: $bg-elevated; }
+  background-color: var(--shell-muted);
+  color: var(--shell-text-muted);
+  &:hover { background-color: var(--shell-elevated); }
 }
 
 .actions {
@@ -226,7 +226,7 @@
 }
 
 .editBtn {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   padding: $s1 + 0.125rem $s3;
   border-radius: $r-md;
@@ -238,7 +238,7 @@
 }
 
 .deleteBtn {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   padding: $s1 + 0.125rem $s3;
   border-radius: $r-md;
@@ -270,7 +270,7 @@
 .mobileSkeletonCard {
   height: 10rem;
   border-radius: $r-lg;
-  background-color: $bg-elevated;
+  background-color: var(--shell-elevated);
   @include animate-pulse;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .mobileMetaLabel {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -317,12 +317,12 @@
 }
 
 .mobileEditBtn {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   min-height: clamp(2.75rem, 8vw, 3rem);
   padding: $s2 + 0.125rem $s4;
   border-radius: $r-md;
-  border: 1px solid $border;
+  border: 1px solid var(--shell-border);
   background: none;
   cursor: pointer;
   font-weight: 600;
@@ -337,7 +337,7 @@
 .emptyRow td {
   padding: $s6;
   text-align: center;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
 }
 
 .pagination {
@@ -410,10 +410,10 @@
 }
 
 .formSection {
-  border: 1px solid $border;
+  border: 1px solid var(--shell-border);
   border-radius: $r-lg;
   padding: $s5;
-  background: rgba($bg-elevated, 0.42);
+  background: var(--shell-soft-bg);
   display: flex;
   flex-direction: column;
   gap: $s4;
@@ -434,14 +434,14 @@
 
 .sectionTitle {
   margin: 0;
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.95rem;
   font-weight: 600;
 }
 
 .sectionText {
   margin: 0;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.82rem;
 }
 
@@ -507,18 +507,18 @@
 }
 
 .editingNote {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   margin: 0;
   margin-bottom: $s4;
-  span { color: $text-primary; font-weight: 500; }
+  span { color: var(--shell-text-primary); font-weight: 500; }
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
   gap: $s1 + 0.125rem;
-  label { font-size: 0.875rem; font-weight: 500; color: $text-secondary; }
+  label { font-size: 0.875rem; font-weight: 500; color: var(--shell-text-secondary); }
 }
 
 .formSelect { @include input; cursor: pointer; }
@@ -537,7 +537,7 @@
   display: flex;
   align-items: center;
   gap: $s3;
-  label { font-size: 0.875rem; color: $text-secondary; }
+  label { font-size: 0.875rem; color: var(--shell-text-secondary); }
   input { width: 1rem; height: 1rem; accent-color: $emerald; }
 }
 
@@ -552,10 +552,10 @@
 }
 
 .permissionsCard {
-  border: 1px solid $border;
+  border: 1px solid var(--shell-border);
   border-radius: $r-lg;
   padding: $s5;
-  background: rgba($bg-elevated, 0.42);
+  background: var(--shell-soft-bg);
   display: flex;
   flex-direction: column;
   gap: $s4;
@@ -576,9 +576,9 @@
   align-items: flex-start;
   gap: $s3;
   padding: $s3 $s4;
-  border: 1px solid $border;
+  border: 1px solid var(--shell-border);
   border-radius: $r-md;
-  background: rgba($bg-muted, 0.55);
+  background: var(--shell-soft-bg-strong);
   cursor: pointer;
 
   input {
@@ -602,18 +602,18 @@
 }
 
 .permissionLabel {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 500;
 }
 
 .permissionHint {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.75rem;
 }
 
 .permissionsBox {
-  border: 1px solid $border;
+  border: 1px solid var(--shell-border);
   border-radius: $r-md;
   padding: $s4;
   display: flex;
@@ -624,7 +624,7 @@
 .permissionsTitle {
   font-size: 0.875rem;
   font-weight: 500;
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   margin: 0 0 $s1;
 }
 
@@ -642,14 +642,14 @@
   flex: 1;
   padding: $s2 + 0.125rem $s4;
   border-radius: $r-md;
-  border: 1px solid $border-input;
+  border: 1px solid var(--shell-input-border);
   background: none;
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.15s;
-  &:hover { color: $text-primary; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .saveBtn {
@@ -682,7 +682,7 @@
 }
 
 .deleteMsg {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   margin: 0 0 $s6;
 }
@@ -699,12 +699,12 @@
   flex: 1;
   padding: $s2 + 0.125rem $s4;
   border-radius: $r-md;
-  border: 1px solid $border-input;
+  border: 1px solid var(--shell-input-border);
   background: none;
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  &:hover { color: $text-primary; }
+  &:hover { color: var(--shell-text-primary); }
 }
 .deleteConfirmBtn { @include btn-danger; flex: 1; padding: $s2 + 0.125rem $s4; }

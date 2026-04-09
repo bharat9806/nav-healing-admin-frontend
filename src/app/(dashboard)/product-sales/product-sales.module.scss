@@ -65,33 +65,44 @@
   @include card;
   padding: clamp(0.9rem, 3.5vw, 1.1rem);
   margin-bottom: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    gap: $s2;
+  }
+}
+
+.filterRowPrimary {
   display: grid;
-  grid-template-columns: minmax(18rem, 1.6fr) auto minmax(12rem, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: $s3;
   align-items: center;
-
-  @media (max-width: ($lg - 1px)) {
-    grid-template-columns: minmax(16rem, 1fr) auto minmax(12rem, 1fr);
-  }
-
-  @media (max-width: ($lg - 1px)) {
-    grid-auto-rows: auto;
-  }
 
   @media (max-width: ($md - 1px)) {
     grid-template-columns: 1fr;
   }
 }
 
-.filterRowPrimary,
 .filterRowSecondary {
-  display: contents;
+  display: flex;
+  gap: $s3;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $s2;
+  }
 }
 
 .searchWrapper {
   position: relative;
-  flex: 1;
-  min-width: 14rem;
+  min-width: 0;
+  width: 100%;
 
   @media (max-width: ($md - 1px)) {
     min-width: 0;
@@ -141,6 +152,10 @@
   @include input;
   width: 10rem;
   min-width: 0;
+
+  @media (max-width: ($lg - 1px)) {
+    width: min(10rem, 100%);
+  }
 
   @media (max-width: ($md - 1px)) {
     width: 100%;
@@ -195,7 +210,7 @@
   label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: $text-secondary;
+    color: var(--shell-text-secondary);
   }
 }
 
@@ -218,7 +233,7 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: #9ca3af;
+  color: var(--shell-text-muted);
   font-size: 0.8rem;
   cursor: pointer;
   padding: 0.2rem;
@@ -287,7 +302,7 @@
   transition: background 0.1s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--shell-hover);
   }
 }
 
@@ -298,19 +313,19 @@
 .comboItemName {
   font-size: 0.875rem;
   font-weight: 500;
-  color: $text-primary;
+  color: var(--shell-text-primary);
 }
 
 .comboItemSku {
   font-size: 0.75rem;
-  color: $text-muted;
+  color: var(--shell-text-muted);
 }
 
 .comboEmpty {
   padding: 0.75rem;
   text-align: center;
   font-size: 0.85rem;
-  color: $text-muted;
+  color: var(--shell-text-muted);
 }
 
 .formTextarea {
@@ -332,7 +347,7 @@
   border-radius: $r-md;
   background: rgba($emerald, 0.08);
   border: 1px solid rgba($emerald, 0.18);
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -357,7 +372,7 @@
 
 .skeletonRow {
   height: 4rem;
-  background-color: $bg-elevated;
+  background-color: var(--shell-elevated);
   border-radius: $r-md;
   @include animate-pulse;
 }
@@ -370,7 +385,7 @@
 .emptyText {
   text-align: center;
   padding: $s8 0;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
 }
 
 .tableWrap {
@@ -401,7 +416,7 @@
 
 .th {
   text-align: left;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.75rem;
   font-weight: 500;
   padding: $s3 $s4;
@@ -416,14 +431,14 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  &:hover { color: $text-muted; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .tr {
-  border-bottom: 1px solid rgba($border, 0.5);
+  border-bottom: 1px solid var(--shell-table-border);
   transition: background-color 0.15s;
   &:last-child { border-bottom: none; }
-  &:hover { background-color: rgba($bg-elevated, 0.3); }
+  &:hover { background-color: var(--shell-row-hover); }
 }
 
 .td {
@@ -436,20 +451,20 @@
 .tdRight { text-align: right; }
 
 .productName {
-  color: $text-primary;
+  color: var(--shell-text-primary);
   font-size: 0.875rem;
   font-weight: 500;
   margin: 0;
 }
 
 .productSub {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.75rem;
   margin-top: $s1;
 }
 
 .cellText {
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   font-size: 0.875rem;
 }
 
@@ -462,7 +477,7 @@
 .editBtn {
   @include btn-ghost;
   margin-right: $s3;
-  &:hover { color: $text-primary; }
+  &:hover { color: var(--shell-text-primary); }
 }
 
 .deleteBtn {
@@ -520,8 +535,8 @@
   width: fit-content;
   padding: 0.2rem 0.55rem;
   border-radius: $r-full;
-  background: rgba(255, 255, 255, 0.06);
-  color: $text-secondary;
+  background: var(--shell-pill-bg);
+  color: var(--shell-text-secondary);
   font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
 }
 
@@ -543,7 +558,7 @@
 }
 
 .mobileMetaLabel {
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -564,8 +579,8 @@
 .mobileEditBtn {
   @include btn-ghost;
   min-height: clamp(2.75rem, 8vw, 3rem);
-  border: 1px solid $border;
-  color: $text-primary;
+  border: 1px solid var(--shell-border);
+  color: var(--shell-text-primary);
   font-weight: 600;
 }
 
@@ -591,7 +606,7 @@
 }
 
 .deleteMsg {
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.875rem;
   margin: 0 0 $s6;
 }

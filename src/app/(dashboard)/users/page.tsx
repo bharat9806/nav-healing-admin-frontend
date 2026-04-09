@@ -771,7 +771,7 @@ export default function UsersPage() {
                         <div
                           style={{
                             height: '2rem',
-                            backgroundColor: '#1f2937',
+                            backgroundColor: 'var(--shell-elevated)',
                             borderRadius: '0.375rem',
                             animation: 'pulse 2s infinite',
                           }}
