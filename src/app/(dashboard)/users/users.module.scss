@@ -6,6 +6,11 @@
   display: flex;
   flex-direction: column;
   gap: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+    gap: $s4;
+  }
 }
 
 .header {
@@ -45,7 +50,8 @@
 // Table
 .tableWrap {
   @include card;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tableScroll { overflow-x: auto; }
@@ -53,6 +59,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 38rem;
 }
 
 .thead tr { border-bottom: 1px solid $border; }
@@ -214,8 +221,11 @@
   align-items: center;
   justify-content: center;
   gap: $s3;
-  padding: $s4 0;
+  padding: $s4 $s3;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+
+  @media (max-width: ($md - 1px)) { gap: $s2; }
 }
 
 .pageBtn {

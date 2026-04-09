@@ -9,6 +9,39 @@
   justify-content: space-between;
   padding: 0 $s6;
   flex-shrink: 0;
+
+  @media (max-width: ($md - 1px)) {
+    padding: 0 $s4;
+  }
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+}
+
+// ── Hamburger ─────────────────────────────────────────────────────
+.menuBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: $text-secondary;
+  cursor: pointer;
+  padding: $s1;
+  border-radius: $r-sm;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover {
+    color: $text-primary;
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+
+  @media (max-width: ($lg - 1px)) {
+    display: flex;
+  }
 }
 
 .title {
@@ -16,6 +49,10 @@
   font-weight: 600;
   font-size: 1.125rem;
   margin: 0;
+
+  @media (max-width: ($md - 1px)) {
+    font-size: 1rem;
+  }
 }
 
 .right {
@@ -26,6 +63,10 @@
 
 .userInfo {
   text-align: right;
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
 }
 
 .username {

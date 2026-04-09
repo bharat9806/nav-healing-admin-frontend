@@ -6,6 +6,11 @@
   display: flex;
   flex-direction: column;
   gap: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+    gap: $s4;
+  }
 }
 
 // Welcome banner

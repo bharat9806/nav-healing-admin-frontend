@@ -5,7 +5,7 @@ import { fetchCurrentUser } from '@/lib/current-user';
 import { User } from '@/types';
 import s from './Header.module.scss';
 
-export default function Header({ title }: { title?: string }) {
+export default function Header({ title, onMenuClick }: { title?: string; onMenuClick?: () => void }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -22,7 +22,23 @@ export default function Header({ title }: { title?: string }) {
 
   return (
     <header className={s.header}>
-      <h1 className={s.title}>{title || 'Dashboard'}</h1>
+      <div className={s.left}>
+        {onMenuClick && (
+          <button
+            type="button"
+            className={s.menuBtn}
+            onClick={onMenuClick}
+            aria-label="Toggle menu"
+          >
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+        )}
+        <h1 className={s.title}>{title || 'Dashboard'}</h1>
+      </div>
       <div className={s.right}>
         {user && (
           <>

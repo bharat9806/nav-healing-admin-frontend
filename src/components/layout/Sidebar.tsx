@@ -32,7 +32,7 @@ const allNavItems = [
   permission: PermissionKey;
 }>;
 
-export default function Sidebar() {
+export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -84,6 +84,7 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={`${s.navItem} ${isActive ? s.navItemActive : ''}`}
+                onClick={onNavigate}
               >
                 <span className={s.icon}>{item.icon}</span>
                 {item.label}

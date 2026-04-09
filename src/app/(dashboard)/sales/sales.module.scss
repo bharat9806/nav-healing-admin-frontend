@@ -1,11 +1,16 @@
 @use '../../../styles/variables' as *;
 @use '../../../styles/mixins' as *;
 
-.page { padding: $s6; }
+.page {
+  padding: $s6;
+  @media (max-width: ($md - 1px)) { padding: $s3; }
+}
 
 .header {
   @include flex-between;
   margin-bottom: $s4;
+  flex-wrap: wrap;
+  gap: $s2;
 }
 
 .pageTitle {
@@ -34,6 +39,11 @@
   display: flex;
   flex-wrap: wrap;
   gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column;
+    padding: $s3;
+  }
 }
 
 .searchWrapper {
@@ -115,12 +125,14 @@
 
 .tableWrap {
   @include card;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 44rem;
 }
 
 .thead tr {
@@ -320,8 +332,11 @@
   align-items: center;
   justify-content: center;
   gap: $s3;
-  padding: $s4 0;
+  padding: $s4 $s3;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+
+  @media (max-width: ($md - 1px)) { gap: $s2; }
 }
 
 .pageBtn {
