@@ -22,6 +22,12 @@
   gap: $s2;
   flex-wrap: wrap;
   justify-content: flex-end;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .pageTitle {
@@ -34,6 +40,11 @@
 .addBtn {
   @include btn-primary;
   padding: $s2 $s4;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    grid-column: 1 / -1;
+  }
 }
 
 .exportBtn {
@@ -41,6 +52,13 @@
   padding: $s2 $s4;
   border: 1px solid $border;
   &:hover { border-color: $text-muted; color: $text-primary; }
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: $s2 $s3;
+    text-align: center;
+  }
 }
 
 // Filters
@@ -60,6 +78,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: $s3;
   margin-bottom: $s4;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .statCard {
@@ -69,6 +91,11 @@
   align-items: center;
   justify-content: space-between;
   gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .statLabel {
@@ -85,6 +112,14 @@
   @include btn-ghost;
   border: 1px solid $border;
   padding: $s2 $s3;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    justify-content: center;
+    min-height: 3rem;
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 .filterChipActive {
@@ -170,12 +205,22 @@
   @include card;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+
+  @media (max-width: ($md - 1px)) {
+    overflow: visible;
+    background: transparent;
+    border: none;
+  }
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   min-width: 40rem; // ensures horizontal scroll on mobile instead of squish
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
 }
 
 .thead tr {
@@ -223,6 +268,7 @@
   display: flex;
   align-items: center;
   gap: $s3;
+  min-width: 0;
 }
 
 .productImg {
@@ -256,6 +302,14 @@
   font-size: 0.75rem;
   @include truncate;
   max-width: 12.5rem;
+
+  @media (max-width: ($md - 1px)) {
+    max-width: none;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
 }
 
 .categoryText {
@@ -347,11 +401,88 @@
   &:hover { color: $red-light; }
 }
 
+.mobileList {
+  display: none;
+
+  @media (max-width: ($md - 1px)) {
+    display: flex;
+    flex-direction: column;
+    gap: $s3;
+  }
+}
+
+.mobileCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.mobileCardTop {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.mobileMetaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s3;
+}
+
+.mobileMetaItem {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  min-width: 0;
+}
+
+.mobileMetaLabel {
+  color: $text-subtle;
+  font-size: $fs-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobileHealthy {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: rgba($emerald, 0.12);
+  color: $emerald-light;
+  font-size: 0.72rem;
+}
+
+.mobileActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s3;
+}
+
+.mobileEditBtn {
+  @include btn-ghost;
+  min-height: 2.75rem;
+  border: 1px solid $border;
+  color: $text-primary;
+}
+
+.mobileDeleteBtn {
+  @include btn-danger;
+  min-height: 2.75rem;
+}
+
 // Inline form
 .inlineFormWrap {
   @include card;
   padding: $s6;
   margin-bottom: $s6;
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s4;
+  }
 }
 
 .inlineForm {
@@ -540,6 +671,7 @@
   @media (max-width: ($md - 1px)) {
     gap: $s2;
     font-size: 0.8rem;
+    justify-content: stretch;
   }
 }
 
@@ -562,11 +694,22 @@
     opacity: 0.35;
     cursor: not-allowed;
   }
+
+  @media (max-width: ($md - 1px)) {
+    flex: 1 1 calc(50% - #{$s2});
+    min-height: 2.75rem;
+  }
 }
 
 .pageInfo {
   color: #9ca3af;
   font-size: 0.85rem;
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
 }
 
 .pageSizeSelect {

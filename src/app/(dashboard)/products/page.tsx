@@ -540,6 +540,59 @@ export default function ProductsPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          <div className={s.mobileList}>
+            {products.map((product) => {
+              const isLowStock = product.currentStock <= product.reorderLevel;
+              return (
+                <article key={`mobile-${product.id}`} className={s.mobileCard}>
+                  <div className={s.mobileCardTop}>
+                    <div className={s.productCell}>
+                      {product.image
+                        ? <img src={`${API_BASE}${product.image}`} alt={product.name} className={s.productImg} />
+                        : <div className={s.productImgPlaceholder}>P</div>
+                      }
+                      <div>
+                        <p className={s.productName}>{product.name}</p>
+                        <span className={s.skuBadge}>{product.sku}</span>
+                        {product.description && <p className={s.productDesc}>{product.description}</p>}
+                      </div>
+                    </div>
+                    <button onClick={() => handleToggle(product.id)} className={`${s.statusBtn} ${product.isActive ? s.statusActive : s.statusInactive}`}>
+                      {product.isActive ? 'Active' : 'Inactive'}
+                    </button>
+                  </div>
+
+                  <div className={s.mobileMetaGrid}>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Category</span>
+                      <span className={s.categoryText}>{product.category}</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Price</span>
+                      <span className={s.price}>Rs.{Number(product.price).toFixed(2)}</span>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Inventory</span>
+                      <div className={s.stockCell}>
+                        <strong className={isLowStock ? s.stockLow : s.stockOk}>{product.currentStock}</strong>
+                        <span className={s.stockMeta}>Reorder at {product.reorderLevel}</span>
+                      </div>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Status</span>
+                      {isLowStock ? <span className={s.lowStockBadge}>Low Stock</span> : <span className={s.mobileHealthy}>In Stock</span>}
+                    </div>
+                  </div>
+
+                  <div className={s.mobileActions}>
+                    <button onClick={() => openEdit(product)} className={s.mobileEditBtn}>Edit</button>
+                    <button onClick={() => setDeleteTarget(product)} className={s.mobileDeleteBtn}>Delete</button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
