@@ -140,7 +140,7 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  &:hover { color: $text; }
+  &:hover { color: $text-muted; }
 }
 
 .tr {
