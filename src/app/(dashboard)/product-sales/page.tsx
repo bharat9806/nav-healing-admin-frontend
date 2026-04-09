@@ -350,7 +350,7 @@ export default function ProductSalesPage() {
             {error && <div className={s.error}>{error}</div>}
             <div className={s.grid2}>
               <SearchableProductSelect
-                products={products.filter((p) => p.isActive)}
+                products={products}
                 value={form.productId}
                 onChange={(id) => setForm({ ...form, productId: id })}
               />
