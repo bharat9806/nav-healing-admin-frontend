@@ -654,22 +654,22 @@ export default function LeadsPage() {
               options={[{ label: 'Created: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
               value={datePreset}
               onChange={(val) => handlePreset(String(val))}
-              align=”left”
-              minWidth=”10rem”
+              align="left"
+              minWidth="10rem"
             />
             <CustomSelect
               options={[{ label: 'Delivered: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
               value={deliveredPreset}
               onChange={(val) => handleDeliveredPreset(String(val))}
-              align=”left”
-              minWidth=”10rem”
+              align="left"
+              minWidth="10rem"
             />
             <CustomSelect
               options={[{ label: 'Follow-Up: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
               value={followUpPreset}
               onChange={(val) => handleFollowUpPreset(String(val))}
-              align=”left”
-              minWidth=”10rem”
+              align="left"
+              minWidth="10rem"
             />
           </div>
         )}
