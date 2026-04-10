@@ -65,37 +65,32 @@
   @include card;
   padding: clamp(0.9rem, 3.5vw, 1.1rem);
   margin-bottom: $s6;
-  display: flex;
-  flex-direction: column;
-  gap: $s3;
-
-  @media (max-width: ($md - 1px)) {
-    gap: $s2;
-  }
+  display: block;
 }
 
-.filterRowPrimary {
+.filterRow {
+  width: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1.7fr) auto minmax(12rem, 1fr) auto auto;
   gap: $s3;
   align-items: center;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
 
   @media (max-width: ($md - 1px)) {
     grid-template-columns: 1fr;
+    gap: $s2;
   }
 }
 
-.filterRowSecondary {
-  display: flex;
-  gap: $s3;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+.formGroupCompact {
+  min-width: min(18rem, 100%);
 
   @media (max-width: ($md - 1px)) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $s2;
+    min-width: 0;
+    width: 100%;
   }
 }
 
@@ -152,9 +147,10 @@
   @include input;
   width: 10rem;
   min-width: 0;
+  justify-self: stretch;
 
   @media (max-width: ($lg - 1px)) {
-    width: min(10rem, 100%);
+    width: 100%;
   }
 
   @media (max-width: ($md - 1px)) {
@@ -166,6 +162,10 @@
   @include btn-primary;
   padding: $s2 $s4;
   white-space: nowrap;
+
+  @media (max-width: ($lg - 1px)) {
+    justify-self: start;
+  }
 
   @media (max-width: ($md - 1px)) {
     width: 100%;
@@ -226,6 +226,17 @@
   }
 }
 
+.comboInput {
+  padding-right: 2.75rem;
+}
+
+.filterProductInput {
+  @include input;
+  width: 100%;
+  min-width: min(16rem, 100%);
+  cursor: text;
+}
+
 .comboClear {
   position: absolute;
   right: 0.5rem;
@@ -246,6 +257,29 @@
   &:hover {
     color: #ef4444;
     background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.comboSearchBtn {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--brand-primary);
+  color: var(--brand-on-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: var(--brand-primary-hover);
+    transform: translateY(-50%) scale(1.03);
   }
 }
 
@@ -326,6 +360,13 @@
   text-align: center;
   font-size: 0.85rem;
   color: var(--shell-text-muted);
+}
+
+.comboHint {
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--shell-text-subtle);
 }
 
 .formTextarea {

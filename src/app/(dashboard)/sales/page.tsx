@@ -169,7 +169,7 @@ export default function SalesPage() {
   const [paymentModes, setPaymentModes] = useState<string[]>(defaultPaymentModes);
   const [statuses, setStatuses] = useState<string[]>(defaultStatuses);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -191,6 +191,9 @@ export default function SalesPage() {
   const computedAmount = selectedProduct
     ? productPrice + therapyPrice
     : Number(form.amount || 0);
+  const summaryTotalAmount = sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
+  const summaryPendingAmount = sales.reduce((sum, sale) => sum + Number(sale.pendingAmount || 0), 0);
+  const summaryReceivedAmount = summaryTotalAmount - summaryPendingAmount;
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -357,6 +360,23 @@ export default function SalesPage() {
           <button onClick={openCreate} className={s.addBtn}>+ Add Sale</button>
         </div>
       </div>
+
+      {!showInlineForm && (
+        <div className={s.summaryRow}>
+          <div className={s.summaryCard}>
+            <span className={s.summaryLabel}>Current Sales</span>
+            <strong className={s.summaryValue}>{currency(summaryTotalAmount)}</strong>
+          </div>
+          <div className={s.summaryCard}>
+            <span className={s.summaryLabel}>Received Amount</span>
+            <strong className={`${s.summaryValue} ${s.summaryValueReceived}`}>{currency(summaryReceivedAmount)}</strong>
+          </div>
+          <div className={s.summaryCard}>
+            <span className={s.summaryLabel}>Pending Amount</span>
+            <strong className={`${s.summaryValue} ${s.summaryValuePending}`}>{currency(summaryPendingAmount)}</strong>
+          </div>
+        </div>
+      )}
 
       {!showInlineForm && (
         <div className={s.filterPanel}>

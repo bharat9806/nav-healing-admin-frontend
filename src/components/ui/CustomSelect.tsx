@@ -17,6 +17,7 @@ type Props = {
   align?: 'left' | 'right';
   direction?: 'up' | 'down';
   minWidth?: string;
+  fullWidth?: boolean;
 };
 
 export function CustomSelect({
@@ -28,6 +29,7 @@ export function CustomSelect({
   align = 'right',
   direction = 'down',
   minWidth,
+  fullWidth = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -49,10 +51,10 @@ export function CustomSelect({
   };
 
   return (
-    <div className={`${s.wrap} ${className}`} ref={wrapRef}>
+    <div className={`${s.wrap} ${fullWidth ? s.wrapFull : ''} ${className}`} ref={wrapRef}>
       <button
         type="button"
-        className={`${s.trigger} ${open ? s.triggerOpen : ''}`}
+        className={`${s.trigger} ${fullWidth ? s.triggerFull : ''} ${open ? s.triggerOpen : ''}`}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={handleKey}
         aria-haspopup="listbox"
@@ -73,7 +75,7 @@ export function CustomSelect({
 
       {open && (
         <ul
-          className={`${s.list} ${align === 'left' ? s.listLeft : s.listRight} ${direction === 'up' ? s.listUp : s.listDown}`}
+          className={`${s.list} ${fullWidth ? s.listFull : ''} ${align === 'left' ? s.listLeft : s.listRight} ${direction === 'up' ? s.listUp : s.listDown}`}
           style={minWidth ? { minWidth } : undefined}
           role="listbox"
           aria-label="Options"

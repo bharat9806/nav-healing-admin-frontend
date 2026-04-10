@@ -16,6 +16,19 @@ type ProductSaleFormState = {
   notes: string;
 };
 
+type ProductLookupSelectProps = {
+  products: Product[];
+  value: string;
+  onChange: (id: string) => void;
+  onSearch: (query?: string) => void;
+  loading: boolean;
+  placeholder: string;
+  label?: string;
+  required?: boolean;
+  emptyOptionLabel?: string;
+  inputClassName?: string;
+};
+
 const initialForm = (): ProductSaleFormState => ({
   productId: '',
   date: new Date().toISOString().slice(0, 10),
@@ -23,26 +36,30 @@ const initialForm = (): ProductSaleFormState => ({
   notes: '',
 });
 
-function SearchableProductSelect({
+function ProductLookupSelect({
   products,
   value,
   onChange,
-}: {
-  products: Product[];
-  value: string;
-  onChange: (id: string) => void;
-}) {
+  onSearch,
+  loading,
+  placeholder,
+  label,
+  required,
+  emptyOptionLabel,
+  inputClassName,
+}: ProductLookupSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const selected = products.find((p) => String(p.id) === value);
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.sku.toLowerCase().includes(query.toLowerCase()),
-  );
+  const selected = products.find((product) => String(product.id) === value);
+  const closedValue = value
+    ? selected
+      ? `${selected.name} (${selected.sku})`
+      : ''
+    : emptyOptionLabel || '';
+  const showSearchAction = open && query.trim().length > 0;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -51,62 +68,113 @@ function SearchableProductSelect({
         setQuery('');
       }
     };
+
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const handleSearch = () => {
+    onSearch(query.trim() || undefined);
+  };
+
   return (
-    <div className={s.formGroup} ref={wrapRef}>
-      <label>Product *</label>
+    <div className={`${s.formGroup} ${!label ? s.formGroupCompact : ''}`} ref={wrapRef}>
+      {label && <label>{label}{required ? ' *' : ''}</label>}
       <div className={s.comboWrap}>
         <input
           ref={inputRef}
           type="text"
-          className={s.formInput}
-          placeholder="Search product..."
-          value={open ? query : selected ? `${selected.name} (${selected.sku})` : ''}
+          className={`${inputClassName || s.formInput} ${s.comboInput}`}
+          placeholder={placeholder}
+          value={open ? query : closedValue}
           onChange={(e) => {
             setQuery(e.target.value);
-            if (!open) setOpen(true);
+            if (!open) {
+              setOpen(true);
+            }
           }}
           onFocus={() => {
             setOpen(true);
-            setQuery('');
+            if (!products.length) {
+              onSearch();
+            }
           }}
-          required={!value}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (showSearchAction) {
+                handleSearch();
+              }
+            }
+          }}
+          required={required && !value}
           autoComplete="off"
         />
-        {value && !open && (
+
+        {showSearchAction && (
+          <button
+            type="button"
+            className={s.comboSearchBtn}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={handleSearch}
+            aria-label="Search products"
+          >
+            <SearchIcon />
+          </button>
+        )}
+
+        {!showSearchAction && value && (
           <button
             type="button"
             className={s.comboClear}
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => {
               onChange('');
               setQuery('');
               setOpen(true);
               inputRef.current?.focus();
+              onSearch();
             }}
+            aria-label="Clear selected product"
           >
-            ✕
+            x
           </button>
         )}
+
         {open && (
           <ul className={s.comboList}>
-            {filtered.length === 0 ? (
+            {emptyOptionLabel && (
+              <li
+                className={`${s.comboItem} ${value === '' ? s.comboItemActive : ''}`}
+                onMouseDown={() => {
+                  onChange('');
+                  setOpen(false);
+                  setQuery('');
+                }}
+              >
+                <span className={s.comboItemName}>{emptyOptionLabel}</span>
+              </li>
+            )}
+
+            {loading ? (
+              <li className={s.comboEmpty}>Loading products...</li>
+            ) : showSearchAction ? (
+              <li className={s.comboHint}>Click the search button to fetch matching products</li>
+            ) : products.length === 0 ? (
               <li className={s.comboEmpty}>No products found</li>
             ) : (
-              filtered.map((p) => (
+              products.map((product) => (
                 <li
-                  key={p.id}
-                  className={`${s.comboItem} ${String(p.id) === value ? s.comboItemActive : ''}`}
+                  key={product.id}
+                  className={`${s.comboItem} ${String(product.id) === value ? s.comboItemActive : ''}`}
                   onMouseDown={() => {
-                    onChange(String(p.id));
+                    onChange(String(product.id));
                     setOpen(false);
                     setQuery('');
                   }}
                 >
-                  <span className={s.comboItemName}>{p.name}</span>
-                  <span className={s.comboItemSku}>{p.sku} • Stock: {p.currentStock}</span>
+                  <span className={s.comboItemName}>{product.name}</span>
+                  <span className={s.comboItemSku}>{product.sku} | Stock: {product.currentStock}</span>
                 </li>
               ))
             )}
@@ -117,15 +185,39 @@ function SearchableProductSelect({
   );
 }
 
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function mergeProductLists(existing: Product[], incoming: Product[]) {
+  const byId = new Map<number, Product>();
+
+  for (const product of existing) {
+    byId.set(product.id, product);
+  }
+
+  for (const product of incoming) {
+    byId.set(product.id, product);
+  }
+
+  return Array.from(byId.values());
+}
+
 export default function ProductSalesPage() {
   const [items, setItems] = useState<ProductSaleItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -141,19 +233,33 @@ export default function ProductSalesPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const selectedProduct = products.find((product) => String(product.id) === form.productId);
 
-  const fetchProducts = () => {
-    api.get('/products/options')
+  const fetchProducts = (query?: string) => {
+    setProductsLoading(true);
+
+    const params = new URLSearchParams();
+    params.set('limit', '10');
+    if (query?.trim()) {
+      params.set('search', query.trim());
+    }
+
+    return api.get(`/products/options?${params.toString()}`)
       .then((res) => {
-        setProducts(res.data || []);
+        const nextProducts = (res.data || []) as Product[];
+        setProducts((prev) => mergeProductLists(prev, nextProducts));
       })
       .catch(() => {
-        setProducts([]);
+        if (!products.length) {
+          setProducts([]);
+        }
+      })
+      .finally(() => {
+        setProductsLoading(false);
       });
   };
 
   const handleSort = (field: string) => {
     if (sortField === field) {
-      setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+      setSortOrder((current) => current === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortOrder('asc');
@@ -201,7 +307,9 @@ export default function ProductSalesPage() {
   };
 
   const openCreate = () => {
-    if (products.length === 0) fetchProducts();
+    if (products.length === 0) {
+      fetchProducts();
+    }
     setEditing(null);
     setForm(initialForm());
     setError('');
@@ -209,6 +317,10 @@ export default function ProductSalesPage() {
   };
 
   const openEdit = (item: ProductSaleItem) => {
+    if (item.product) {
+      setProducts((prev) => mergeProductLists(prev, [item.product as Product]));
+    }
+
     setEditing(item);
     setForm({
       productId: String(item.productId),
@@ -239,8 +351,11 @@ export default function ProductSalesPage() {
     };
 
     try {
-      if (editing) await api.put(`/product-sales/${editing.id}`, payload);
-      else await api.post('/product-sales', payload);
+      if (editing) {
+        await api.put(`/product-sales/${editing.id}`, payload);
+      } else {
+        await api.post('/product-sales', payload);
+      }
 
       setShowInlineForm(false);
       setEditing(null);
@@ -264,6 +379,7 @@ export default function ProductSalesPage() {
 
   const handleExport = async () => {
     if (currentUser && currentUser.role !== 'SUPER_ADMIN' && !currentUser.canExportProductSales) return;
+
     const params = new URLSearchParams();
     if (search) params.set('search', search);
     if (productFilter) params.set('productId', productFilter);
@@ -298,7 +414,7 @@ export default function ProductSalesPage() {
 
       {!showInlineForm && (
         <div className={s.filterPanel}>
-          <div className={s.filterRowPrimary}>
+          <div className={s.filterRow}>
             <div className={s.searchWrapper}>
               <input
                 type="text"
@@ -316,22 +432,29 @@ export default function ProductSalesPage() {
                 <button
                   type="button"
                   className={s.searchClear}
-                  onClick={() => { setSearch(''); if (page === 1) fetchData(1); else setPage(1); }}
+                  onClick={() => {
+                    setSearch('');
+                    if (page === 1) fetchData(1); else setPage(1);
+                  }}
                   aria-label="Clear search"
                 >
-                  ✕
+                  x
                 </button>
               )}
             </div>
             <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
-          </div>
-          <div className={s.filterRowSecondary}>
-            <CustomSelect
-              options={[{ label: 'All Products', value: '' }, ...products.map((p) => ({ label: p.name, value: p.id }))]}
+            <ProductLookupSelect
+              products={products}
               value={productFilter}
-              onChange={(val) => { setProductFilter(String(val)); setPage(1); }}
-              align="left"
-              minWidth="12rem"
+              onChange={(id) => {
+                setProductFilter(id);
+                setPage(1);
+              }}
+              onSearch={fetchProducts}
+              loading={productsLoading}
+              placeholder="All Products"
+              emptyOptionLabel="All Products"
+              inputClassName={s.filterProductInput}
             />
             <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={s.dateInput} />
             <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.dateInput} />
@@ -344,17 +467,25 @@ export default function ProductSalesPage() {
           <form onSubmit={handleSubmit} className={s.inlineForm}>
             <h2 className={s.inlineFormTitle}>{editing ? 'Edit Product Sale' : 'New Product Sale'}</h2>
             {error && <div className={s.error}>{error}</div>}
+
             <div className={s.grid2}>
-              <SearchableProductSelect
+              <ProductLookupSelect
                 products={products}
                 value={form.productId}
                 onChange={(id) => setForm({ ...form, productId: id })}
+                onSearch={fetchProducts}
+                loading={productsLoading}
+                placeholder="Search product..."
+                label="Product"
+                required
               />
+
               <div className={s.formGroup}>
                 <label>Date *</label>
                 <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={s.formInput} required />
               </div>
             </div>
+
             <div className={s.grid2}>
               <div className={s.formGroup}>
                 <label>Quantity *</label>
@@ -365,11 +496,13 @@ export default function ProductSalesPage() {
                 <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className={s.formTextarea} />
               </div>
             </div>
+
             {selectedProduct && (
               <div className={s.stockHint}>
                 <strong>{selectedProduct.name}</strong> stock: {selectedProduct.currentStock}. Reorder level: {selectedProduct.reorderLevel}.
               </div>
             )}
+
             <div className={s.formActions}>
               <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
               <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
@@ -397,7 +530,7 @@ export default function ProductSalesPage() {
                       <p className={s.productName}>{item.product?.name || '-'}</p>
                       <p className={s.productSub}>
                         {new Date(item.date).toLocaleDateString('en-GB')}
-                        {item.product?.sku ? ` • ${item.product.sku}` : ''}
+                        {item.product?.sku ? ` | ${item.product.sku}` : ''}
                       </p>
                     </div>
                     <span className={s.quantityBadge}>{item.quantity} sold</span>
@@ -448,7 +581,7 @@ export default function ProductSalesPage() {
                   <td className={s.td}><span className={s.cellText}>{new Date(item.date).toLocaleDateString('en-GB')}</span></td>
                   <td className={s.td}>
                     <p className={s.productName}>{item.product?.name || '-'}</p>
-                    <p className={s.productSub}>{item.product?.sku || ''} {item.product?.category ? `• ${item.product.category}` : ''}</p>
+                    <p className={s.productSub}>{item.product?.sku || ''} {item.product?.category ? `| ${item.product.category}` : ''}</p>
                   </td>
                   <td className={s.td}><span className={s.quantityText}>{item.quantity}</span></td>
                   <td className={s.td}><span className={s.cellText}>{item.product?.currentStock ?? '-'}</span></td>

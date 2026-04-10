@@ -46,6 +46,7 @@ export interface Product {
   price: number;
   image?: string;
   category: string;
+  subcategory?: string;
   isActive: boolean;
   currentStock: number;
   reorderLevel: number;
@@ -102,7 +103,7 @@ export interface Sale {
   date: string;
   patientName: string;
   productId?: number;
-  product?: { id: number; name: string; sku: string; price: number; category: string };
+  product?: { id: number; name: string; sku: string; price: number; category: string; subcategory?: string };
   therapyPrice?: number;
   amount: number;
   paymentMode: string;

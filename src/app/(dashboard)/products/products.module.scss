@@ -551,8 +551,22 @@
   }
 }
 
+.productMetaRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(11rem, 0.8fr) minmax(0, 1.35fr);
+  gap: $s4;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
 .formInput  { @include input; }
 .formSelect { @include input; cursor: pointer; }
+
+.formSelectWrap {
+  width: 100%;
+}
 
 .formTextarea {
   @include input;

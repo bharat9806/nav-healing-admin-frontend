@@ -8,10 +8,53 @@ import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Product, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { TypeableSelect } from '@/components/ui/TypeableSelect';
 import s from './products.module.scss';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
-const categories = ['Herbs', 'Oils', 'Powders', 'Capsules', 'Drops', 'Other'];
+const categories = [
+  'Syrup',
+  'Soap',
+  'Toothpaste',
+  'Ointment',
+  'Shampoo',
+  'Face Cream',
+  'Face Wash',
+  'Capsules',
+  'Tablets',
+  'Powder',
+  'Drops',
+  'Lotion',
+  'Granules',
+  'Churan',
+  'Cream',
+  'Gel',
+  'Spray',
+  'Oil',
+  'Other',
+];
+
+const subcategoryOptionsByCategory: Record<string, string[]> = {
+  Syrup: ['Cough Relief', 'Digestive', 'Immunity'],
+  Soap: ['Herbal Bath', 'Acne Care', 'Moisturizing'],
+  Toothpaste: ['Sensitive Teeth', 'Herbal Care', 'Whitening'],
+  Ointment: ['Pain Relief', 'Anti-fungal', 'Skin Repair'],
+  Shampoo: ['Anti-Dandruff', 'Hair Fall Control', 'Daily Care'],
+  'Face Cream': ['Brightening', 'Anti-Acne', 'Moisturizing'],
+  'Face Wash': ['Oil Control', 'Gentle Cleanser', 'Anti-Acne'],
+  Capsules: ['Digestive', 'Immunity', 'Women Care'],
+  Tablets: ['General Wellness', 'Pain Relief', 'Digestive'],
+  Powder: ['Nutrition', 'Digestive', 'Protein Support'],
+  Drops: ['Eye Care', 'Ear Care', 'Pediatric'],
+  Lotion: ['Body Care', 'Itch Relief', 'Moisturizing'],
+  Granules: ['Digestive', 'Energy Support', 'Metabolic Care'],
+  Churan: ['Digestive', 'Appetite Support', 'Gas Relief'],
+  Cream: ['Skin Care', 'Pain Relief', 'Anti-fungal'],
+  Gel: ['Pain Relief', 'Cooling', 'Skin Care'],
+  Spray: ['Pain Relief', 'Nasal Care', 'Oral Care'],
+  Oil: ['Hair Care', 'Massage', 'Therapeutic'],
+  Other: ['General', 'Herbal', 'Specialty'],
+};
 
 type ProductFormState = {
   sku: string;
@@ -19,6 +62,7 @@ type ProductFormState = {
   description: string;
   price: string;
   category: string;
+  subcategory: string;
   isActive: boolean;
   currentStock: string;
   reorderLevel: string;
@@ -47,11 +91,17 @@ function ProductForm({
   onFormChange,
   onImageChange,
 }: ProductFormProps) {
+  const subcategoryOptions = subcategoryOptionsByCategory[form.category] ?? [];
+  const subcategorySelectOptions = [
+    { label: 'Select subcategory', value: '' },
+    ...subcategoryOptions.map((option) => ({ label: option, value: option })),
+  ];
+
   return (
     <form onSubmit={onSubmit} className={s.inlineForm}>
       <h2 className={s.inlineFormTitle}>{editing ? 'Edit Product' : 'New Product'}</h2>
       {error && <div className={s.error}>{error}</div>}
-      <div className={s.grid2}>
+      <div className={s.productMetaRow}>
         <div className={s.formGroup}>
           <label>SKU / Product Code</label>
           <input
@@ -65,11 +115,28 @@ function ProductForm({
         <div className={s.formGroup}>
           <label>Category *</label>
           <CustomSelect
+            className={s.formSelectWrap}
+            fullWidth
             options={categories.map((c) => ({ label: c, value: c }))}
             value={form.category}
             onChange={(val) => onFormChange({ ...form, category: String(val) })}
             align="left"
             minWidth="100%"
+          />
+        </div>
+        <div className={s.formGroup}>
+          <label>Subcategory</label>
+          <TypeableSelect
+            className={s.formSelectWrap}
+            fullWidth
+            options={subcategorySelectOptions}
+            value={form.subcategory}
+            onChange={(val) => onFormChange({ ...form, subcategory: val })}
+            align="left"
+            minWidth="100%"
+            placeholder="Select subcategory"
+            customOptionLabel="Type custom subcategory"
+            customPlaceholder="Type subcategory"
           />
         </div>
       </div>
@@ -151,7 +218,8 @@ const initialForm = (): ProductFormState => ({
   name: '',
   description: '',
   price: '',
-  category: 'Herbs',
+  category: 'Capsules',
+  subcategory: '',
   isActive: true,
   currentStock: '0',
   reorderLevel: '5',
@@ -163,7 +231,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -250,6 +318,7 @@ export default function ProductsPage() {
       description: product.description || '',
       price: String(product.price),
       category: product.category,
+      subcategory: product.subcategory || '',
       isActive: product.isActive,
       currentStock: String(product.currentStock),
       reorderLevel: String(product.reorderLevel),
@@ -278,6 +347,7 @@ export default function ProductsPage() {
     fd.append('description', form.description);
     fd.append('price', form.price);
     fd.append('category', form.category);
+    fd.append('subcategory', form.subcategory);
     fd.append('isActive', String(form.isActive));
     fd.append('currentStock', form.currentStock || '0');
     fd.append('reorderLevel', form.reorderLevel || '5');
@@ -320,7 +390,8 @@ export default function ProductsPage() {
         name: 'Ashwagandha Powder',
         description: 'Stress support herbal powder',
         price: 499,
-        category: 'Powders',
+        category: 'Powder',
+        subcategory: 'Herbal Support',
         isActive: true,
         currentStock: 80,
         reorderLevel: 15,
@@ -330,7 +401,8 @@ export default function ProductsPage() {
         name: 'Neem Oil',
         description: 'Cold-pressed neem oil',
         price: 299,
-        category: 'Oils',
+        category: 'Oil',
+        subcategory: 'Skin Care',
         isActive: true,
         currentStock: 24,
         reorderLevel: 10,
@@ -341,6 +413,7 @@ export default function ProductsPage() {
         description: 'Daily immunity drops',
         price: 199,
         category: 'Drops',
+        subcategory: 'Immunity',
         isActive: false,
         currentStock: 6,
         reorderLevel: 8,
@@ -413,6 +486,7 @@ export default function ProductsPage() {
       SKU: product.sku,
       Name: product.name,
       Category: product.category,
+      Subcategory: product.subcategory || '',
       Price: Number(product.price).toFixed(2),
       'Current Stock': product.currentStock,
       'Reorder Level': product.reorderLevel,
@@ -565,7 +639,7 @@ export default function ProductsPage() {
                   <div className={s.mobileMetaGrid}>
                     <div className={s.mobileMetaItem}>
                       <span className={s.mobileMetaLabel}>Category</span>
-                      <span className={s.categoryText}>{product.category}</span>
+                      <span className={s.categoryText}>{product.category}{product.subcategory ? ` / ${product.subcategory}` : ''}</span>
                     </div>
                     <div className={s.mobileMetaItem}>
                       <span className={s.mobileMetaLabel}>Price</span>
@@ -623,7 +697,7 @@ export default function ProductsPage() {
                       </div>
                     </td>
                     <td className={s.td}><span className={s.skuBadge}>{product.sku}</span></td>
-                    <td className={`${s.td} ${s.hideMd}`}><span className={s.categoryText}>{product.category}</span></td>
+                    <td className={`${s.td} ${s.hideMd}`}><span className={s.categoryText}>{product.category}{product.subcategory ? ` / ${product.subcategory}` : ''}</span></td>
                     <td className={s.td}><span className={s.price}>Rs.{Number(product.price).toFixed(2)}</span></td>
                     <td className={s.td}>
                       <div className={s.stockCell}>

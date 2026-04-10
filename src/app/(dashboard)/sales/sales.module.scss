@@ -61,6 +61,49 @@
   }
 }
 
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $s3;
+  margin-bottom: $s4;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summaryCard {
+  @include card;
+  padding: clamp(0.9rem, 3.4vw, 1.1rem);
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.summaryLabel {
+  color: var(--shell-text-muted);
+  font-size: clamp(0.72rem, 0.68rem + 0.2vw, 0.8rem);
+}
+
+.summaryValue {
+  color: var(--shell-text-primary);
+  font-size: clamp(1.15rem, 1.02rem + 0.45vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.summaryValueReceived {
+  color: $emerald-light;
+}
+
+.summaryValuePending {
+  color: $amber-light;
+}
+
 .filterPanel {
   @include card;
   padding: clamp(0.9rem, 3.5vw, 1.1rem);

@@ -11,6 +11,11 @@
   }
 }
 
+.wrapFull {
+  display: block;
+  width: 100%;
+}
+
 // ── Trigger Button ────────────────────────────────────────────────
 .trigger {
   display: inline-flex;
@@ -28,6 +33,7 @@
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   user-select: none;
   outline: none;
+  text-align: left;
 
   @media (max-width: 767px) {
     width: 100%;
@@ -46,6 +52,11 @@
   }
 }
 
+.triggerFull {
+  width: 100%;
+  justify-content: space-between;
+}
+
 .triggerOpen {
   background: var(--shell-control-bg-strong);
   border-color: var(--shell-border-strong);
@@ -54,6 +65,7 @@
 
 .triggerLabel {
   flex: 1;
+  text-align: left;
 }
 
 // ── Chevron Icon ──────────────────────────────────────────────────
@@ -117,6 +129,10 @@
     width: 100%;
     max-height: min(18rem, 50vh);
   }
+}
+
+.listFull {
+  width: 100%;
 }
 
 .listDown {
