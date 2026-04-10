@@ -31,6 +31,7 @@ const categories = [
   'Gel',
   'Spray',
   'Oil',
+  'Lip Balm',
   'Other',
 ];
 
@@ -53,6 +54,7 @@ const subcategoryOptionsByCategory: Record<string, string[]> = {
   Gel: ['Pain Relief', 'Cooling', 'Skin Care'],
   Spray: ['Pain Relief', 'Nasal Care', 'Oral Care'],
   Oil: ['Hair Care', 'Massage', 'Therapeutic'],
+  'Lip Balm': ['Moisturizing', 'Herbal', 'Tinted', 'Medicated'],
   Other: ['General', 'Herbal', 'Specialty'],
 };
 
