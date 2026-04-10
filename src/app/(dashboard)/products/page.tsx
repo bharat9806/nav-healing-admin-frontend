@@ -12,50 +12,11 @@ import { TypeableSelect } from '@/components/ui/TypeableSelect';
 import s from './products.module.scss';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
-const categories = [
-  'Syrup',
-  'Soap',
-  'Toothpaste',
-  'Ointment',
-  'Shampoo',
-  'Face Cream',
-  'Face Wash',
-  'Capsules',
-  'Tablets',
-  'Powder',
-  'Drops',
-  'Lotion',
-  'Granules',
-  'Churan',
-  'Cream',
-  'Gel',
-  'Spray',
-  'Oil',
-  'Lip Balm',
-  'Other',
-];
 
-const subcategoryOptionsByCategory: Record<string, string[]> = {
-  Syrup: ['Cough Relief', 'Digestive', 'Immunity'],
-  Soap: ['Herbal Bath', 'Acne Care', 'Moisturizing'],
-  Toothpaste: ['Sensitive Teeth', 'Herbal Care', 'Whitening'],
-  Ointment: ['Pain Relief', 'Anti-fungal', 'Skin Repair'],
-  Shampoo: ['Anti-Dandruff', 'Hair Fall Control', 'Daily Care'],
-  'Face Cream': ['Brightening', 'Anti-Acne', 'Moisturizing'],
-  'Face Wash': ['Oil Control', 'Gentle Cleanser', 'Anti-Acne'],
-  Capsules: ['Digestive', 'Immunity', 'Women Care'],
-  Tablets: ['General Wellness', 'Pain Relief', 'Digestive'],
-  Powder: ['Nutrition', 'Digestive', 'Protein Support'],
-  Drops: ['Eye Care', 'Ear Care', 'Pediatric'],
-  Lotion: ['Body Care', 'Itch Relief', 'Moisturizing'],
-  Granules: ['Digestive', 'Energy Support', 'Metabolic Care'],
-  Churan: ['Digestive', 'Appetite Support', 'Gas Relief'],
-  Cream: ['Skin Care', 'Pain Relief', 'Anti-fungal'],
-  Gel: ['Pain Relief', 'Cooling', 'Skin Care'],
-  Spray: ['Pain Relief', 'Nasal Care', 'Oral Care'],
-  Oil: ['Hair Care', 'Massage', 'Therapeutic'],
-  'Lip Balm': ['Moisturizing', 'Herbal', 'Tinted', 'Medicated'],
-  Other: ['General', 'Herbal', 'Specialty'],
+type CategoryOption = {
+  id: number;
+  name: string;
+  subcategories: { id: number; name: string }[];
 };
 
 type ProductFormState = {
@@ -76,6 +37,7 @@ type ProductFormProps = {
   form: ProductFormState;
   imagePreview: string;
   saving: boolean;
+  categoryOptions: CategoryOption[];
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
   onFormChange: (next: ProductFormState) => void;
@@ -88,15 +50,17 @@ function ProductForm({
   form,
   imagePreview,
   saving,
+  categoryOptions,
   onSubmit,
   onCancel,
   onFormChange,
   onImageChange,
 }: ProductFormProps) {
-  const subcategoryOptions = subcategoryOptionsByCategory[form.category] ?? [];
+  const selectedCategory = categoryOptions.find((c) => c.name === form.category);
+  const subcategoryOptions = selectedCategory?.subcategories ?? [];
   const subcategorySelectOptions = [
     { label: 'Select subcategory', value: '' },
-    ...subcategoryOptions.map((option) => ({ label: option, value: option })),
+    ...subcategoryOptions.map((option) => ({ label: option.name, value: option.name })),
   ];
 
   return (
@@ -119,9 +83,9 @@ function ProductForm({
           <CustomSelect
             className={s.formSelectWrap}
             fullWidth
-            options={categories.map((c) => ({ label: c, value: c }))}
+            options={categoryOptions.map((c) => ({ label: c.name, value: c.name }))}
             value={form.category}
-            onChange={(val) => onFormChange({ ...form, category: String(val) })}
+            onChange={(val) => onFormChange({ ...form, category: String(val), subcategory: '' })}
             align="left"
             minWidth="100%"
           />
@@ -220,7 +184,7 @@ const initialForm = (): ProductFormState => ({
   name: '',
   description: '',
   price: '',
-  category: 'Capsules',
+  category: '',
   subcategory: '',
   isActive: true,
   currentStock: '0',
@@ -230,6 +194,7 @@ const initialForm = (): ProductFormState => ({
 export default function ProductsPage() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -288,6 +253,12 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
+    api.get('/categories').then((res) => {
+      const cats: CategoryOption[] = res.data;
+      setCategoryOptions(cats);
+      // Set default category for the new-product form
+      setForm((prev) => ({ ...prev, category: prev.category || (cats[0]?.name ?? '') }));
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -559,6 +530,7 @@ export default function ProductsPage() {
             form={form}
             imagePreview={imagePreview}
             saving={saving}
+            categoryOptions={categoryOptions}
             onSubmit={handleSubmit}
             onCancel={cancelCreate}
             onFormChange={setForm}
@@ -597,7 +569,7 @@ export default function ProductsPage() {
             )}
           </div>
           <CustomSelect
-            options={[{ label: 'All Categories', value: '' }, ...categories.map((c) => ({ label: c, value: c }))]}
+            options={[{ label: 'All Categories', value: '' }, ...categoryOptions.map((c) => ({ label: c.name, value: c.name }))]}
             value={catFilter}
             onChange={(val) => { setCatFilter(String(val)); setPage(1); }}
             align="left"
