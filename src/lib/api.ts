@@ -24,7 +24,11 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       const requestUrl = String(error.config?.url ?? '');
       const isAuthSubmit =
-        requestUrl.includes('/auth/login') || requestUrl.includes('/auth/accept-invite');
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/accept-invite') ||
+        requestUrl.includes('/auth/login-method') ||
+        requestUrl.includes('/auth/request-otp') ||
+        requestUrl.includes('/auth/verify-otp');
       const isOnLoginPage = window.location.pathname.startsWith('/login');
 
       if (!isAuthSubmit && !isOnLoginPage) {

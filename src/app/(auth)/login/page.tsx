@@ -1,13 +1,15 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { setFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './login.module.scss';
 
 type Step = 'userCode' | 'password' | 'otp';
+
+const OTP_COOLDOWN_SECONDS = 60;
 
 export default function LoginPage() {
   const [step, setStep] = useState<Step>('userCode');
@@ -18,6 +20,27 @@ export default function LoginPage() {
   const [info, setInfo] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
+
+  const startResendCooldown = () => {
+    setResendCooldown(OTP_COOLDOWN_SECONDS);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current!);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const completeLogin = (accessToken?: string) => {
     if (accessToken) {
@@ -45,8 +68,16 @@ export default function LoginPage() {
       } else {
         setStep('otp');
         setEmailHint(response.data.emailHint || '');
-        const otpResponse = await api.post<{ message?: string }>('/auth/request-otp', { userCode });
-        setInfo(otpResponse.data.message || 'OTP sent successfully');
+        try {
+          const otpResponse = await api.post<{ message?: string }>('/auth/request-otp', { userCode });
+          setInfo(otpResponse.data.message || 'OTP sent successfully');
+          startResendCooldown();
+        } catch (otpErr) {
+          const otpMsg = isAxiosError<{ message?: string }>(otpErr)
+            ? otpErr.response?.data?.message
+            : undefined;
+          setError(otpMsg || 'Could not send OTP email. Use the Resend button to try again.');
+        }
       }
     } catch (error) {
       const message = isAxiosError<{ message?: string }>(error)
@@ -102,6 +133,25 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0 || loading) return;
+    setLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const otpResponse = await api.post<{ message?: string }>('/auth/request-otp', { userCode });
+      setInfo(otpResponse.data.message || 'OTP resent successfully');
+      startResendCooldown();
+    } catch (err) {
+      const message = isAxiosError<{ message?: string }>(err)
+        ? err.response?.data?.message
+        : undefined;
+      setError(message || 'Failed to resend OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetFlow = () => {
     setStep('userCode');
     setPassword('');
@@ -109,6 +159,8 @@ export default function LoginPage() {
     setInfo('');
     setError('');
     setEmailHint('');
+    setResendCooldown(0);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
   };
 
   return (
@@ -198,30 +250,41 @@ export default function LoginPage() {
                 <input type="text" value={userCode} disabled className={s.input} />
               </div>
               {emailHint && (
-                <div className={s.info}>OTP sent to {emailHint}</div>
+                <div className={s.info}>OTP sent to <strong>{emailHint}</strong> — expires in 10 minutes.</div>
               )}
               <div className={s.field}>
                 <label>OTP</label>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
                   value={otp}
                   onChange={(e) => {
-                    setOtp(e.target.value);
+                    setOtp(e.target.value.replace(/\D/g, ''));
                     setError('');
                     setInfo('');
                   }}
                   placeholder="123456"
                   required
                   maxLength={6}
+                  autoComplete="one-time-code"
                   className={s.input}
                 />
               </div>
 
               {error && <div className={s.error}>{error}</div>}
-              {info && !emailHint && <div className={s.info}>{info}</div>}
+              {info && <div className={s.info}>{info}</div>}
 
               <button type="submit" disabled={loading} className={s.submitBtn}>
                 {loading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resendCooldown > 0 || loading}
+                className={s.secondaryBtn}
+              >
+                {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
               </button>
               <button type="button" onClick={resetFlow} className={s.secondaryBtn}>
                 Change User Code

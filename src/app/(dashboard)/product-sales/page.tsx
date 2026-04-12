@@ -52,6 +52,19 @@ function ProductLookupSelect({
   const [query, setQuery] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-search 300ms after user stops typing
+  useEffect(() => {
+    if (!open) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onSearch(query.trim() || undefined);
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, open]);
 
   const selected = products.find((product) => String(product.id) === value);
   const closedValue = value
@@ -157,9 +170,7 @@ function ProductLookupSelect({
             )}
 
             {loading ? (
-              <li className={s.comboEmpty}>Loading products...</li>
-            ) : showSearchAction ? (
-              <li className={s.comboHint}>Click the search button to fetch matching products</li>
+              <li className={s.comboEmpty}>Searching...</li>
             ) : products.length === 0 ? (
               <li className={s.comboEmpty}>No products found</li>
             ) : (

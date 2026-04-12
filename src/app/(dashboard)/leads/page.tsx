@@ -47,6 +47,112 @@ const statusCls = (st: string) => {
 
 interface LeadItemForm { productId: number; quantity: number; search: string; showDropdown: boolean; }
 
+type ProductOption = { id: number; name: string; sku: string; price: number };
+
+function LeadProductSearch({
+  value,
+  displayName,
+  onSelect,
+}: {
+  value: number;
+  displayName: string;
+  onSelect: (id: number, name: string) => void;
+}) {
+  const [query, setQuery] = useState(displayName);
+  const [open, setOpen] = useState(false);
+  const [results, setResults] = useState<ProductOption[]>([]);
+  const [searching, setSearching] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep local query in sync when parent changes the display name (e.g. edit mode)
+  useEffect(() => { if (!open) setQuery(displayName); }, [displayName, open]);
+
+  // Debounced server-side search
+  useEffect(() => {
+    if (!open) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearching(true);
+      api
+        .get<ProductOption[]>(`/products/options?search=${encodeURIComponent(query)}&limit=10`)
+        .then((res) => setResults(res.data || []))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, open]);
+
+  // Load initial results when first opened
+  useEffect(() => {
+    if (open && results.length === 0 && !searching) {
+      setSearching(true);
+      api
+        .get<ProductOption[]>('/products/options?limit=10')
+        .then((res) => setResults(res.data || []))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery(displayName); // restore name on blur without selection
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [displayName]);
+
+  return (
+    <div className={s.itemSearchWrap} ref={wrapRef}>
+      <input
+        type="text"
+        className={s.itemSearchInput}
+        placeholder="Search medicine..."
+        value={query}
+        autoComplete="off"
+        onChange={(e) => {
+          setQuery(e.target.value);
+          if (!open) setOpen(true);
+          if (e.target.value === '') onSelect(0, '');
+        }}
+        onFocus={() => {
+          setOpen(true);
+          setQuery('');
+        }}
+      />
+      {open && (
+        <div className={s.productDropdown}>
+          {searching ? (
+            <div className={s.productOptionEmpty}>Searching...</div>
+          ) : results.length === 0 ? (
+            <div className={s.productOptionEmpty}>No medicines found</div>
+          ) : (
+            results.map((p) => (
+              <div
+                key={p.id}
+                className={`${s.productOption} ${value === p.id ? s.productOptionSelected : ''}`}
+                onMouseDown={() => {
+                  onSelect(p.id, p.name);
+                  setQuery(p.name);
+                  setOpen(false);
+                }}
+              >
+                <span>{p.name}</span>
+                <span className={s.productPrice}>&#8377;{Number(p.price).toFixed(2)}</span>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const DATE_PRESETS = [
   { label: 'Today',        key: 'today' },
   { label: 'Yesterday',    key: 'yesterday' },
@@ -57,7 +163,6 @@ const DATE_PRESETS = [
 
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [doctors, setDoctors] = useState<{ id: number; username: string }[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -213,8 +318,6 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
-    // Fetch products, doctors, and stats once on mount — these don't change with filters
-    api.get('/products/options').then((res) => setProducts(res.data)).catch(() => {});
     api.get('/users/doctors').then((res) => setDoctors(res.data)).catch(() => {});
     fetchStats();
   }, []);
@@ -469,53 +572,20 @@ export default function LeadsPage() {
           <button type="button" onClick={addItem} className={s.addItemBtn}>+ Add Item</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          {items.map((item, idx) => {
-            const filtered = products.filter(
-              (p) => p.isActive && p.name.toLowerCase().includes(item.search.toLowerCase()),
-            );
-            return (
-              <div key={idx} className={s.itemRow}>
-                <div className={s.itemSearchWrap}>
-                  <input
-                    type="text"
-                    className={s.itemSearchInput}
-                    placeholder="Search medicine..."
-                    value={item.search}
-                    autoComplete="off"
-                    onChange={(e) => {
-                      updateItem(idx, 'search', e.target.value);
-                      updateItem(idx, 'showDropdown', true);
-                      if (e.target.value === '') updateItem(idx, 'productId', 0);
-                    }}
-                    onFocus={() => updateItem(idx, 'showDropdown', true)}
-                    onBlur={() => setTimeout(() => updateItem(idx, 'showDropdown', false), 150)}
-                  />
-                  {item.showDropdown && (
-                    <div className={s.productDropdown}>
-                      {filtered.length > 0 ? filtered.map((p) => (
-                        <div
-                          key={p.id}
-                          className={`${s.productOption} ${item.productId === p.id ? s.productOptionSelected : ''}`}
-                          onMouseDown={() => {
-                            updateItem(idx, 'productId', p.id);
-                            updateItem(idx, 'search', p.name);
-                            updateItem(idx, 'showDropdown', false);
-                          }}
-                        >
-                          <span>{p.name}</span>
-                          <span className={s.productPrice}>&#8377;{Number(p.price).toFixed(2)}</span>
-                        </div>
-                      )) : (
-                        <div className={s.productOptionEmpty}>No medicines found</div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className={s.itemQty} placeholder="Qty" />
-                {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className={s.removeItemBtn}>✕</button>}
-              </div>
-            );
-          })}
+          {items.map((item, idx) => (
+            <div key={idx} className={s.itemRow}>
+              <LeadProductSearch
+                value={item.productId}
+                displayName={item.search}
+                onSelect={(id, name) => {
+                  updateItem(idx, 'productId', id);
+                  updateItem(idx, 'search', name);
+                }}
+              />
+              <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className={s.itemQty} placeholder="Qty" />
+              {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className={s.removeItemBtn}>✕</button>}
+            </div>
+          ))}
         </div>
       </div>
       <div className={s.formGroup}><label>Notes</label><input type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} /></div>

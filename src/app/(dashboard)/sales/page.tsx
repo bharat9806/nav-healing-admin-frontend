@@ -56,26 +56,54 @@ const statusClass = (status: string) => {
 };
 
 function SearchableProductSelect({
-  products,
   value,
   onChange,
+  selectedProduct,
+  onProductLoaded,
 }: {
-  products: ProductOption[];
   value: string;
   onChange: (id: string) => void;
+  selectedProduct: ProductOption | undefined;
+  onProductLoaded: (product: ProductOption) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<ProductOption[]>([]);
+  const [searching, setSearching] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const selected = products.find((p) => String(p.id) === value);
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.sku.toLowerCase().includes(query.toLowerCase()),
-  );
+  // Fetch results whenever the query changes (debounced 300ms)
+  useEffect(() => {
+    if (!open) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setSearching(true);
+      api
+        .get<ProductOption[]>(`/products/options?search=${encodeURIComponent(query)}&limit=10`)
+        .then((res) => setResults(res.data || []))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, open]);
 
+  // Load initial results when dropdown opens
+  useEffect(() => {
+    if (open && results.length === 0 && !searching) {
+      setSearching(true);
+      api
+        .get<ProductOption[]>('/products/options?limit=10')
+        .then((res) => setResults(res.data || []))
+        .catch(() => setResults([]))
+        .finally(() => setSearching(false));
+    }
+  }, [open]);
+
+  // Close on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
@@ -87,6 +115,13 @@ function SearchableProductSelect({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const handleSelect = (p: ProductOption) => {
+    onChange(String(p.id));
+    onProductLoaded(p);
+    setOpen(false);
+    setQuery('');
+  };
+
   return (
     <div className={s.formGroup} ref={wrapRef}>
       <label>Product (optional)</label>
@@ -95,8 +130,8 @@ function SearchableProductSelect({
           ref={inputRef}
           type="text"
           className={s.formInput}
-          placeholder="Search product..."
-          value={open ? query : selected ? `${selected.name} (${selected.sku})` : ''}
+          placeholder="Search product by name or SKU..."
+          value={open ? query : selectedProduct ? `${selectedProduct.name} (${selectedProduct.sku})` : ''}
           onChange={(e) => {
             setQuery(e.target.value);
             if (!open) setOpen(true);
@@ -133,18 +168,16 @@ function SearchableProductSelect({
             >
               <span className={s.comboItemName}>— No product —</span>
             </li>
-            {filtered.length === 0 ? (
+            {searching ? (
+              <li className={s.comboEmpty}>Searching...</li>
+            ) : results.length === 0 ? (
               <li className={s.comboEmpty}>No products found</li>
             ) : (
-              filtered.map((p) => (
+              results.map((p) => (
                 <li
                   key={p.id}
                   className={`${s.comboItem} ${String(p.id) === value ? s.comboItemActive : ''}`}
-                  onMouseDown={() => {
-                    onChange(String(p.id));
-                    setOpen(false);
-                    setQuery('');
-                  }}
+                  onMouseDown={() => handleSelect(p)}
                 >
                   <span className={s.comboItemName}>{p.name}</span>
                   <span className={s.comboItemSku}>{p.sku} • Rs. {Number(p.price).toFixed(2)}</span>
@@ -160,7 +193,7 @@ function SearchableProductSelect({
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
-  const [products, setProducts] = useState<ProductOption[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<ProductOption | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [paymentModeFilter, setPaymentModeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -185,10 +218,10 @@ export default function SalesPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Derived: selected product and computed amount
-  const selectedProduct = products.find((p) => String(p.id) === form.productId);
-  const productPrice = selectedProduct ? Number(selectedProduct.price) : 0;
+  const productPrice = selectedProduct && String(selectedProduct.id) === form.productId ? Number(selectedProduct.price) : 0;
   const therapyPrice = Number(form.therapyPrice || 0);
-  const computedAmount = selectedProduct
+  const hasSelectedProduct = selectedProduct && String(selectedProduct.id) === form.productId;
+  const computedAmount = hasSelectedProduct
     ? productPrice + therapyPrice
     : Number(form.amount || 0);
   const summaryTotalAmount = sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
@@ -230,7 +263,6 @@ export default function SalesPage() {
 
   useEffect(() => {
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
-    api.get('/products/options').then((res) => setProducts(res.data || [])).catch(() => {});
     api.get('/sales/filters')
       .then((res) => {
         if (res.data.paymentModes?.length) setPaymentModes(res.data.paymentModes);
@@ -250,6 +282,7 @@ export default function SalesPage() {
   const openCreate = () => {
     setEditing(null);
     setForm(initialForm());
+    setSelectedProduct(undefined);
     setError('');
     setShowInlineForm(true);
   };
@@ -267,6 +300,19 @@ export default function SalesPage() {
       pendingAmount: String(sale.pendingAmount),
       notes: sale.notes || '',
     });
+    // Restore selected product so price calculation works correctly
+    if (sale.product && sale.productId) {
+      setSelectedProduct({
+        id: sale.productId,
+        name: sale.product.name,
+        sku: sale.product.sku || '',
+        price: Number(sale.product.price),
+        currentStock: 0,
+        reorderLevel: 0,
+      });
+    } else {
+      setSelectedProduct(undefined);
+    }
     setError('');
     setShowInlineForm(true);
   };
@@ -274,6 +320,7 @@ export default function SalesPage() {
   const cancelForm = () => {
     setShowInlineForm(false);
     setEditing(null);
+    setSelectedProduct(undefined);
     setError('');
   };
 
@@ -457,9 +504,16 @@ export default function SalesPage() {
             {/* Row 2: Product + Therapy Price */}
             <div className={s.grid2}>
               <SearchableProductSelect
-                products={products}
                 value={form.productId}
-                onChange={(id) => setForm({ ...form, productId: id })}
+                onChange={(id) => {
+                  setForm({ ...form, productId: id });
+                  if (!id) setSelectedProduct(undefined);
+                }}
+                selectedProduct={selectedProduct}
+                onProductLoaded={(p) => {
+                  setSelectedProduct(p);
+                  setForm((prev) => ({ ...prev, productId: String(p.id) }));
+                }}
               />
               <div className={s.formGroup}>
                 <label>Therapy Price (optional)</label>
