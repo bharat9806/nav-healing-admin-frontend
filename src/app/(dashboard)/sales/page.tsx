@@ -919,7 +919,7 @@ export default function SalesPage() {
                                 <div key={i} className={s.productPopoverItem}>
                                   <span className={s.productPopoverName}>{item.name}</span>
                                   {item.qty > 0 && <span className={s.productPopoverQty}>×{item.qty}</span>}
-                                  {item.qty === 0 && <span className={s.productPopoverQty}>{currency(sale.therapyPrice)}</span>}
+                                  {item.qty === 0 && <span className={s.productPopoverQty}>{currency(sale.therapyPrice || 0)}</span>}
                                 </div>
                               ))}
                             </div>
