@@ -639,8 +639,20 @@ export default function SalesPage() {
                         type="number"
                         min="1"
                         step="1"
+                        inputMode="numeric"
                         value={item.quantity}
-                        onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value || 1)) })}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          if (raw === '' || raw === '0') {
+                            updateItem(index, { quantity: '' as unknown as number });
+                          } else {
+                            updateItem(index, { quantity: Math.max(1, parseInt(raw, 10) || 1) });
+                          }
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          updateItem(index, { quantity: isNaN(val) || val < 1 ? 1 : val });
+                        }}
                         className={s.formInput}
                       />
                     </div>
