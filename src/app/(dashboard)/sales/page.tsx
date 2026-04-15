@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { Sale, User } from '@/types';
+import { Sale, SaleItem, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './sales.module.scss';
 
@@ -19,12 +19,13 @@ type ProductOption = {
   price: number;
   currentStock: number;
   reorderLevel: number;
+  category: string;
+  subcategory?: string;
 };
 
 type SaleFormState = {
   date: string;
   patientName: string;
-  productId: string;
   therapyPrice: string;
   amount: string;
   paymentMode: string;
@@ -33,10 +34,20 @@ type SaleFormState = {
   notes: string;
 };
 
+type SaleItemForm = {
+  productId: number;
+  quantity: number;
+  product?: ProductOption;
+};
+
+const initialItem = (): SaleItemForm => ({
+  productId: 0,
+  quantity: 1,
+});
+
 const initialForm = (): SaleFormState => ({
   date: new Date().toISOString().slice(0, 10),
   patientName: '',
-  productId: '',
   therapyPrice: '',
   amount: '',
   paymentMode: 'Cash',
@@ -46,6 +57,60 @@ const initialForm = (): SaleFormState => ({
 });
 
 const currency = (value: number | string) => `Rs. ${Number(value || 0).toFixed(2)}`;
+
+const getSaleItems = (sale: Sale): SaleItemForm[] => {
+  if (sale.items?.length) {
+    return sale.items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      product: item.product
+        ? {
+            id: item.product.id,
+            name: item.product.name,
+            sku: item.product.sku,
+            price: Number(item.unitPrice || item.product.price),
+            currentStock: item.product.currentStock,
+            reorderLevel: item.product.reorderLevel,
+            category: item.product.category,
+            subcategory: item.product.subcategory,
+          }
+        : undefined,
+    }));
+  }
+
+  if (sale.product && sale.productId) {
+    return [
+      {
+        productId: sale.productId,
+        quantity: 1,
+        product: {
+          id: sale.product.id,
+          name: sale.product.name,
+          sku: sale.product.sku,
+          price: Number(sale.product.price),
+          currentStock: sale.product.currentStock,
+          reorderLevel: sale.product.reorderLevel,
+          category: sale.product.category,
+          subcategory: sale.product.subcategory,
+        },
+      },
+    ];
+  }
+
+  return [initialItem()];
+};
+
+const describeSaleItems = (sale: Sale) => {
+  if (sale.items?.length) {
+    return sale.items
+      .map((item) => `${item.product?.name || `Product #${item.productId}`} x${item.quantity}`)
+      .join(', ');
+  }
+
+  if (sale.product) return sale.product.name;
+
+  return 'No product';
+};
 
 const statusClass = (status: string) => {
   const normalized = status.toLowerCase();
@@ -57,14 +122,12 @@ const statusClass = (status: string) => {
 
 function SearchableProductSelect({
   value,
-  onChange,
   selectedProduct,
-  onProductLoaded,
+  onProductChange,
 }: {
-  value: string;
-  onChange: (id: string) => void;
+  value: number;
   selectedProduct: ProductOption | undefined;
-  onProductLoaded: (product: ProductOption) => void;
+  onProductChange: (product?: ProductOption) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -116,8 +179,7 @@ function SearchableProductSelect({
   }, []);
 
   const handleSelect = (p: ProductOption) => {
-    onChange(String(p.id));
-    onProductLoaded(p);
+    onProductChange(p);
     setOpen(false);
     setQuery('');
   };
@@ -146,8 +208,8 @@ function SearchableProductSelect({
           <button
             type="button"
             className={s.comboClear}
-            onClick={() => {
-              onChange('');
+          onClick={() => {
+              onProductChange(undefined);
               setQuery('');
               setOpen(true);
               inputRef.current?.focus();
@@ -161,7 +223,7 @@ function SearchableProductSelect({
             <li
               className={s.comboItem}
               onMouseDown={() => {
-                onChange('');
+                onProductChange(undefined);
                 setOpen(false);
                 setQuery('');
               }}
@@ -176,7 +238,7 @@ function SearchableProductSelect({
               results.map((p) => (
                 <li
                   key={p.id}
-                  className={`${s.comboItem} ${String(p.id) === value ? s.comboItemActive : ''}`}
+                  className={`${s.comboItem} ${p.id === value ? s.comboItemActive : ''}`}
                   onMouseDown={() => handleSelect(p)}
                 >
                   <span className={s.comboItemName}>{p.name}</span>
@@ -193,7 +255,6 @@ function SearchableProductSelect({
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
-  const [selectedProduct, setSelectedProduct] = useState<ProductOption | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [paymentModeFilter, setPaymentModeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -211,19 +272,20 @@ export default function SalesPage() {
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [editing, setEditing] = useState<Sale | null>(null);
   const [form, setForm] = useState<SaleFormState>(initialForm());
+  const [items, setItems] = useState<SaleItemForm[]>([initialItem()]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null);
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  // Derived: selected product and computed amount
-  const productPrice = selectedProduct && String(selectedProduct.id) === form.productId ? Number(selectedProduct.price) : 0;
   const therapyPrice = Number(form.therapyPrice || 0);
-  const hasSelectedProduct = selectedProduct && String(selectedProduct.id) === form.productId;
-  const computedAmount = hasSelectedProduct
-    ? productPrice + therapyPrice
-    : Number(form.amount || 0);
+  const validItems = items.filter((item) => item.productId > 0 && item.product);
+  const itemsTotal = validItems.reduce(
+    (sum, item) => sum + Number(item.product?.price || 0) * item.quantity,
+    0,
+  );
+  const computedAmount = validItems.length > 0 ? itemsTotal + therapyPrice : Number(form.amount || 0);
   const summaryTotalAmount = sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
   const summaryPendingAmount = sales.reduce((sum, sale) => sum + Number(sale.pendingAmount || 0), 0);
   const summaryReceivedAmount = summaryTotalAmount - summaryPendingAmount;
@@ -282,7 +344,7 @@ export default function SalesPage() {
   const openCreate = () => {
     setEditing(null);
     setForm(initialForm());
-    setSelectedProduct(undefined);
+    setItems([initialItem()]);
     setError('');
     setShowInlineForm(true);
   };
@@ -292,7 +354,6 @@ export default function SalesPage() {
     setForm({
       date: sale.date.slice(0, 10),
       patientName: sale.patientName,
-      productId: sale.productId ? String(sale.productId) : '',
       therapyPrice: sale.therapyPrice ? String(sale.therapyPrice) : '',
       amount: String(sale.amount),
       paymentMode: sale.paymentMode,
@@ -300,19 +361,7 @@ export default function SalesPage() {
       pendingAmount: String(sale.pendingAmount),
       notes: sale.notes || '',
     });
-    // Restore selected product so price calculation works correctly
-    if (sale.product && sale.productId) {
-      setSelectedProduct({
-        id: sale.productId,
-        name: sale.product.name,
-        sku: sale.product.sku || '',
-        price: Number(sale.product.price),
-        currentStock: 0,
-        reorderLevel: 0,
-      });
-    } else {
-      setSelectedProduct(undefined);
-    }
+    setItems(getSaleItems(sale));
     setError('');
     setShowInlineForm(true);
   };
@@ -320,8 +369,24 @@ export default function SalesPage() {
   const cancelForm = () => {
     setShowInlineForm(false);
     setEditing(null);
-    setSelectedProduct(undefined);
+    setItems([initialItem()]);
     setError('');
+  };
+
+  const addItem = () => setItems((current) => [...current, initialItem()]);
+
+  const updateItem = (index: number, patch: Partial<SaleItemForm>) => {
+    setItems((current) =>
+      current.map((item, itemIndex) => (
+        itemIndex === index ? { ...item, ...patch } : item
+      )),
+    );
+  };
+
+  const removeItem = (index: number) => {
+    setItems((current) => (
+      current.length === 1 ? [initialItem()] : current.filter((_, itemIndex) => itemIndex !== index)
+    ));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -332,7 +397,12 @@ export default function SalesPage() {
     const payload = {
       date: form.date,
       patientName: form.patientName,
-      productId: form.productId ? Number(form.productId) : undefined,
+      items: validItems.length
+        ? validItems.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          }))
+        : undefined,
       therapyPrice: form.therapyPrice ? Number(form.therapyPrice) : undefined,
       amount: computedAmount,
       paymentMode: form.paymentMode,
@@ -350,12 +420,13 @@ export default function SalesPage() {
 
       setShowInlineForm(false);
       setEditing(null);
+      setItems([initialItem()]);
       fetchSales();
     } catch (err) {
-      const message = isAxiosError<{ message?: string }>(err)
+      const message = isAxiosError<{ message?: string | string[] }>(err)
         ? err.response?.data?.message
         : undefined;
-      setError(message || 'Failed to save sale');
+      setError(Array.isArray(message) ? message.join(', ') : message || 'Failed to save sale');
     } finally {
       setSaving(false);
     }
@@ -382,8 +453,7 @@ export default function SalesPage() {
     const rows = (res.data.data as Sale[]).map((sale) => ({
       Date: sale.date.slice(0, 10),
       'Patient Name': sale.patientName,
-      Product: sale.product?.name || '',
-      'Product Price': sale.product ? Number(sale.product.price).toFixed(2) : '',
+      Products: describeSaleItems(sale),
       'Therapy Price': sale.therapyPrice ? Number(sale.therapyPrice).toFixed(2) : '',
       Amount: Number(sale.amount).toFixed(2),
       'Payment Mode': sale.paymentMode,
@@ -501,20 +571,48 @@ export default function SalesPage() {
               </div>
             </div>
 
-            {/* Row 2: Product + Therapy Price */}
+            <div className={s.formGroup}>
+              <div className={s.itemsHeader}>
+                <label>Products (optional)</label>
+                <button type="button" onClick={addItem} className={s.addItemBtn}>+ Add Product</button>
+              </div>
+              <div className={s.itemsList}>
+                {items.map((item, index) => (
+                  <div key={`${item.productId}-${index}`} className={s.itemRow}>
+                    <div className={s.itemProductCell}>
+                      <SearchableProductSelect
+                        value={item.productId}
+                        selectedProduct={item.product}
+                        onProductChange={(product) => {
+                          updateItem(index, {
+                            productId: product?.id || 0,
+                            product,
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className={s.itemQuantityCell}>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, { quantity: Math.max(1, Number(e.target.value || 1)) })}
+                        className={s.formInput}
+                      />
+                    </div>
+                    <div className={s.itemPriceCell}>
+                      <span className={s.itemPriceText}>
+                        {item.product ? currency(Number(item.product.price) * item.quantity) : 'Select product'}
+                      </span>
+                    </div>
+                    <button type="button" onClick={() => removeItem(index)} className={s.removeItemBtn}>Remove</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className={s.grid2}>
-              <SearchableProductSelect
-                value={form.productId}
-                onChange={(id) => {
-                  setForm({ ...form, productId: id });
-                  if (!id) setSelectedProduct(undefined);
-                }}
-                selectedProduct={selectedProduct}
-                onProductLoaded={(p) => {
-                  setSelectedProduct(p);
-                  setForm((prev) => ({ ...prev, productId: String(p.id) }));
-                }}
-              />
               <div className={s.formGroup}>
                 <label>Therapy Price (optional)</label>
                 <input
@@ -529,14 +627,13 @@ export default function SalesPage() {
               </div>
             </div>
 
-            {/* Amount breakdown */}
             <div className={s.amountBreakdown}>
-              {selectedProduct && (
-                <div className={s.breakdownRow}>
-                  <span>Product ({selectedProduct.name})</span>
-                  <span>{currency(productPrice)}</span>
+              {validItems.map((item, index) => (
+                <div key={`${item.productId}-${index}`} className={s.breakdownRow}>
+                  <span>{item.product?.name} x{item.quantity}</span>
+                  <span>{currency(Number(item.product?.price || 0) * item.quantity)}</span>
                 </div>
-              )}
+              ))}
               {therapyPrice > 0 && (
                 <div className={s.breakdownRow}>
                   <span>Therapy</span>
@@ -547,8 +644,8 @@ export default function SalesPage() {
                 <span>Total Amount</span>
                 <span>{currency(computedAmount)}</span>
               </div>
-              {!selectedProduct && (
-                <div className={s.formGroup} style={{ marginTop: '0.5rem' }}>
+              {validItems.length === 0 && (
+                <div className={s.formGroup}>
                   <label>Amount * <small>(enter manually — no product selected)</small></label>
                   <input
                     type="number"
@@ -572,7 +669,7 @@ export default function SalesPage() {
                   value={form.paymentMode}
                   onChange={(val) => setForm({ ...form, paymentMode: String(val) })}
                   align="left"
-                  minWidth="100%"
+                  fullWidth
                 />
               </div>
               <div className={s.formGroup}>
@@ -582,7 +679,7 @@ export default function SalesPage() {
                   value={form.status}
                   onChange={(val) => setForm({ ...form, status: String(val) })}
                   align="left"
-                  minWidth="100%"
+                  fullWidth
                 />
               </div>
             </div>
@@ -609,7 +706,7 @@ export default function SalesPage() {
               <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
               <button
                 type="submit"
-                disabled={saving || (!selectedProduct && !form.amount)}
+                disabled={saving || (!validItems.length && !form.amount)}
                 className={s.saveBtn}
               >
                 {saving ? 'Saving...' : editing ? 'Update' : 'Create'}
@@ -653,18 +750,30 @@ export default function SalesPage() {
                     <span className={s.cellText}>{sale.paymentMode}</span>
                   </div>
                   <div className={s.mobileMetaItem}>
-                    <span className={s.mobileMetaLabel}>Product</span>
-                    <span className={s.cellText}>{sale.product?.name || 'No product'}</span>
+                    <span className={s.mobileMetaLabel}>Products</span>
+                    <span className={s.cellText}>{describeSaleItems(sale)}</span>
                   </div>
                 </div>
 
-                {sale.product && (
+                {(sale.items?.length > 0 || sale.product) && (
                   <div className={s.mobileProductBlock}>
-                    <p className={s.productName}>{sale.product.name}</p>
-                    <p className={s.productSub}>
-                      {sale.product.sku}
+                    {(sale.items?.length
+                      ? sale.items
+                      : [{
+                          id: 0,
+                          saleId: sale.id,
+                          productId: sale.productId || 0,
+                          quantity: 1,
+                          unitPrice: sale.product?.price || 0,
+                          product: sale.product,
+                        } as SaleItem]
+                    ).map((item, index) => (
+                      <p key={`${sale.id}-${item.productId}-${index}`} className={index === 0 ? s.productName : s.productSub}>
+                        {item.product?.name || `Product #${item.productId}`} x{item.quantity}
+                      </p>
+                    ))}
+                    {sale.therapyPrice ? <p className={s.productSub}>Therapy: {currency(sale.therapyPrice)}</p> : null}
                       {sale.therapyPrice ? ` • Therapy: ${currency(sale.therapyPrice)}` : ''}
-                    </p>
                   </div>
                 )}
 
@@ -686,7 +795,7 @@ export default function SalesPage() {
               <tr>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('date')}>Date{sortField === 'date' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('patientName')}>Patient Name{sortField === 'patientName' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
-                <th className={s.th}>Product</th>
+                <th className={s.th}>Products</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('amount')}>Amount{sortField === 'amount' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('paymentMode')}>Payment Mode{sortField === 'paymentMode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
@@ -703,7 +812,16 @@ export default function SalesPage() {
                     {sale.notes && <p className={s.noteText}>{sale.notes}</p>}
                   </td>
                   <td className={s.td}>
-                    {sale.product ? (
+                    {sale.items?.length > 0 ? (
+                      <>
+                        {sale.items.map((item, index) => (
+                          <p key={`${sale.id}-${item.productId}-${index}`} className={index === 0 ? s.productName : s.productSub}>
+                            {item.product?.name || `Product #${item.productId}`} x{item.quantity}
+                          </p>
+                        ))}
+                        {sale.therapyPrice ? <p className={s.productSub}>Therapy: {currency(sale.therapyPrice)}</p> : null}
+                      </>
+                    ) : sale.product ? (
                       <>
                         <p className={s.productName}>{sale.product.name}</p>
                         <p className={s.productSub}>{sale.product.sku}{sale.therapyPrice ? ` + Therapy: ${currency(sale.therapyPrice)}` : ''}</p>

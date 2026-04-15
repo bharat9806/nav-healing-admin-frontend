@@ -468,6 +468,57 @@
   }
 }
 
+.itemsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+  flex-wrap: wrap;
+}
+
+.itemsList {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.itemRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 6rem 8rem auto;
+  gap: $s2;
+  align-items: center;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.itemProductCell,
+.itemQuantityCell,
+.itemPriceCell {
+  min-width: 0;
+}
+
+.itemPriceText {
+  color: var(--shell-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.addItemBtn {
+  @include btn-ghost;
+  border: 1px solid var(--shell-border);
+  color: var(--shell-text-primary);
+  padding: $s2 $s3;
+}
+
+.removeItemBtn {
+  @include btn-ghost;
+  border: 1px solid rgba($red-light, 0.25);
+  color: $red-light;
+  padding: $s2 $s3;
+}
+
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

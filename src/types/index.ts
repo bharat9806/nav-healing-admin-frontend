@@ -103,13 +103,25 @@ export interface Sale {
   date: string;
   patientName: string;
   productId?: number;
-  product?: { id: number; name: string; sku: string; price: number; category: string; subcategory?: string };
+  product?: Product;
+  items: SaleItem[];
   therapyPrice?: number;
   amount: number;
   paymentMode: string;
   status: string;
   pendingAmount: number;
   notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SaleItem {
+  id: number;
+  saleId: number;
+  productId: number;
+  quantity: number;
+  unitPrice: number;
+  product?: Product;
   createdAt: string;
   updatedAt: string;
 }
