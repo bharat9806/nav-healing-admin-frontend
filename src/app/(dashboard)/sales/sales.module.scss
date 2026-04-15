@@ -281,6 +281,19 @@
   margin: 0;
 }
 
+.patientLink {
+  color: var(--shell-text-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+  text-decoration: none;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: $emerald-light;
+  }
+}
+
 .noteText {
   color: var(--shell-text-subtle);
   font-size: 0.75rem;

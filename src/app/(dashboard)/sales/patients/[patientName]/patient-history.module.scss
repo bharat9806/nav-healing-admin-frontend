@@ -1,0 +1,247 @@
+@use '../../../../../styles/variables' as *;
+@use '../../../../../styles/mixins' as *;
+
+.page {
+  padding: $s6;
+  color: var(--shell-text-primary);
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $s3;
+  margin-bottom: $s5;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: $s2;
+  color: $emerald-light;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  &:hover {
+    color: color-mix(in srgb, #ffffff 20%, #34d399);
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 1.3rem + 0.8vw, 2rem);
+  font-weight: 700;
+}
+
+.subtitle {
+  margin: $s2 0 0;
+  color: var(--shell-text-muted);
+  max-width: 40rem;
+}
+
+.stateCard {
+  @include card;
+  padding: $s5;
+  color: var(--shell-text-secondary);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $s3;
+  margin-bottom: $s5;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summaryCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.summaryLabel {
+  color: var(--shell-text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summaryValue {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+.pendingValue {
+  color: $amber-light;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.visitCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.visitHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column;
+  }
+}
+
+.visitLabel {
+  margin: 0 0 $s1;
+  color: var(--shell-text-subtle);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.visitDate {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.visitMeta {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  @include status-badge;
+  border: none;
+  background-color: rgba($emerald, 0.12);
+  color: $emerald-light;
+}
+
+.amount {
+  color: var(--shell-text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.visitGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $s3;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.metaBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  padding: $s3;
+  background: var(--shell-soft-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+}
+
+.metaLabel {
+  color: var(--shell-text-subtle);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metaValue {
+  color: var(--shell-text-primary);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.pendingText {
+  color: $amber-light;
+}
+
+.medicineBlock,
+.notesBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+.productList {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.productRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+  padding: $s3;
+  background: var(--shell-soft-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+}
+
+.productName {
+  color: var(--shell-text-primary);
+  font-weight: 600;
+}
+
+.productQty {
+  color: var(--shell-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.therapyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+  padding-top: $s2;
+}
+
+.notesText,
+.emptyText {
+  margin: 0;
+  color: var(--shell-text-secondary);
+  line-height: 1.6;
+}

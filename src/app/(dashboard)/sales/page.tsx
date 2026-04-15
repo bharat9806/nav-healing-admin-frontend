@@ -1,6 +1,7 @@
 'use client';
 
 import { isAxiosError } from 'axios';
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
@@ -57,6 +58,7 @@ const initialForm = (): SaleFormState => ({
 });
 
 const currency = (value: number | string) => `Rs. ${Number(value || 0).toFixed(2)}`;
+const patientHistoryHref = (patientName: string) => `/sales/patients/${encodeURIComponent(patientName)}`;
 
 const getSaleItems = (sale: Sale): SaleItemForm[] => {
   if (sale.items?.length) {
@@ -838,7 +840,9 @@ export default function SalesPage() {
                 <div className={s.mobileCardTop}>
                   <div className={s.mobileCardHeader}>
                     <div>
-                      <p className={s.patientName}>{sale.patientName}</p>
+                      <Link href={patientHistoryHref(sale.patientName)} className={s.patientLink}>
+                        {sale.patientName}
+                      </Link>
                       <p className={s.noteText}>{sale.date.slice(0, 10)}</p>
                     </div>
                     <span className={statusClass(sale.status)}>{sale.status}</span>
@@ -915,7 +919,9 @@ export default function SalesPage() {
                 <tr key={sale.id} className={s.tr}>
                   <td className={s.td}><span className={s.cellText}>{sale.date.slice(0, 10)}</span></td>
                   <td className={s.td}>
-                    <p className={s.patientName}>{sale.patientName}</p>
+                    <Link href={patientHistoryHref(sale.patientName)} className={s.patientLink}>
+                      {sale.patientName}
+                    </Link>
                   </td>
                   {visibleCols.products && <td className={s.td}>
                     {(() => {

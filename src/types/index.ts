@@ -137,6 +137,34 @@ export interface SaleProductsResponse {
   }>;
 }
 
+export interface PatientSaleHistoryVisit {
+  id: number;
+  date: string;
+  updatedAt: string;
+  amount: number;
+  paymentMode: string;
+  status: string;
+  pendingAmount: number;
+  notes?: string;
+  therapyPrice?: number;
+  itemCount: number;
+  products: Array<{
+    name: string;
+    quantity: number;
+  }>;
+}
+
+export interface PatientSaleHistoryResponse {
+  patientName: string;
+  totalVisits: number;
+  firstVisitDate: string;
+  lastVisitDate: string;
+  lastUpdatedAt: string;
+  totalAmount: number;
+  totalPendingAmount: number;
+  visits: PatientSaleHistoryVisit[];
+}
+
 export interface ProductSaleItem {
   id: number;
   productId: number;
