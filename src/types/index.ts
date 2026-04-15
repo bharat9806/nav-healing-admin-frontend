@@ -132,11 +132,8 @@ export interface SaleProductsResponse {
   itemCount: number;
   therapyPrice?: number;
   products: Array<{
-    id: number;
-    productId: number;
+    name: string;
     quantity: number;
-    unitPrice: number;
-    product?: Product;
   }>;
 }
 

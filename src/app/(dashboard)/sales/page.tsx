@@ -925,7 +925,7 @@ export default function SalesPage() {
                       const allItems: { name: string; qty: number }[] = saleProducts
                         ? [
                             ...saleProducts.products.map((item) => ({
-                              name: item.product?.name || `Product #${item.productId}`,
+                              name: item.name,
                               qty: item.quantity,
                             })),
                             ...(saleProducts.therapyPrice ? [{ name: 'Therapy', qty: 0 }] : []),
