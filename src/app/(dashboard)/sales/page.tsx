@@ -268,6 +268,17 @@ export default function SalesPage() {
 
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [editing, setEditing] = useState<Sale | null>(null);
+  const [showColMenu, setShowColMenu] = useState(false);
+  const [visibleCols, setVisibleCols] = useState({
+    products: true,
+    amount: true,
+    paymentMode: true,
+    status: true,
+    pending: true,
+    notes: true,
+  });
+  const toggleCol = (col: keyof typeof visibleCols) =>
+    setVisibleCols(p => ({ ...p, [col]: !p[col] }));
   const [form, setForm] = useState<SaleFormState>(initialForm());
   const [items, setItems] = useState<SaleItemForm[]>([initialItem()]);
   const [saving, setSaving] = useState(false);
@@ -547,6 +558,33 @@ export default function SalesPage() {
           >
             Search
           </button>
+          <div className={s.colMenuWrap}>
+            <button
+              type="button"
+              onClick={() => setShowColMenu(p => !p)}
+              className={`${s.colMenuBtn} ${showColMenu ? s.colMenuBtnActive : ''}`}
+              title="Toggle columns"
+            >
+              Columns
+            </button>
+            {showColMenu && (
+              <div className={s.colMenu}>
+                {([
+                  ['products',    'Products'],
+                  ['amount',      'Amount'],
+                  ['paymentMode', 'Payment Mode'],
+                  ['status',      'Status'],
+                  ['pending',     'Pending'],
+                  ['notes',       'Notes'],
+                ] as [keyof typeof visibleCols, string][]).map(([key, label]) => (
+                  <label key={key} className={s.colMenuItem}>
+                    <input type="checkbox" checked={visibleCols[key]} onChange={() => toggleCol(key)} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -808,11 +846,12 @@ export default function SalesPage() {
               <tr>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('date')}>Date{sortField === 'date' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('patientName')}>Patient Name{sortField === 'patientName' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
-                <th className={s.th}>Products</th>
-                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('amount')}>Amount{sortField === 'amount' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
-                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('paymentMode')}>Payment Mode{sortField === 'paymentMode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
-                <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
-                <th className={s.th}>Pending</th>
+                {visibleCols.products    && <th className={s.th}>Products</th>}
+                {visibleCols.amount      && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('amount')}>Amount{sortField === 'amount' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.paymentMode && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('paymentMode')}>Payment Mode{sortField === 'paymentMode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.status      && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.pending     && <th className={s.th}>Pending</th>}
+                {visibleCols.notes       && <th className={s.th}>Notes</th>}
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>
             </thead>
@@ -822,9 +861,8 @@ export default function SalesPage() {
                   <td className={s.td}><span className={s.cellText}>{sale.date.slice(0, 10)}</span></td>
                   <td className={s.td}>
                     <p className={s.patientName}>{sale.patientName}</p>
-                    {sale.notes && <p className={s.noteText}>{sale.notes}</p>}
                   </td>
-                  <td className={s.td}>
+                  {visibleCols.products && <td className={s.td}>
                     {sale.items?.length > 0 ? (
                       <>
                         {sale.items.map((item, index) => (
@@ -842,11 +880,12 @@ export default function SalesPage() {
                     ) : (
                       <span className={s.cellText}>—</span>
                     )}
-                  </td>
-                  <td className={s.td}><span className={s.amountText}>{currency(sale.amount)}</span></td>
-                  <td className={s.td}><span className={s.cellText}>{sale.paymentMode}</span></td>
-                  <td className={s.td}><span className={statusClass(sale.status)}>{sale.status}</span></td>
-                  <td className={s.td}><span className={s.pendingText}>{currency(sale.pendingAmount)}</span></td>
+                  </td>}
+                  {visibleCols.amount      && <td className={s.td}><span className={s.amountText}>{currency(sale.amount)}</span></td>}
+                  {visibleCols.paymentMode && <td className={s.td}><span className={s.cellText}>{sale.paymentMode}</span></td>}
+                  {visibleCols.status      && <td className={s.td}><span className={statusClass(sale.status)}>{sale.status}</span></td>}
+                  {visibleCols.pending     && <td className={s.td}><span className={s.pendingText}>{currency(sale.pendingAmount)}</span></td>}
+                  {visibleCols.notes       && <td className={s.td}><span className={s.cellText}>{sale.notes || '—'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>
                     <button onClick={() => openEdit(sale)} className={s.editBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(sale)} className={s.deleteBtn}>Delete</button>

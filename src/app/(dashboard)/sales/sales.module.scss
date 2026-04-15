@@ -702,6 +702,102 @@
   }
 }
 
+// ── Column visibility menu ────────────────────────────────────────
+.colMenuWrap {
+  position: relative;
+}
+
+.colMenuBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.375rem;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+  background: var(--shell-control-bg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: transparent;
+  font-size: 0;
+  line-height: 1;
+  white-space: nowrap;
+
+  &::before {
+    content: '';
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 0.2rem;
+    margin-right: $s2;
+    background:
+      linear-gradient(currentColor 0 0) left top / calc(50% - 1px) calc(50% - 1px) no-repeat,
+      linear-gradient(currentColor 0 0) right top / calc(50% - 1px) calc(50% - 1px) no-repeat,
+      linear-gradient(currentColor 0 0) left bottom / calc(50% - 1px) calc(50% - 1px) no-repeat,
+      linear-gradient(currentColor 0 0) right bottom / calc(50% - 1px) calc(50% - 1px) no-repeat;
+    color: var(--shell-text-secondary);
+    opacity: 0.9;
+  }
+
+  &::after {
+    content: 'Columns';
+    color: var(--shell-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  &:hover {
+    background: var(--shell-control-bg-strong);
+    border-color: var(--shell-border-strong);
+    &::before, &::after { color: var(--shell-text-primary); }
+  }
+}
+
+.colMenuBtnActive {
+  background: rgba($emerald, 0.12);
+  border-color: rgba($emerald, 0.3);
+  &::before, &::after { color: $emerald-light; }
+}
+
+.colMenu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 11rem;
+  padding: $s2;
+  border-radius: $r-lg;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-surface);
+  box-shadow: var(--shell-shadow-soft);
+  z-index: 20;
+}
+
+.colMenuItem {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  padding: 0.5rem 0.65rem;
+  border-radius: $r-md;
+  color: var(--shell-text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: var(--shell-hover);
+    color: var(--shell-text-primary);
+  }
+
+  input[type='checkbox'] {
+    accent-color: $emerald;
+    width: 0.875rem;
+    height: 0.875rem;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
 // ── Combo (searchable product select) ────────────────────────────
 .comboWrap {
   position: relative;
