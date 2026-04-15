@@ -185,39 +185,37 @@ function SearchableProductSelect({
   };
 
   return (
-    <div className={s.formGroup} ref={wrapRef}>
-      <label>Product (optional)</label>
-      <div className={s.comboWrap}>
-        <input
-          ref={inputRef}
-          type="text"
-          className={s.formInput}
-          placeholder="Search product by name or SKU..."
-          value={open ? query : selectedProduct ? `${selectedProduct.name} (${selectedProduct.sku})` : ''}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            if (!open) setOpen(true);
-          }}
-          onFocus={() => {
-            setOpen(true);
-            setQuery('');
-          }}
-          autoComplete="off"
-        />
-        {value && !open && (
-          <button
-            type="button"
-            className={s.comboClear}
+    <div className={s.comboWrap} ref={wrapRef}>
+      <input
+        ref={inputRef}
+        type="text"
+        className={s.formInput}
+        placeholder="Search product by name or SKU..."
+        value={open ? query : selectedProduct ? `${selectedProduct.name} (${selectedProduct.sku})` : ''}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          if (!open) setOpen(true);
+        }}
+        onFocus={() => {
+          setOpen(true);
+          setQuery('');
+        }}
+        autoComplete="off"
+      />
+      {value > 0 && !open && (
+        <button
+          type="button"
+          className={s.comboClear}
           onClick={() => {
-              onProductChange(undefined);
-              setQuery('');
-              setOpen(true);
-              inputRef.current?.focus();
-            }}
-          >
-            ✕
-          </button>
-        )}
+            onProductChange(undefined);
+            setQuery('');
+            setOpen(true);
+            inputRef.current?.focus();
+          }}
+        >
+          ✕
+        </button>
+      )}
         {open && (
           <ul className={s.comboList}>
             <li
@@ -248,7 +246,6 @@ function SearchableProductSelect({
             )}
           </ul>
         )}
-      </div>
     </div>
   );
 }
@@ -576,6 +573,14 @@ export default function SalesPage() {
                 <label>Products (optional)</label>
                 <button type="button" onClick={addItem} className={s.addItemBtn}>+ Add Product</button>
               </div>
+              {items.length > 0 && (
+                <div className={s.itemColHeader}>
+                  <span>Product</span>
+                  <span className={s.itemColCenter}>Qty</span>
+                  <span className={s.itemColRight}>Subtotal</span>
+                  <span />
+                </div>
+              )}
               <div className={s.itemsList}>
                 {items.map((item, index) => (
                   <div key={`${item.productId}-${index}`} className={s.itemRow}>
@@ -603,10 +608,18 @@ export default function SalesPage() {
                     </div>
                     <div className={s.itemPriceCell}>
                       <span className={s.itemPriceText}>
-                        {item.product ? currency(Number(item.product.price) * item.quantity) : 'Select product'}
+                        {item.product ? currency(Number(item.product.price) * item.quantity) : '—'}
                       </span>
                     </div>
-                    <button type="button" onClick={() => removeItem(index)} className={s.removeItemBtn}>Remove</button>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className={s.removeItemBtn}
+                      aria-label="Remove product"
+                      title="Remove product"
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))}
               </div>

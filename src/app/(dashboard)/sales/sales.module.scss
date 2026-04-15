@@ -482,14 +482,45 @@
   gap: $s2;
 }
 
+.itemColHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5rem 7rem 2.25rem;
+  gap: $s3;
+  padding: 0 $s1;
+  margin-top: $s2;
+  margin-bottom: $s1;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--shell-text-subtle);
+  font-weight: 500;
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
+}
+
+.itemColCenter {
+  text-align: center;
+}
+
+.itemColRight {
+  text-align: right;
+}
+
 .itemRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 6rem 8rem auto;
-  gap: $s2;
+  grid-template-columns: minmax(0, 1fr) 5rem 7rem 2.25rem;
+  gap: $s3;
   align-items: center;
+  padding: $s2;
+  background: var(--shell-soft-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
 
   @media (max-width: ($md - 1px)) {
     grid-template-columns: 1fr;
+    gap: $s2;
   }
 }
 
@@ -499,24 +530,49 @@
   min-width: 0;
 }
 
+.itemQuantityCell .formInput {
+  text-align: center;
+}
+
+.itemPriceCell {
+  text-align: right;
+}
+
 .itemPriceText {
-  color: var(--shell-text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
+  color: var(--shell-text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .addItemBtn {
   @include btn-ghost;
   border: 1px solid var(--shell-border);
   color: var(--shell-text-primary);
-  padding: $s2 $s3;
+  padding: $s1 $s3;
+  font-size: 0.8rem;
 }
 
 .removeItemBtn {
   @include btn-ghost;
   border: 1px solid rgba($red-light, 0.25);
   color: $red-light;
-  padding: $s2 $s3;
+  padding: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.4rem;
+  font-size: 0.95rem;
+  line-height: 1;
+
+  &:hover {
+    background: rgba($red-light, 0.1);
+  }
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+  }
 }
 
 .grid2 {
