@@ -104,7 +104,8 @@ export interface Sale {
   patientName: string;
   productId?: number;
   product?: Product;
-  items: SaleItem[];
+  items?: SaleItem[];
+  itemCount?: number;
   therapyPrice?: number;
   amount: number;
   paymentMode: string;
@@ -124,6 +125,19 @@ export interface SaleItem {
   product?: Product;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SaleProductsResponse {
+  saleId: number;
+  itemCount: number;
+  therapyPrice?: number;
+  products: Array<{
+    id: number;
+    productId: number;
+    quantity: number;
+    unitPrice: number;
+    product?: Product;
+  }>;
 }
 
 export interface ProductSaleItem {

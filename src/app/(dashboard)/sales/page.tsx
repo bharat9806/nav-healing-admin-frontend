@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { Sale, SaleItem, User } from '@/types';
+import { Sale, SaleItem, SaleProductsResponse, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './sales.module.scss';
 
@@ -100,16 +100,16 @@ const getSaleItems = (sale: Sale): SaleItemForm[] => {
   return [initialItem()];
 };
 
+const getSaleProductCount = (sale: Sale) => {
+  if (typeof sale.itemCount === 'number') return sale.itemCount;
+  if (sale.items?.length) return sale.items.length;
+  if (sale.productId) return 1;
+  return 0;
+};
+
 const describeSaleItems = (sale: Sale) => {
-  if (sale.items?.length) {
-    return sale.items
-      .map((item) => `${item.product?.name || `Product #${item.productId}`} x${item.quantity}`)
-      .join(', ');
-  }
-
-  if (sale.product) return sale.product.name;
-
-  return 'No product';
+  const count = getSaleProductCount(sale);
+  return count > 0 ? `${count} ${count === 1 ? 'product' : 'products'}` : 'No product';
 };
 
 const statusClass = (status: string) => {
@@ -270,6 +270,8 @@ export default function SalesPage() {
   const [editing, setEditing] = useState<Sale | null>(null);
   const [showColMenu, setShowColMenu] = useState(false);
   const [openProductPopover, setOpenProductPopover] = useState<number | null>(null);
+  const [saleProductsById, setSaleProductsById] = useState<Record<number, SaleProductsResponse>>({});
+  const [loadingProductSaleId, setLoadingProductSaleId] = useState<number | null>(null);
   const [visibleCols, setVisibleCols] = useState({
     products: true,
     amount: true,
@@ -366,20 +368,53 @@ export default function SalesPage() {
   };
 
   const openEdit = (sale: Sale) => {
-    setEditing(sale);
-    setForm({
-      date: sale.date.slice(0, 10),
-      patientName: sale.patientName,
-      therapyPrice: sale.therapyPrice ? String(sale.therapyPrice) : '',
-      amount: String(sale.amount),
-      paymentMode: sale.paymentMode,
-      status: sale.status,
-      pendingAmount: String(sale.pendingAmount),
-      notes: sale.notes || '',
-    });
-    setItems(getSaleItems(sale));
     setError('');
-    setShowInlineForm(true);
+    api.get<Sale>(`/sales/${sale.id}`)
+      .then((res) => {
+        const fullSale = res.data;
+        setEditing(fullSale);
+        setForm({
+          date: fullSale.date.slice(0, 10),
+          patientName: fullSale.patientName,
+          therapyPrice: fullSale.therapyPrice ? String(fullSale.therapyPrice) : '',
+          amount: String(fullSale.amount),
+          paymentMode: fullSale.paymentMode,
+          status: fullSale.status,
+          pendingAmount: String(fullSale.pendingAmount),
+          notes: fullSale.notes || '',
+        });
+        setItems(getSaleItems(fullSale));
+        setShowInlineForm(true);
+      })
+      .catch(() => {
+        setError('Failed to load sale details');
+      });
+  };
+
+  const toggleProductsPopover = async (sale: Sale, event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    if (openProductPopover === sale.id) {
+      setOpenProductPopover(null);
+      return;
+    }
+
+    setOpenProductPopover(sale.id);
+
+    if (saleProductsById[sale.id]) {
+      return;
+    }
+
+    setLoadingProductSaleId(sale.id);
+    try {
+      const res = await api.get<SaleProductsResponse>(`/sales/${sale.id}/products`);
+      setSaleProductsById((current) => ({
+        ...current,
+        [sale.id]: res.data,
+      }));
+    } finally {
+      setLoadingProductSaleId(null);
+    }
   };
 
   const cancelForm = () => {
@@ -826,10 +861,10 @@ export default function SalesPage() {
                   </div>
                 </div>
 
-                {(sale.items?.length > 0 || sale.product) && (
+                {((sale.items?.length ?? 0) > 0 || sale.product) && (
                   <div className={s.mobileProductBlock}>
-                    {(sale.items?.length
-                      ? sale.items
+                    {((sale.items?.length ?? 0) > 0
+                      ? sale.items ?? []
                       : [{
                           id: 0,
                           saleId: sale.id,
@@ -884,17 +919,19 @@ export default function SalesPage() {
                   </td>
                   {visibleCols.products && <td className={s.td}>
                     {(() => {
-                      const allItems: { name: string; qty: number }[] = sale.items?.length > 0
+                      const itemCount = getSaleProductCount(sale);
+                      const saleProducts = saleProductsById[sale.id];
+                      const isLoadingProducts = loadingProductSaleId === sale.id;
+                      const allItems: { name: string; qty: number }[] = saleProducts
                         ? [
-                            ...sale.items.map(item => ({ name: item.product?.name || `Product #${item.productId}`, qty: item.quantity })),
-                            ...(sale.therapyPrice ? [{ name: `Therapy`, qty: 0 }] : []),
+                            ...saleProducts.products.map((item) => ({
+                              name: item.product?.name || `Product #${item.productId}`,
+                              qty: item.quantity,
+                            })),
+                            ...(saleProducts.therapyPrice ? [{ name: 'Therapy', qty: 0 }] : []),
                           ]
-                        : sale.product
-                          ? [
-                              { name: sale.product.name, qty: 1 },
-                              ...(sale.therapyPrice ? [{ name: `Therapy`, qty: 0 }] : []),
-                            ]
-                          : [];
+                        : Array.from({ length: itemCount }, () => ({ name: 'Loading...', qty: 0 }));
+
 
                       if (allItems.length === 0) return <span className={s.cellText}>—</span>;
 
@@ -904,22 +941,23 @@ export default function SalesPage() {
                           <button
                             type="button"
                             className={`${s.productBadge} ${isOpen ? s.productBadgeActive : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenProductPopover(isOpen ? null : sale.id);
-                            }}
+                            onClick={(e) => void toggleProductsPopover(sale, e)}
                           >
-                            {allItems.length} {allItems.length === 1 ? 'product' : 'products'}
+                            {itemCount} {itemCount === 1 ? 'product' : 'products'}
                             <span className={s.productBadgeArrow}>⌄</span>
                           </button>
                           {isOpen && (
                             <div className={s.productPopover} onClick={e => e.stopPropagation()}>
                               <p className={s.productPopoverTitle}>Products</p>
-                              {allItems.map((item, i) => (
+                              {isLoadingProducts ? (
+                                <div className={s.productPopoverItem}>
+                                  <span className={s.productPopoverName}>Loading...</span>
+                                </div>
+                              ) : allItems.map((item, i) => (
                                 <div key={i} className={s.productPopoverItem}>
                                   <span className={s.productPopoverName}>{item.name}</span>
                                   {item.qty > 0 && <span className={s.productPopoverQty}>×{item.qty}</span>}
-                                  {item.qty === 0 && <span className={s.productPopoverQty}>{currency(sale.therapyPrice || 0)}</span>}
+                                  {item.qty === 0 && saleProducts?.therapyPrice && <span className={s.productPopoverQty}>{currency(saleProducts.therapyPrice)}</span>}
                                 </div>
                               ))}
                             </div>
