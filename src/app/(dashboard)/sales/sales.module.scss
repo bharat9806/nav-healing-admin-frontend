@@ -902,7 +902,100 @@
   font-size: 1rem;
 }
 
-// ── Product cell in table ─────────────────────────────────────────
+// ── Product popover ───────────────────────────────────────────────
+.productPopoverWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.productBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-control-bg);
+  color: var(--shell-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+
+  &:hover {
+    background: var(--shell-control-bg-strong);
+    border-color: var(--shell-border-strong);
+    color: var(--shell-text-primary);
+  }
+}
+
+.productBadgeActive {
+  background: rgba($emerald, 0.1);
+  border-color: rgba($emerald, 0.35);
+  color: $emerald-light;
+}
+
+.productBadgeArrow {
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.productPopover {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  min-width: 13rem;
+  max-width: 18rem;
+  padding: $s2 $s3;
+  background: var(--shell-surface);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-lg;
+  box-shadow: var(--shell-shadow-soft);
+  z-index: 50;
+}
+
+.productPopoverTitle {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--shell-text-subtle);
+  margin: 0 0 $s2;
+  padding-bottom: $s2;
+  border-bottom: 1px solid var(--shell-border);
+}
+
+.productPopoverItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+  padding: 0.3rem 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--shell-table-border);
+  }
+}
+
+.productPopoverName {
+  font-size: 0.8125rem;
+  color: var(--shell-text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productPopoverQty {
+  font-size: 0.78rem;
+  color: var(--shell-text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+// ── Product cell in table (legacy) ────────────────────────────────
 .productName {
   color: var(--shell-text-primary);
   font-size: 0.875rem;

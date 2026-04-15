@@ -269,6 +269,7 @@ export default function SalesPage() {
   const [showInlineForm, setShowInlineForm] = useState(false);
   const [editing, setEditing] = useState<Sale | null>(null);
   const [showColMenu, setShowColMenu] = useState(false);
+  const [openProductPopover, setOpenProductPopover] = useState<number | null>(null);
   const [visibleCols, setVisibleCols] = useState({
     products: true,
     amount: true,
@@ -297,6 +298,13 @@ export default function SalesPage() {
   const summaryTotalAmount = sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
   const summaryPendingAmount = sales.reduce((sum, sale) => sum + Number(sale.pendingAmount || 0), 0);
   const summaryReceivedAmount = summaryTotalAmount - summaryPendingAmount;
+
+  useEffect(() => {
+    if (openProductPopover === null) return;
+    const close = () => setOpenProductPopover(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [openProductPopover]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -875,23 +883,50 @@ export default function SalesPage() {
                     <p className={s.patientName}>{sale.patientName}</p>
                   </td>
                   {visibleCols.products && <td className={s.td}>
-                    {sale.items?.length > 0 ? (
-                      <>
-                        {sale.items.map((item, index) => (
-                          <p key={`${sale.id}-${item.productId}-${index}`} className={index === 0 ? s.productName : s.productSub}>
-                            {item.product?.name || `Product #${item.productId}`} x{item.quantity}
-                          </p>
-                        ))}
-                        {sale.therapyPrice ? <p className={s.productSub}>Therapy: {currency(sale.therapyPrice)}</p> : null}
-                      </>
-                    ) : sale.product ? (
-                      <>
-                        <p className={s.productName}>{sale.product.name}</p>
-                        <p className={s.productSub}>{sale.product.sku}{sale.therapyPrice ? ` + Therapy: ${currency(sale.therapyPrice)}` : ''}</p>
-                      </>
-                    ) : (
-                      <span className={s.cellText}>—</span>
-                    )}
+                    {(() => {
+                      const allItems: { name: string; qty: number }[] = sale.items?.length > 0
+                        ? [
+                            ...sale.items.map(item => ({ name: item.product?.name || `Product #${item.productId}`, qty: item.quantity })),
+                            ...(sale.therapyPrice ? [{ name: `Therapy`, qty: 0 }] : []),
+                          ]
+                        : sale.product
+                          ? [
+                              { name: sale.product.name, qty: 1 },
+                              ...(sale.therapyPrice ? [{ name: `Therapy`, qty: 0 }] : []),
+                            ]
+                          : [];
+
+                      if (allItems.length === 0) return <span className={s.cellText}>—</span>;
+
+                      const isOpen = openProductPopover === sale.id;
+                      return (
+                        <div className={s.productPopoverWrap}>
+                          <button
+                            type="button"
+                            className={`${s.productBadge} ${isOpen ? s.productBadgeActive : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenProductPopover(isOpen ? null : sale.id);
+                            }}
+                          >
+                            {allItems.length} {allItems.length === 1 ? 'product' : 'products'}
+                            <span className={s.productBadgeArrow}>⌄</span>
+                          </button>
+                          {isOpen && (
+                            <div className={s.productPopover} onClick={e => e.stopPropagation()}>
+                              <p className={s.productPopoverTitle}>Products</p>
+                              {allItems.map((item, i) => (
+                                <div key={i} className={s.productPopoverItem}>
+                                  <span className={s.productPopoverName}>{item.name}</span>
+                                  {item.qty > 0 && <span className={s.productPopoverQty}>×{item.qty}</span>}
+                                  {item.qty === 0 && <span className={s.productPopoverQty}>{currency(sale.therapyPrice)}</span>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>}
                   {visibleCols.amount      && <td className={s.td}><span className={s.amountText}>{currency(sale.amount)}</span></td>}
                   {visibleCols.paymentMode && <td className={s.td}><span className={s.cellText}>{sale.paymentMode}</span></td>}
