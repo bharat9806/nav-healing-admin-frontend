@@ -29,10 +29,18 @@ export default function PatientsPage() {
   const [detailError, setDetailError] = useState('');
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [showInteractionForm, setShowInteractionForm] = useState(false);
+  const [showEditContactForm, setShowEditContactForm] = useState(false);
   const [savingPatient, setSavingPatient] = useState(false);
   const [savingInteraction, setSavingInteraction] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
   const [patientFormError, setPatientFormError] = useState('');
   const [interactionFormError, setInteractionFormError] = useState('');
+  const [editContactError, setEditContactError] = useState('');
+  const [editContactForm, setEditContactForm] = useState({
+    phone: '',
+    alternatePhone: '',
+    email: '',
+  });
   const [patientForm, setPatientForm] = useState({
     name: '',
     phone: '',
@@ -107,6 +115,9 @@ export default function PatientsPage() {
   }, [search]);
 
   useEffect(() => {
+    setShowEditContactForm(false);
+    setEditContactError('');
+
     if (!selectedPatientId) {
       setPatientDetail(null);
       return;
@@ -141,6 +152,49 @@ export default function PatientsPage() {
     });
     setInteractionFormError('');
     setShowInteractionForm(false);
+  };
+
+  const openEditContactForm = (detail: PatientDetail) => {
+    setEditContactForm({
+      phone: detail.phone || '',
+      alternatePhone: detail.alternatePhone || '',
+      email: detail.email || '',
+    });
+    setEditContactError('');
+    setShowEditContactForm(true);
+  };
+
+  const resetEditContactForm = () => {
+    setEditContactError('');
+    setShowEditContactForm(false);
+  };
+
+  const handleSaveContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPatientId) return;
+    setSavingContact(true);
+    setEditContactError('');
+
+    try {
+      await api.put(`/patients/${selectedPatientId}`, {
+        phone: editContactForm.phone || null,
+        alternatePhone: editContactForm.alternatePhone || null,
+        email: editContactForm.email || null,
+      });
+
+      await Promise.all([
+        loadPatients(search, selectedPatientId),
+        loadPatientDetail(selectedPatientId),
+      ]);
+      resetEditContactForm();
+    } catch (error) {
+      const message = isAxiosError<{ message?: string | string[] }>(error)
+        ? error.response?.data?.message
+        : undefined;
+      setEditContactError(Array.isArray(message) ? message.join(', ') : message || 'Failed to update contact details');
+    } finally {
+      setSavingContact(false);
+    }
   };
 
   const handleCreatePatient = async (e: React.FormEvent) => {
@@ -399,11 +453,89 @@ export default function PatientsPage() {
 
               <div className={s.profileGrid}>
                 <div className={s.profileCard}>
-                  <h3 className={s.cardTitle}>Patient Details</h3>
-                  <p><strong>Phone:</strong> {patientDetail.phone || '-'}</p>
-                  <p><strong>Alternate:</strong> {patientDetail.alternatePhone || '-'}</p>
-                  <p><strong>Email:</strong> {patientDetail.email || '-'}</p>
-                  <p><strong>Created:</strong> {formatDate(patientDetail.createdAt)}</p>
+                  <div className={s.cardTitleRow}>
+                    <h3 className={s.cardTitle}>Patient Details</h3>
+                    {canManagePatients ? (
+                      <button
+                        type="button"
+                        className={s.editContactBtn}
+                        onClick={() =>
+                          showEditContactForm
+                            ? resetEditContactForm()
+                            : openEditContactForm(patientDetail)
+                        }
+                      >
+                        {showEditContactForm ? 'Cancel' : 'Edit'}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {showEditContactForm ? (
+                    <form onSubmit={handleSaveContact} className={s.editContactForm}>
+                      <div className={s.editContactField}>
+                        <label>Phone</label>
+                        <input
+                          type="text"
+                          className={s.input}
+                          value={editContactForm.phone}
+                          onChange={(e) =>
+                            setEditContactForm((c) => ({ ...c, phone: e.target.value }))
+                          }
+                          placeholder="e.g. 9876543210"
+                        />
+                      </div>
+                      <div className={s.editContactField}>
+                        <label>Alternate Phone</label>
+                        <input
+                          type="text"
+                          className={s.input}
+                          value={editContactForm.alternatePhone}
+                          onChange={(e) =>
+                            setEditContactForm((c) => ({ ...c, alternatePhone: e.target.value }))
+                          }
+                          placeholder="e.g. 9876543211"
+                        />
+                      </div>
+                      <div className={s.editContactField}>
+                        <label>Email</label>
+                        <input
+                          type="email"
+                          className={s.input}
+                          value={editContactForm.email}
+                          onChange={(e) =>
+                            setEditContactForm((c) => ({ ...c, email: e.target.value }))
+                          }
+                          placeholder="patient@example.com"
+                        />
+                      </div>
+                      {editContactError ? (
+                        <p className={s.formError}>{editContactError}</p>
+                      ) : null}
+                      <div className={s.editContactActions}>
+                        <button
+                          type="button"
+                          className={s.secondaryButton}
+                          onClick={resetEditContactForm}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className={s.primaryButton}
+                          disabled={savingContact}
+                        >
+                          {savingContact ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <>
+                      <p><strong>Phone:</strong> {patientDetail.phone || '-'}</p>
+                      <p><strong>Alternate:</strong> {patientDetail.alternatePhone || '-'}</p>
+                      <p><strong>Email:</strong> {patientDetail.email || '-'}</p>
+                      <p><strong>Created:</strong> {formatDate(patientDetail.createdAt)}</p>
+                    </>
+                  )}
                 </div>
 
                 <div className={s.profileCard}>

@@ -335,6 +335,56 @@
   color: var(--shell-text-primary);
 }
 
+.cardTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s2;
+}
+
+.editContactBtn {
+  @include btn-ghost;
+  font-size: $fs-xs;
+  font-weight: 600;
+  padding: 0.2rem $s3;
+  border: 1px solid var(--shell-border);
+  border-radius: $r-full;
+  color: $emerald-light;
+
+  &:hover {
+    background: var(--brand-primary-soft);
+    border-color: rgba($emerald, 0.35);
+    color: $emerald-light;
+  }
+}
+
+.editContactForm {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.editContactField {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+
+  label {
+    font-size: $fs-xs;
+    font-weight: 500;
+    color: var(--shell-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+}
+
+.editContactActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s2;
+  padding-top: $s1;
+}
+
 .longText {
   margin: 0;
   font-size: $fs-body;
