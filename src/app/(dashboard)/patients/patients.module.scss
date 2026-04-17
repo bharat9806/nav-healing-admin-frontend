@@ -1,287 +1,454 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
 .page {
-  display: grid;
-  gap: 1.5rem;
+  padding: $s6;
+  color: var(--shell-text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: $s5;
+
+  @media (max-width: ($md - 1px)) { padding: $s3; }
 }
 
-.header,
-.detailHeader,
-.formHeader,
-.sectionHeader,
-.patientListTop,
-.timelineTop,
-.saleTop,
-.formActions,
-.detailActions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+// ── Page header ───────────────────────────────────────────────────────────────
+.header {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    align-items: flex-start;
+  }
 }
 
 .pageTitle {
   margin: 0;
-  font-size: 2rem;
-  font-weight: 800;
-  color: #10233f;
+  font-size: $fs-xl;
+  font-weight: 700;
+  color: var(--shell-text-primary);
 }
 
-.pageSubtitle,
-.detailSubtitle,
-.formSubtitle,
-.patientContact,
-.patientTimestamp,
-.emptyText,
-.timelineMeta,
-.saleMeta,
-.longText {
-  margin: 0;
-  color: #5b6b84;
-  line-height: 1.6;
+.pageSubtitle {
+  margin: 0.25rem 0 0;
+  font-size: $fs-body;
+  color: var(--shell-text-muted);
+  line-height: 1.5;
 }
 
-.primaryButton,
-.secondaryButton,
+// ── Buttons ───────────────────────────────────────────────────────────────────
+.primaryButton   { @include btn-primary;  padding: $s2 $s4; }
+.secondaryButton { @include btn-ghost;    padding: $s2 $s4; border: 1px solid var(--shell-border); }
+
 .historyLink {
-  border-radius: 999px;
-  padding: 0.8rem 1.15rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-}
-
-.primaryButton {
-  border: none;
-  background: linear-gradient(135deg, #0d8b7b, #1466a3);
-  color: #fff;
-  box-shadow: 0 14px 32px rgba(20, 102, 163, 0.18);
-}
-
-.secondaryButton,
-.historyLink {
-  border: 1px solid #cfd8e6;
-  background: #fff;
-  color: #183153;
-}
-
-.primaryButton:hover,
-.secondaryButton:hover,
-.historyLink:hover {
-  transform: translateY(-1px);
-}
-
-.layout {
-  display: grid;
-  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.sidebar,
-.detailPanel,
-.formCard,
-.searchCard,
-.stateCard,
-.summaryCard,
-.profileCard,
-.sectionCard,
-.timelineCard,
-.saleCard,
-.patientListItem {
-  border: 1px solid #dde5f0;
-  border-radius: 1.35rem;
-  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-  box-shadow: 0 18px 40px rgba(17, 35, 63, 0.07);
-}
-
-.sidebar,
-.detailPanel,
-.formCard,
-.sectionCard,
-.profileCard {
-  padding: 1.25rem;
-}
-
-.searchInput,
-.input,
-.textarea {
-  width: 100%;
-  border: 1px solid #ccd7e5;
-  border-radius: 1rem;
-  background: #fff;
-  color: #10233f;
-  padding: 0.9rem 1rem;
-  font: inherit;
-}
-
-.searchInput:focus,
-.input:focus,
-.textarea:focus {
-  outline: none;
-  border-color: #1466a3;
-  box-shadow: 0 0 0 4px rgba(20, 102, 163, 0.1);
-}
-
-.patientList {
-  display: grid;
-  gap: 0.9rem;
-  margin-top: 1rem;
-}
-
-.patientListItem {
-  padding: 1rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.patientListItemActive {
-  border-color: #1466a3;
-  box-shadow: 0 18px 40px rgba(20, 102, 163, 0.14);
-  background: linear-gradient(180deg, #eff8ff 0%, #ffffff 100%);
-}
-
-.patientName,
-.detailTitle,
-.formTitle,
-.sectionTitle,
-.cardTitle,
-.timelineSummary {
-  margin: 0;
-  color: #10233f;
-}
-
-.patientMeta,
-.timelineType,
-.timelineDate,
-.summaryLabel {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #1466a3;
-}
-
-.detailTitle {
-  font-size: 1.8rem;
-  font-weight: 800;
-}
-
-.summaryGrid,
-.profileGrid,
-.sectionGrid,
-.formGrid {
-  display: grid;
-  gap: 1rem;
-}
-
-.summaryGrid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 1.25rem;
-}
-
-.summaryCard {
-  padding: 1rem 1.1rem;
-}
-
-.summaryValue {
-  display: block;
-  margin-top: 0.35rem;
-  color: #10233f;
-  font-size: 1.25rem;
-  font-weight: 800;
-}
-
-.profileGrid,
-.sectionGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  margin-top: 1.25rem;
-}
-
-.formCard {
-  display: grid;
-  gap: 1rem;
-}
-
-.formGrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.formGroup {
-  display: grid;
-  gap: 0.45rem;
-}
-
-.formGroup label {
-  color: #183153;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.formGroupFull {
-  grid-column: 1 / -1;
-}
-
-.formError {
-  margin: 0;
-  color: #a1264d;
-  font-weight: 700;
-}
-
-.sectionCard,
-.detailPanel {
-  display: grid;
-  gap: 1rem;
-}
-
-.timeline,
-.salesList {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.timelineCard,
-.saleCard {
-  padding: 1rem;
-}
-
-.timelineType {
   display: inline-flex;
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  background: rgba(20, 102, 163, 0.1);
+  align-items: center;
+  padding: $s2 $s4;
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+  background: var(--shell-control-bg);
+  color: var(--shell-text-secondary);
+  font-size: $fs-body;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--shell-control-bg-strong);
+    border-color: var(--shell-border-strong);
+    color: var(--shell-text-primary);
+  }
 }
 
-.saleAmount {
-  color: #0d8b7b;
-  font-weight: 800;
+// ── Add-patient form card ─────────────────────────────────────────────────────
+.formCard {
+  @include card;
+  padding: $s5;
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
 }
 
-.stateCard {
-  padding: 1.5rem;
-  color: #5b6b84;
+.formHeader {
+  @include flex-between;
+  gap: $s3;
+  flex-wrap: wrap;
 }
 
-@media (max-width: 1100px) {
-  .layout,
-  .profileGrid,
-  .sectionGrid,
-  .summaryGrid,
-  .formGrid {
+.formTitle {
+  margin: 0;
+  font-size: $fs-lg;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+.formSubtitle {
+  margin: 0.2rem 0 0;
+  font-size: $fs-body;
+  color: var(--shell-text-muted);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s4;
+
+  @media (max-width: ($md - 1px)) {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 720px) {
-  .header,
-  .detailHeader,
-  .detailActions,
-  .formHeader,
-  .formActions,
-  .timelineTop,
-  .saleTop {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
 
-  .pageTitle {
-    font-size: 1.6rem;
+  label {
+    font-size: $fs-body;
+    font-weight: 500;
+    color: var(--shell-text-secondary);
   }
+}
+
+.formGroupFull { grid-column: 1 / -1; }
+
+.input    { @include input; }
+.textarea { @include input; resize: none; }
+
+.formError {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: $fs-body;
+  font-weight: 500;
+  color: $red-light;
+}
+
+.formActions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
+}
+
+// ── Two-column layout: sidebar + detail ───────────────────────────────────────
+.layout {
+  display: grid;
+  grid-template-columns: minmax(17rem, 22rem) minmax(0, 1fr);
+  gap: $s4;
+  align-items: start;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+.sidebar {
+  @include card;
+  padding: $s4;
+  // Stick below header and scroll internally on tall viewports
+  position: sticky;
+  top: $s4;
+  max-height: calc(100vh - 10rem);
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+  overflow: hidden;
+
+  @media (max-width: ($md - 1px)) {
+    position: static;
+    max-height: none;
+  }
+}
+
+.searchInput {
+  @include input;
+}
+
+// ── Patient list — SCROLLABLE ─────────────────────────────────────────────────
+.patientList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+  scrollbar-width: thin;
+  scrollbar-color: var(--shell-scrollbar) transparent;
+
+  &::-webkit-scrollbar        { width: 0.4rem; }
+  &::-webkit-scrollbar-track  { background: transparent; }
+  &::-webkit-scrollbar-thumb  { background: var(--shell-scrollbar); border-radius: 999px; }
+}
+
+.patientListItem {
+  width: 100%;
+  padding: $s3;
+  text-align: left;
+  background: var(--shell-soft-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover { background: var(--shell-hover); }
+}
+
+.patientListItemActive {
+  background: var(--brand-primary-soft) !important;
+  border-color: rgba($emerald, 0.4) !important;
+}
+
+.patientListTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s2;
+}
+
+.patientName {
+  font-size: $fs-body;
+  font-weight: 600;
+  color: var(--shell-text-primary);
+}
+
+.patientMeta {
+  font-size: $fs-xs;
+  font-weight: 600;
+  color: $emerald-light;
+  white-space: nowrap;
+}
+
+.patientContact {
+  margin: 0.2rem 0 0;
+  font-size: $fs-xs;
+  color: var(--shell-text-muted);
+}
+
+.patientTimestamp {
+  margin: 0.15rem 0 0;
+  font-size: $fs-xs;
+  color: var(--shell-text-subtle);
+}
+
+// ── Detail panel ──────────────────────────────────────────────────────────────
+.detailPanel {
+  @include card;
+  padding: $s5;
+  display: flex;
+  flex-direction: column;
+  gap: $s5;
+}
+
+.detailHeader {
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: $s3;
+}
+
+.detailTitle {
+  margin: 0;
+  font-size: $fs-2xl;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+.detailSubtitle {
+  margin: 0.25rem 0 0;
+  font-size: $fs-body;
+  color: var(--shell-text-muted);
+}
+
+.detailActions {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  flex-wrap: wrap;
+}
+
+// ── Summary cards ─────────────────────────────────────────────────────────────
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.summaryCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+}
+
+.summaryLabel {
+  font-size: $fs-xs;
+  font-weight: 600;
+  color: var(--shell-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.summaryValue {
+  font-size: $fs-xl;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+// ── Profile / note cards ──────────────────────────────────────────────────────
+.profileGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s4;
+
+  @media (max-width: ($md - 1px)) { grid-template-columns: 1fr; }
+}
+
+.profileCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  p {
+    margin: 0;
+    font-size: $fs-body;
+    color: var(--shell-text-secondary);
+    line-height: 1.55;
+
+    strong { color: var(--shell-text-muted); font-weight: 500; }
+  }
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: $fs-md;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+.longText {
+  margin: 0;
+  font-size: $fs-body;
+  color: var(--shell-text-secondary);
+  line-height: 1.6;
+}
+
+// ── Sections (timeline + recent sales) ───────────────────────────────────────
+.sectionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $s4;
+
+  @media (max-width: ($md - 1px)) { grid-template-columns: 1fr; }
+}
+
+.sectionCard {
+  @include card;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.sectionHeader {
+  @include flex-between;
+  gap: $s2;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: $fs-md;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+.timeline,
+.salesList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.timelineCard,
+.saleCard {
+  @include card;
+  padding: $s3 $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.timelineTop,
+.saleTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $s2;
+}
+
+.timelineType {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: $r-full;
+  font-size: $fs-xs;
+  font-weight: 600;
+  background: var(--brand-primary-soft);
+  color: $emerald-light;
+}
+
+.timelineSummary {
+  margin: 0.25rem 0 0;
+  font-size: $fs-body;
+  font-weight: 600;
+  color: var(--shell-text-primary);
+}
+
+.timelineDate {
+  font-size: $fs-xs;
+  font-weight: 600;
+  color: var(--shell-text-muted);
+  white-space: nowrap;
+}
+
+.timelineMeta {
+  margin: 0;
+  font-size: $fs-xs;
+  color: var(--shell-text-subtle);
+}
+
+// ── Sales cards ───────────────────────────────────────────────────────────────
+.saleAmount {
+  font-weight: 700;
+  color: $emerald-light;
+  white-space: nowrap;
+}
+
+.saleMeta {
+  margin: 0;
+  font-size: $fs-xs;
+  color: var(--shell-text-muted);
+}
+
+// ── Empty / loading state ─────────────────────────────────────────────────────
+.stateCard {
+  @include card;
+  padding: $s6;
+  font-size: $fs-body;
+  color: var(--shell-text-muted);
+}
+
+.emptyText {
+  margin: 0;
+  font-size: $fs-body;
+  color: var(--shell-text-subtle);
 }
