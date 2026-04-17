@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
+import { generateInvoice } from '@/lib/generateInvoice';
 import { Sale, SaleItem, SaleProductsResponse, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './sales.module.scss';
@@ -28,6 +29,7 @@ type SaleFormState = {
   date: string;
   patientName: string;
   therapyPrice: string;
+  discount: string;
   amount: string;
   paymentMode: string;
   status: string;
@@ -50,6 +52,7 @@ const initialForm = (): SaleFormState => ({
   date: new Date().toISOString().slice(0, 10),
   patientName: '',
   therapyPrice: '',
+  discount: '',
   amount: '',
   paymentMode: 'Cash',
   status: 'Paid',
@@ -293,12 +296,14 @@ export default function SalesPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   const therapyPrice = Number(form.therapyPrice || 0);
+  const discount = Number(form.discount || 0);
   const validItems = items.filter((item) => item.productId > 0 && item.product);
   const itemsTotal = validItems.reduce(
     (sum, item) => sum + Number(item.product?.price || 0) * item.quantity,
     0,
   );
-  const computedAmount = validItems.length > 0 ? itemsTotal + therapyPrice : Number(form.amount || 0);
+  const subtotalAmount = validItems.length > 0 ? itemsTotal + therapyPrice : Number(form.amount || 0);
+  const computedAmount = Math.max(0, subtotalAmount - discount);
   const summaryTotalAmount = sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
   const summaryPendingAmount = sales.reduce((sum, sale) => sum + Number(sale.pendingAmount || 0), 0);
   const summaryReceivedAmount = summaryTotalAmount - summaryPendingAmount;
@@ -379,6 +384,7 @@ export default function SalesPage() {
           date: fullSale.date.slice(0, 10),
           patientName: fullSale.patientName,
           therapyPrice: fullSale.therapyPrice ? String(fullSale.therapyPrice) : '',
+          discount: '',
           amount: String(fullSale.amount),
           paymentMode: fullSale.paymentMode,
           status: fullSale.status,
@@ -457,6 +463,7 @@ export default function SalesPage() {
           }))
         : undefined,
       therapyPrice: form.therapyPrice ? Number(form.therapyPrice) : undefined,
+      discount: discount > 0 ? discount : undefined,
       amount: computedAmount,
       paymentMode: form.paymentMode,
       status: form.status,
@@ -733,6 +740,18 @@ export default function SalesPage() {
                   className={s.formInput}
                 />
               </div>
+              <div className={s.formGroup}>
+                <label>Discount (optional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={form.discount}
+                  onChange={(e) => setForm({ ...form, discount: e.target.value })}
+                  className={s.formInput}
+                />
+              </div>
             </div>
 
             <div className={s.amountBreakdown}>
@@ -747,6 +766,18 @@ export default function SalesPage() {
                   <span>Therapy</span>
                   <span>{currency(therapyPrice)}</span>
                 </div>
+              )}
+              {discount > 0 && (
+                <>
+                  <div className={s.breakdownRow}>
+                    <span>Subtotal</span>
+                    <span>{currency(subtotalAmount)}</span>
+                  </div>
+                  <div className={`${s.breakdownRow} ${s.breakdownDiscount}`}>
+                    <span>Discount</span>
+                    <span>- {currency(discount)}</span>
+                  </div>
+                </>
               )}
               <div className={`${s.breakdownRow} ${s.breakdownTotal}`}>
                 <span>Total Amount</span>
@@ -812,6 +843,31 @@ export default function SalesPage() {
 
             <div className={s.formActions}>
               <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
+              <button
+                type="button"
+                className={s.invoiceBtn}
+                disabled={!form.patientName.trim()}
+                onClick={() => {
+                  void generateInvoice({
+                    date: form.date,
+                    patientName: form.patientName,
+                    items: validItems.map((it) => ({
+                      name: it.product?.name || '',
+                      qty: it.quantity,
+                      unitPrice: Number(it.product?.price || 0),
+                    })),
+                    therapyPrice: therapyPrice || undefined,
+                    discount: discount || undefined,
+                    totalAmount: computedAmount,
+                    paymentMode: form.paymentMode,
+                    status: form.status,
+                    pendingAmount: Number(form.pendingAmount || 0),
+                    notes: form.notes || undefined,
+                  });
+                }}
+              >
+                ↓ Download Invoice
+              </button>
               <button
                 type="submit"
                 disabled={saving || (!validItems.length && !form.amount)}

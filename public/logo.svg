@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="200" height="220">
+  <!-- Outer circle -->
+  <circle cx="100" cy="85" r="72" fill="none" stroke="#1a5c38" stroke-width="5"/>
+
+  <!-- Meditation body torso -->
+  <path d="M100 55 C100 55 92 62 88 72 C84 82 85 90 100 95 C115 90 116 82 112 72 C108 62 100 55 100 55 Z" fill="#1a5c38"/>
+  <!-- Head -->
+  <circle cx="100" cy="48" r="10" fill="#1a5c38"/>
+  <!-- Left arm -->
+  <path d="M88 72 C80 78 72 85 68 92" stroke="#1a5c38" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- Right arm -->
+  <path d="M112 72 C120 78 128 85 132 92" stroke="#1a5c38" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- Left hand resting -->
+  <circle cx="67" cy="94" r="4" fill="#1a5c38"/>
+  <!-- Right hand resting -->
+  <circle cx="133" cy="94" r="4" fill="#1a5c38"/>
+  <!-- Left leg folded -->
+  <path d="M88 95 C84 102 78 108 68 110 C78 112 88 110 100 110" stroke="#1a5c38" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <!-- Right leg folded -->
+  <path d="M112 95 C116 102 122 108 132 110 C122 112 112 110 100 110" stroke="#1a5c38" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Ground waves -->
+  <path d="M60 122 Q80 115 100 122 Q120 130 140 122" fill="none" stroke="#1a5c38" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M50 133 Q75 123 100 133 Q125 143 150 133" fill="none" stroke="#1a5c38" stroke-width="3" stroke-linecap="round"/>
+  <path d="M42 144 Q71 132 100 144 Q129 156 158 144" fill="none" stroke="#1a5c38" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Brand name -->
+  <text x="100" y="178" font-family="Georgia, serif" font-size="14.5" font-weight="bold" fill="#1a5c38" text-anchor="middle" letter-spacing="2">NNAVHEALING HERBSS</text>
+
+  <!-- Decorative line -->
+  <line x1="30" y1="185" x2="170" y2="185" stroke="#1a5c38" stroke-width="1.2"/>
+
+  <!-- Tagline -->
+  <text x="100" y="198" font-family="Georgia, serif" font-size="9.5" fill="#1a5c38" text-anchor="middle" font-style="italic" letter-spacing="1">Roots. Remedy. Relief.</text>
+</svg>

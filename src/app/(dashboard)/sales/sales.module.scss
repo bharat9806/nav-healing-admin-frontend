@@ -627,7 +627,32 @@
 }
 
 .cancelBtn { @include btn-ghost; padding: $s2 $s4; }
-.saveBtn { @include btn-primary; padding: $s2 $s4; }
+.saveBtn   { @include btn-primary; padding: $s2 $s4; }
+
+.invoiceBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $s2;
+  padding: $s2 $s4;
+  border: 1px solid rgba($emerald, 0.45);
+  border-radius: $r-md;
+  background: rgba($emerald, 0.08);
+  color: $emerald-light;
+  font-size: $fs-body;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: rgba($emerald, 0.16);
+    border-color: rgba($emerald, 0.65);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
 
 .overlay { @include modal-overlay; }
 
@@ -905,6 +930,11 @@
   justify-content: space-between;
   font-size: 0.875rem;
   color: var(--shell-text-secondary);
+}
+
+.breakdownDiscount {
+  color: $red-light;
+  font-size: 0.875rem;
 }
 
 .breakdownTotal {
