@@ -23,6 +23,7 @@ const allNavItems = [
   { label: 'Products', href: '/products', icon: <ProductsIcon />, permission: 'canManageProducts' },
   { label: 'Product Sales', href: '/product-sales', icon: <ProductSalesIcon />, permission: 'canManageProductSales' },
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
+  { label: 'Patients', href: '/patients', icon: <PatientsIcon />, permission: 'canManageSales' },
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
@@ -153,6 +154,17 @@ function SalesIcon() {
       <path d="M4 12h10" />
       <path d="M4 17h16" />
       <circle cx="18" cy="12" r="2.5" />
+    </IconShell>
+  );
+}
+
+function PatientsIcon() {
+  return (
+    <IconShell>
+      <path d="M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+      <path d="M4 19a5 5 0 0 1 10 0" />
+      <path d="M16.5 8.5h4" />
+      <path d="M18.5 6.5v4" />
     </IconShell>
   );
 }

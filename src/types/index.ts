@@ -175,3 +175,59 @@ export interface ProductSaleItem {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface PatientListItem {
+  id: number;
+  name: string;
+  phone?: string;
+  alternatePhone?: string;
+  email?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  interactionCount: number;
+  lastInteractionAt?: string | null;
+}
+
+export interface PatientInteraction {
+  id: number;
+  patientId: number;
+  interactionDate: string;
+  type: string;
+  summary?: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: {
+    id: number;
+    username: string;
+  };
+}
+
+export interface PatientDetail {
+  id: number;
+  name: string;
+  phone?: string;
+  alternatePhone?: string;
+  email?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  interactionCount: number;
+  salesSummary: {
+    totalSales: number;
+    lastSaleDate?: string | null;
+    totalAmount: number;
+    totalPendingAmount: number;
+  };
+  recentSales: Array<{
+    id: number;
+    date: string;
+    amount: number;
+    pendingAmount: number;
+    paymentMode: string;
+    status: string;
+    notes?: string;
+  }>;
+  interactions: PatientInteraction[];
+}

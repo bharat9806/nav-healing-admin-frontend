@@ -16,6 +16,10 @@
   align-items: flex-start;
   gap: $s3;
   margin-bottom: $s5;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column;
+  }
 }
 
 .backLink {
@@ -47,6 +51,293 @@
   @include card;
   padding: $s5;
   color: var(--shell-text-secondary);
+}
+
+.primaryAction,
+.secondaryAction,
+.ghostAction,
+.removeItemBtn,
+.comboClear {
+  border: none;
+  border-radius: $r-md;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+  }
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+}
+
+.primaryAction {
+  padding: 0.85rem 1.15rem;
+  background: linear-gradient(135deg, $emerald 0%, color-mix(in srgb, $emerald 70%, #ffffff) 100%);
+  color: #03291f;
+}
+
+.secondaryAction,
+.ghostAction,
+.removeItemBtn {
+  padding: 0.75rem 1rem;
+  background: var(--shell-soft-bg);
+  color: var(--shell-text-primary);
+  border: 1px solid var(--shell-border);
+}
+
+.removeItemBtn {
+  align-self: flex-end;
+}
+
+.formCard {
+  @include card;
+  margin-bottom: $s5;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.formHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column;
+  }
+}
+
+.formTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--shell-text-primary);
+}
+
+.formSubtitle {
+  margin: $s1 0 0;
+  color: var(--shell-text-secondary);
+  line-height: 1.5;
+}
+
+.totalBadge {
+  padding: 0.8rem 1rem;
+  border-radius: $r-md;
+  background: rgba($emerald, 0.12);
+  color: $emerald-light;
+  font-weight: 700;
+}
+
+.formLayout {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $s3;
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  label {
+    color: var(--shell-text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+.formInput,
+.textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: $r-md;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-soft-bg);
+  color: var(--shell-text-primary);
+  font: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: rgba($emerald, 0.7);
+    box-shadow: 0 0 0 3px rgba($emerald, 0.14);
+  }
+}
+
+.textarea {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.productsSection {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.productsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.productEditorList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.productEditorRow {
+  display: grid;
+  grid-template-columns: minmax(0, 2.5fr) minmax(7rem, 0.8fr) minmax(8rem, 0.9fr) auto;
+  gap: $s3;
+  align-items: end;
+  padding: $s3;
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+  background: var(--shell-soft-bg);
+
+  @media (max-width: ($lg - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.productField,
+.qtyField {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  label {
+    color: var(--shell-text-muted);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+.pricePreview {
+  display: flex;
+  flex-direction: column;
+  gap: $s1;
+  min-height: 3.3rem;
+  justify-content: center;
+}
+
+.lineTotal {
+  color: var(--shell-text-primary);
+  font-size: 1rem;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    flex-direction: column-reverse;
+  }
+}
+
+.formError {
+  margin: 0;
+  color: $red-light;
+  font-weight: 600;
+}
+
+.comboWrap {
+  position: relative;
+}
+
+.comboClear {
+  position: absolute;
+  top: 50%;
+  right: 0.7rem;
+  transform: translateY(-50%);
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  background: transparent;
+  color: var(--shell-text-muted);
+
+  &:not(:disabled):hover {
+    transform: translateY(-50%);
+    color: var(--shell-text-primary);
+  }
+}
+
+.comboList {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 15;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+  background: var(--shell-bg);
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.18);
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.comboItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: calc($r-md - 4px);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--shell-soft-bg);
+  }
+}
+
+.comboItemActive {
+  background: rgba($emerald, 0.12);
+}
+
+.comboItemName {
+  color: var(--shell-text-primary);
+  font-weight: 600;
+}
+
+.comboItemSku,
+.comboEmpty {
+  color: var(--shell-text-muted);
+  font-size: 0.84rem;
+}
+
+.comboEmpty {
+  padding: 0.8rem 0.85rem;
 }
 
 .summaryGrid {

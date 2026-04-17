@@ -1,0 +1,287 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.header,
+.detailHeader,
+.formHeader,
+.sectionHeader,
+.patientListTop,
+.timelineTop,
+.saleTop,
+.formActions,
+.detailActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #10233f;
+}
+
+.pageSubtitle,
+.detailSubtitle,
+.formSubtitle,
+.patientContact,
+.patientTimestamp,
+.emptyText,
+.timelineMeta,
+.saleMeta,
+.longText {
+  margin: 0;
+  color: #5b6b84;
+  line-height: 1.6;
+}
+
+.primaryButton,
+.secondaryButton,
+.historyLink {
+  border-radius: 999px;
+  padding: 0.8rem 1.15rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.primaryButton {
+  border: none;
+  background: linear-gradient(135deg, #0d8b7b, #1466a3);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(20, 102, 163, 0.18);
+}
+
+.secondaryButton,
+.historyLink {
+  border: 1px solid #cfd8e6;
+  background: #fff;
+  color: #183153;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.historyLink:hover {
+  transform: translateY(-1px);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.sidebar,
+.detailPanel,
+.formCard,
+.searchCard,
+.stateCard,
+.summaryCard,
+.profileCard,
+.sectionCard,
+.timelineCard,
+.saleCard,
+.patientListItem {
+  border: 1px solid #dde5f0;
+  border-radius: 1.35rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  box-shadow: 0 18px 40px rgba(17, 35, 63, 0.07);
+}
+
+.sidebar,
+.detailPanel,
+.formCard,
+.sectionCard,
+.profileCard {
+  padding: 1.25rem;
+}
+
+.searchInput,
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid #ccd7e5;
+  border-radius: 1rem;
+  background: #fff;
+  color: #10233f;
+  padding: 0.9rem 1rem;
+  font: inherit;
+}
+
+.searchInput:focus,
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #1466a3;
+  box-shadow: 0 0 0 4px rgba(20, 102, 163, 0.1);
+}
+
+.patientList {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.patientListItem {
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.patientListItemActive {
+  border-color: #1466a3;
+  box-shadow: 0 18px 40px rgba(20, 102, 163, 0.14);
+  background: linear-gradient(180deg, #eff8ff 0%, #ffffff 100%);
+}
+
+.patientName,
+.detailTitle,
+.formTitle,
+.sectionTitle,
+.cardTitle,
+.timelineSummary {
+  margin: 0;
+  color: #10233f;
+}
+
+.patientMeta,
+.timelineType,
+.timelineDate,
+.summaryLabel {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1466a3;
+}
+
+.detailTitle {
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.summaryGrid,
+.profileGrid,
+.sectionGrid,
+.formGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.summaryGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 1.25rem;
+}
+
+.summaryCard {
+  padding: 1rem 1.1rem;
+}
+
+.summaryValue {
+  display: block;
+  margin-top: 0.35rem;
+  color: #10233f;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.profileGrid,
+.sectionGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1.25rem;
+}
+
+.formCard {
+  display: grid;
+  gap: 1rem;
+}
+
+.formGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formGroup {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.formGroup label {
+  color: #183153;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.formGroupFull {
+  grid-column: 1 / -1;
+}
+
+.formError {
+  margin: 0;
+  color: #a1264d;
+  font-weight: 700;
+}
+
+.sectionCard,
+.detailPanel {
+  display: grid;
+  gap: 1rem;
+}
+
+.timeline,
+.salesList {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.timelineCard,
+.saleCard {
+  padding: 1rem;
+}
+
+.timelineType {
+  display: inline-flex;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: rgba(20, 102, 163, 0.1);
+}
+
+.saleAmount {
+  color: #0d8b7b;
+  font-weight: 800;
+}
+
+.stateCard {
+  padding: 1.5rem;
+  color: #5b6b84;
+}
+
+@media (max-width: 1100px) {
+  .layout,
+  .profileGrid,
+  .sectionGrid,
+  .summaryGrid,
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .header,
+  .detailHeader,
+  .detailActions,
+  .formHeader,
+  .formActions,
+  .timelineTop,
+  .saleTop {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pageTitle {
+    font-size: 1.6rem;
+  }
+}
