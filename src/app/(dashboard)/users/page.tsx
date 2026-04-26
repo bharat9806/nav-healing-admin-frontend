@@ -31,6 +31,7 @@ interface EditForm {
   canExportLeads: boolean;
   canExportSales: boolean;
   canManageUsers: boolean;
+  canManageBlogs: boolean;
   canViewDashboard: boolean;
 }
 
@@ -50,6 +51,7 @@ interface CreateForm {
   canExportLeads: boolean;
   canExportSales: boolean;
   canManageUsers: boolean;
+  canManageBlogs: boolean;
   canViewDashboard: boolean;
 }
 
@@ -59,6 +61,7 @@ const PAGE_PERMISSIONS = [
   { key: 'canManageProductSales', label: 'Manage Product Sales' },
   { key: 'canManageLeads', label: 'Manage Leads' },
   { key: 'canManageSales', label: 'Manage Sales' },
+  { key: 'canManageBlogs', label: 'Manage Blogs' },
   { key: 'canManageUsers', label: 'Manage Users' },
 ] as const;
 
@@ -104,6 +107,7 @@ const initialEditForm = (): EditForm => ({
   canExportLeads: true,
   canExportSales: true,
   canManageUsers: false,
+  canManageBlogs: true,
   canViewDashboard: true,
 });
 
@@ -123,6 +127,7 @@ const initialCreateForm = (): CreateForm => ({
   canExportLeads: false,
   canExportSales: false,
   canManageUsers: false,
+  canManageBlogs: false,
   canViewDashboard: true,
 });
 
@@ -297,6 +302,7 @@ export default function UsersPage() {
       canExportLeads: user.canExportLeads,
       canExportSales: user.canExportSales,
       canManageUsers: user.canManageUsers,
+      canManageBlogs: user.canManageBlogs,
       canViewDashboard: user.canViewDashboard,
     });
     setFormError('');
@@ -900,6 +906,16 @@ export default function UsersPage() {
               >
                 Cancel
               </button>
+              <button onClick={handleDelete} className={s.deleteConfirmBtn}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>
                 Delete
               </button>
