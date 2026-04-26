@@ -916,13 +916,3 @@ export default function UsersPage() {
     </div>
   );
 }
-              <button onClick={handleDelete} className={s.deleteConfirmBtn}>
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
