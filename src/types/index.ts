@@ -155,6 +155,7 @@ export interface Sale {
   items?: SaleItem[];
   itemCount?: number;
   therapyPrice?: number;
+  discount?: number;
   amount: number;
   paymentMode: string;
   status: string;

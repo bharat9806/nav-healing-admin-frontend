@@ -384,7 +384,7 @@ export default function SalesPage() {
           date: fullSale.date.slice(0, 10),
           patientName: fullSale.patientName,
           therapyPrice: fullSale.therapyPrice ? String(fullSale.therapyPrice) : '',
-          discount: '',
+          discount: fullSale.discount ? String(fullSale.discount) : '',
           amount: String(fullSale.amount),
           paymentMode: fullSale.paymentMode,
           status: fullSale.status,
