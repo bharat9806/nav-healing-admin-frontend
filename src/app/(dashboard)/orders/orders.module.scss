@@ -1,0 +1,442 @@
+@use '@/styles/variables' as *;
+
+.page {
+  padding: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s5;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $s3;
+}
+
+.pageTitle {
+  font-size: $fs-xl;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
+}
+
+.totalBadge {
+  font-size: $fs-xs;
+  color: $text-muted;
+  background: $bg-elevated;
+  border: 1px solid $border;
+  border-radius: $r-full;
+  padding: 0.15rem 0.6rem;
+}
+
+// Status tabs
+.tabs {
+  display: flex;
+  gap: $s2;
+  border-bottom: 1px solid $border;
+  padding-bottom: 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: $text-muted;
+  font-size: $fs-body;
+  padding: $s2 $s4;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px;
+
+  &:hover { color: $text-secondary; }
+}
+
+.tabActive {
+  color: $emerald;
+  border-bottom-color: $emerald;
+  font-weight: 500;
+}
+
+// Skeleton
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.skeletonRow {
+  height: 52px;
+  border-radius: $r-md;
+  background: $bg-elevated;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// Empty
+.emptyBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $s8 $s4;
+  background: $bg-surface;
+  border: 1px dashed $border;
+  border-radius: $r-lg;
+}
+
+.emptyText {
+  color: $text-muted;
+  font-size: $fs-md;
+  margin: 0;
+}
+
+// Table
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid $border;
+  border-radius: $r-lg;
+  display: none;
+
+  @media (min-width: $md) { display: block; }
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $fs-body;
+}
+
+.thead { background: $bg-elevated; }
+
+.th {
+  padding: $s3 $s4;
+  text-align: left;
+  font-size: $fs-xs;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted;
+  white-space: nowrap;
+}
+
+.thRight { text-align: right; }
+
+.tr {
+  border-top: 1px solid $border;
+  transition: background 0.1s;
+  &:hover { background: $bg-elevated; }
+}
+
+.td {
+  padding: $s3 $s4;
+  color: $text-secondary;
+  vertical-align: middle;
+}
+
+.tdRight { text-align: right; }
+
+.orderRef {
+  font-family: monospace;
+  font-size: $fs-sm;
+  color: $emerald;
+  font-weight: 600;
+  margin: 0;
+}
+
+.customerName {
+  font-weight: 500;
+  color: $text-primary;
+  margin: 0;
+}
+
+.customerEmail {
+  font-size: $fs-xs;
+  color: $text-muted;
+  margin: 2px 0 0;
+}
+
+.itemLine {
+  font-size: $fs-sm;
+  color: $text-secondary;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.dateText {
+  font-size: $fs-xs;
+  color: $text-muted;
+  white-space: nowrap;
+}
+
+// Status badge
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.65rem;
+  border-radius: $r-full;
+  font-size: $fs-xs;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.statusPending {
+  background: rgba(251, 191, 36, 0.12);
+  color: $amber-light;
+  border: 1px solid rgba(251, 191, 36, 0.25);
+}
+
+.statusApproved {
+  background: rgba(74, 222, 128, 0.12);
+  color: $green-light;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.statusRejected {
+  background: rgba(220, 38, 38, 0.12);
+  color: $red-light;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+// Action buttons
+.viewBtn {
+  background: $bg-muted;
+  color: $text-secondary;
+  border: none;
+  border-radius: $r-sm;
+  padding: 0.3rem 0.75rem;
+  font-size: $fs-xs;
+  cursor: pointer;
+  margin-right: $s2;
+  transition: background 0.15s;
+  &:hover { background: lighten(#374151, 5%); }
+}
+
+.approveBtn {
+  background: rgba(5, 150, 105, 0.15);
+  color: $emerald-light;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  border-radius: $r-sm;
+  padding: 0.3rem 0.75rem;
+  font-size: $fs-xs;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: $s2;
+  transition: background 0.15s;
+  &:hover:not(:disabled) { background: rgba(5, 150, 105, 0.25); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.rejectBtn {
+  background: rgba(220, 38, 38, 0.1);
+  color: $red-light;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: $r-sm;
+  padding: 0.3rem 0.75rem;
+  font-size: $fs-xs;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: $s2;
+  transition: background 0.15s;
+  &:hover:not(:disabled) { background: rgba(220, 38, 38, 0.2); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// Mobile cards
+.mobileList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+
+  @media (min-width: $md) { display: none; }
+}
+
+.mobileCard {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $r-lg;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.mobileCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $s3;
+}
+
+.mobileMeta {
+  display: flex;
+  gap: $s4;
+  font-size: $fs-sm;
+  color: $text-muted;
+}
+
+.mobileActions {
+  display: flex;
+  gap: $s2;
+  flex-wrap: wrap;
+}
+
+// Pagination
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s4;
+  padding: $s4 0;
+}
+
+.pageBtn {
+  background: $bg-elevated;
+  color: $text-secondary;
+  border: 1px solid $border;
+  border-radius: $r-sm;
+  padding: $s2 $s4;
+  font-size: $fs-body;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover:not(:disabled) { background: $bg-muted; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.pageInfo {
+  font-size: $fs-sm;
+  color: $text-muted;
+}
+
+// Modal
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: $s4;
+}
+
+.modal {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $r-xl;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $s4;
+  padding: $s5 $s6;
+  border-bottom: 1px solid $border;
+}
+
+.modalTitle {
+  font-size: $fs-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0 0 $s2;
+  font-family: monospace;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: $text-muted;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: $s1;
+  line-height: 1;
+  &:hover { color: $text-primary; }
+}
+
+.modalBody {
+  padding: $s5 $s6;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $s5;
+}
+
+.modalSection {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  p {
+    margin: 0;
+    font-size: $fs-body;
+    color: $text-secondary;
+  }
+}
+
+.modalSectionTitle {
+  font-size: $fs-sm;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted;
+  margin: 0 0 $s1;
+}
+
+.itemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $fs-body;
+
+  th, td {
+    padding: $s2 $s3;
+    text-align: left;
+    border-bottom: 1px solid $border;
+    color: $text-secondary;
+  }
+
+  th {
+    font-size: $fs-xs;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  tfoot td {
+    border-bottom: none;
+    padding-top: $s3;
+    color: $text-primary;
+  }
+}
+
+.modalDate {
+  font-size: $fs-xs;
+  color: $text-muted;
+  margin: 0;
+}
+
+.modalFooter {
+  display: flex;
+  gap: $s3;
+  justify-content: flex-end;
+  padding: $s4 $s6;
+  border-top: 1px solid $border;
+  background: $bg-elevated;
+
+  .approveBtn, .rejectBtn {
+    padding: $s2 $s6;
+    font-size: $fs-body;
+  }
+}

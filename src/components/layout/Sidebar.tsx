@@ -26,6 +26,7 @@ const allNavItems = [
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
   { label: 'Patients', href: '/patients', icon: <PatientsIcon />, permission: 'canManageSales' },
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
+  { label: 'Orders', href: '/orders', icon: <OrdersIcon />, permission: 'canManageSales' },
   { label: 'Blogs', href: '/blogs', icon: <BlogsIcon />, permission: 'canManageBlogs' },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
@@ -188,6 +189,17 @@ function UsersIcon() {
     <IconShell>
       <path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
       <path d="M5 20a7 7 0 0 1 14 0" />
+    </IconShell>
+  );
+}
+
+function OrdersIcon() {
+  return (
+    <IconShell>
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <path d="M9 12h6" />
+      <path d="M9 16h4" />
     </IconShell>
   );
 }
