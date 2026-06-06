@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import s from './orders.module.scss';
 
 type OrderStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -21,7 +22,10 @@ interface Order {
   customerEmail?: string;
   address: string;
   notes?: string;
+  subtotal?: number;
+  discountAmount?: number;
   totalAmount: number;
+  paymentMethod?: string;
   status: OrderStatus;
   items: OrderItem[];
   createdAt: string;
@@ -92,6 +96,27 @@ export default function OrdersPage() {
     } finally {
       setActioning(null);
     }
+  };
+
+  const downloadInvoice = (o: Order) => {
+    const year = new Date(o.createdAt).getFullYear();
+    generateOrderInvoice({
+      invoiceNumber: `NNH-${year}-${String(o.id).padStart(3, '0')}`,
+      date: o.createdAt,
+      customerName: o.customerName,
+      customerPhone: o.customerPhone,
+      customerEmail: o.customerEmail,
+      address: o.address,
+      paymentMethod: o.paymentMethod,
+      items: o.items.map((i) => ({
+        name: i.productName,
+        qty: i.quantity,
+        unitPrice: Number(i.unitPrice),
+      })),
+      subtotal: o.subtotal != null ? Number(o.subtotal) : undefined,
+      discountAmount: o.discountAmount != null ? Number(o.discountAmount) : undefined,
+      totalAmount: Number(o.totalAmount),
+    });
   };
 
   const fmt = (d: string) =>
@@ -351,6 +376,18 @@ export default function OrdersPage() {
                     ))}
                   </tbody>
                   <tfoot>
+                    {Number(selected.discountAmount) > 0 && (
+                      <>
+                        <tr>
+                          <td colSpan={3}>Subtotal</td>
+                          <td>{fmtAmount(selected.subtotal ?? selected.totalAmount)}</td>
+                        </tr>
+                        <tr>
+                          <td colSpan={3}>Prepaid discount (10%)</td>
+                          <td>− {fmtAmount(selected.discountAmount ?? 0)}</td>
+                        </tr>
+                      </>
+                    )}
                     <tr>
                       <td colSpan={3}><strong>Total</strong></td>
                       <td><strong>{fmtAmount(selected.totalAmount)}</strong></td>
@@ -364,24 +401,33 @@ export default function OrdersPage() {
               </p>
             </div>
 
-            {selected.status === 'PENDING' && (
-              <div className={s.modalFooter}>
-                <button
-                  className={s.rejectBtn}
-                  disabled={actioning === selected.id}
-                  onClick={() => handleReject(selected.id)}
-                >
-                  {actioning === selected.id ? 'Processing...' : '✕ Reject'}
-                </button>
-                <button
-                  className={s.approveBtn}
-                  disabled={actioning === selected.id}
-                  onClick={() => handleApprove(selected.id)}
-                >
-                  {actioning === selected.id ? 'Processing...' : '✓ Approve'}
-                </button>
-              </div>
-            )}
+            <div className={s.modalFooter}>
+              <button
+                type="button"
+                className={s.invoiceBtn}
+                onClick={() => downloadInvoice(selected)}
+              >
+                ↓ Download Invoice
+              </button>
+              {selected.status === 'PENDING' && (
+                <div className={s.modalFooterActions}>
+                  <button
+                    className={s.rejectBtn}
+                    disabled={actioning === selected.id}
+                    onClick={() => handleReject(selected.id)}
+                  >
+                    {actioning === selected.id ? 'Processing...' : '✕ Reject'}
+                  </button>
+                  <button
+                    className={s.approveBtn}
+                    disabled={actioning === selected.id}
+                    onClick={() => handleApprove(selected.id)}
+                  >
+                    {actioning === selected.id ? 'Processing...' : '✓ Approve'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

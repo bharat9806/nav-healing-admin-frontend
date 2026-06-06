@@ -430,7 +430,8 @@
 .modalFooter {
   display: flex;
   gap: $s3;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   padding: $s4 $s6;
   border-top: 1px solid $border;
   background: $bg-elevated;
@@ -438,5 +439,27 @@
   .approveBtn, .rejectBtn {
     padding: $s2 $s6;
     font-size: $fs-body;
+  }
+}
+
+.modalFooterActions {
+  display: flex;
+  gap: $s3;
+  margin-left: auto;
+}
+
+.invoiceBtn {
+  background: rgba(5, 150, 105, 0.15);
+  color: $emerald-light;
+  border: 1px solid rgba(5, 150, 105, 0.35);
+  border-radius: $r-sm;
+  padding: $s2 $s6;
+  font-size: $fs-body;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(5, 150, 105, 0.25);
   }
 }
