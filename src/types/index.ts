@@ -29,53 +29,6 @@ export interface User {
   updatedAt: string;
 }
 
-export type BlogStatus = 'DRAFT' | 'PUBLISHED';
-
-export interface BlogRelatedFormulation {
-  name: string;
-  dhatu?: string;
-}
-
-export interface Blog {
-  id: number;
-  slug: string;
-  title: string;
-  excerpt?: string | null;
-  category?: string | null;
-  issue?: string | null;
-  readTimeMinutes?: number | null;
-  authorName?: string | null;
-  authorInitials?: string | null;
-  content: string;
-  heroImage?: string | null;
-  heroImageCaption?: string | null;
-  relatedFormulations?: BlogRelatedFormulation[] | null;
-  status: BlogStatus;
-  publishedAt?: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface BlogListItem {
-  id: number;
-  slug: string;
-  title: string;
-  excerpt?: string | null;
-  category?: string | null;
-  issue?: string | null;
-  readTimeMinutes?: number | null;
-  authorName?: string | null;
-  authorInitials?: string | null;
-  heroImage?: string | null;
-  heroImageCaption?: string | null;
-  status: BlogStatus;
-  publishedAt?: string | null;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface AuthResponse {
   message: string;
   user: User;

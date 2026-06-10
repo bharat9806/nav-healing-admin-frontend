@@ -54,7 +54,7 @@ export default function OrdersPage() {
     if (status) params.set('status', status);
     api
       .get<{ data: Order[]; total: number; page: number; limit: number }>(
-        `/orders?${params.toString()}`,
+        `/website-orders?${params.toString()}`,
       )
       .then((res) => {
         setOrders(res.data.data);
@@ -77,7 +77,7 @@ export default function OrdersPage() {
   const handleApprove = async (id: number) => {
     setActioning(id);
     try {
-      await api.patch(`/orders/${id}/approve`);
+      await api.patch(`/website-orders/${id}/approve`);
       fetchOrders();
       if (selected?.id === id)
         setSelected((o) => (o ? { ...o, status: 'APPROVED' } : null));
@@ -89,7 +89,7 @@ export default function OrdersPage() {
   const handleReject = async (id: number) => {
     setActioning(id);
     try {
-      await api.patch(`/orders/${id}/reject`);
+      await api.patch(`/website-orders/${id}/reject`);
       fetchOrders();
       if (selected?.id === id)
         setSelected((o) => (o ? { ...o, status: 'REJECTED' } : null));
@@ -140,7 +140,7 @@ export default function OrdersPage() {
   return (
     <div className={s.page}>
       <div className={s.header}>
-        <h1 className={s.pageTitle}>Orders</h1>
+        <h1 className={s.pageTitle}>Website Orders</h1>
         <span className={s.totalBadge}>{total} total</span>
       </div>
 

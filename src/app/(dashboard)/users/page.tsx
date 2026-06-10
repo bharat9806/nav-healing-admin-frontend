@@ -61,7 +61,6 @@ const PAGE_PERMISSIONS = [
   { key: 'canManageProductSales', label: 'Manage Product Sales' },
   { key: 'canManageLeads', label: 'Manage Leads' },
   { key: 'canManageSales', label: 'Manage Sales' },
-  { key: 'canManageBlogs', label: 'Manage Blogs' },
   { key: 'canManageUsers', label: 'Manage Users' },
 ] as const;
 

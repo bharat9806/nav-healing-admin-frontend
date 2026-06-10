@@ -16,8 +16,7 @@ type PermissionKey =
   | 'canManageProductSales'
   | 'canManageLeads'
   | 'canManageSales'
-  | 'canManageUsers'
-  | 'canManageBlogs';
+  | 'canManageUsers';
 
 const allNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, permission: 'canViewDashboard' },
@@ -26,8 +25,7 @@ const allNavItems = [
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
   { label: 'Patients', href: '/patients', icon: <PatientsIcon />, permission: 'canManageSales' },
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
-  { label: 'Orders', href: '/orders', icon: <OrdersIcon />, permission: 'canManageSales' },
-  { label: 'Blogs', href: '/blogs', icon: <BlogsIcon />, permission: 'canManageBlogs' },
+  { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageSales' },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
   label: string;
@@ -204,13 +202,3 @@ function OrdersIcon() {
   );
 }
 
-function BlogsIcon() {
-  return (
-    <IconShell>
-      <path d="M5 4h11a3 3 0 0 1 3 3v13a1 1 0 0 1-1 1H7a2 2 0 0 1-2-2V4Z" />
-      <path d="M9 9h6" />
-      <path d="M9 13h6" />
-      <path d="M9 17h4" />
-    </IconShell>
-  );
-}
