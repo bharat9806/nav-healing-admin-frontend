@@ -1,21 +1,12 @@
 import axios from 'axios';
-import { clearFrontendAuthCookie, getFrontendAuthToken } from '@/lib/auth-cookie';
 
+// Requests go to the same-origin /backend-api proxy (see next.config.ts).
+// Auth uses an httpOnly cookie set by the backend — the JWT is never
+// readable by JavaScript, so XSS cannot steal it.
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
+  baseURL: '/backend-api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
-});
-
-api.interceptors.request.use((config) => {
-  const token = getFrontendAuthToken();
-
-  if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
 });
 
 api.interceptors.response.use(
@@ -32,7 +23,6 @@ api.interceptors.response.use(
       const isOnLoginPage = window.location.pathname.startsWith('/login');
 
       if (!isAuthSubmit && !isOnLoginPage) {
-        clearFrontendAuthCookie();
         window.location.replace('/login?force=1');
       }
     }

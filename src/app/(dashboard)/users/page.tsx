@@ -32,6 +32,7 @@ interface EditForm {
   canExportSales: boolean;
   canManageUsers: boolean;
   canManageBlogs: boolean;
+  canManageWebsiteOrders: boolean;
   canViewDashboard: boolean;
 }
 
@@ -52,6 +53,7 @@ interface CreateForm {
   canExportSales: boolean;
   canManageUsers: boolean;
   canManageBlogs: boolean;
+  canManageWebsiteOrders: boolean;
   canViewDashboard: boolean;
 }
 
@@ -61,6 +63,7 @@ const PAGE_PERMISSIONS = [
   { key: 'canManageProductSales', label: 'Manage Product Sales' },
   { key: 'canManageLeads', label: 'Manage Leads' },
   { key: 'canManageSales', label: 'Manage Sales' },
+  { key: 'canManageWebsiteOrders', label: 'Manage Website Orders' },
   { key: 'canManageUsers', label: 'Manage Users' },
 ] as const;
 
@@ -107,6 +110,7 @@ const initialEditForm = (): EditForm => ({
   canExportSales: true,
   canManageUsers: false,
   canManageBlogs: true,
+  canManageWebsiteOrders: false,
   canViewDashboard: true,
 });
 
@@ -127,6 +131,7 @@ const initialCreateForm = (): CreateForm => ({
   canExportSales: false,
   canManageUsers: false,
   canManageBlogs: false,
+  canManageWebsiteOrders: false,
   canViewDashboard: true,
 });
 
@@ -302,6 +307,7 @@ export default function UsersPage() {
       canExportSales: user.canExportSales,
       canManageUsers: user.canManageUsers,
       canManageBlogs: user.canManageBlogs,
+      canManageWebsiteOrders: user.canManageWebsiteOrders,
       canViewDashboard: user.canViewDashboard,
     });
     setFormError('');

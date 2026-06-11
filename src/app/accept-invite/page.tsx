@@ -4,7 +4,6 @@ import { isAxiosError } from 'axios';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
-import { setFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './accept-invite.module.scss';
 
@@ -35,15 +34,12 @@ function AcceptInviteForm() {
     setError('');
 
     try {
-      const response = await api.post<{ access_token?: string }>('/auth/accept-invite', {
+      await api.post('/auth/accept-invite', {
         token,
         username: form.username,
         password: form.password,
       });
 
-      if (response.data.access_token) {
-        setFrontendAuthCookie(response.data.access_token);
-      }
       clearCurrentUserCache();
       setSuccess(true);
       setTimeout(() => window.location.replace('/dashboard'), 1500);

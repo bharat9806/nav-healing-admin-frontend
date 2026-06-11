@@ -5,7 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import api from '@/lib/api';
-import { clearFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache, fetchCurrentUser } from '@/lib/current-user';
 import { User } from '@/types';
 import s from './Sidebar.module.scss';
@@ -16,6 +15,7 @@ type PermissionKey =
   | 'canManageProductSales'
   | 'canManageLeads'
   | 'canManageSales'
+  | 'canManageWebsiteOrders'
   | 'canManageUsers';
 
 const allNavItems = [
@@ -25,7 +25,7 @@ const allNavItems = [
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
   { label: 'Patients', href: '/patients', icon: <PatientsIcon />, permission: 'canManageSales' },
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
-  { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageSales' },
+  { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageWebsiteOrders' },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
   label: string;
@@ -56,7 +56,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     } catch {
       // If the backend is unreachable, still complete the local logout flow.
     } finally {
-      clearFrontendAuthCookie();
+      // The httpOnly cookie is cleared by the backend's /auth/logout response.
       router.push('/login?force=1');
     }
   };
@@ -201,4 +201,3 @@ function OrdersIcon() {
     </IconShell>
   );
 }
-

@@ -11,7 +11,8 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { TypeableSelect } from '@/components/ui/TypeableSelect';
 import s from './products.module.scss';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:4000';
+// Backend-served images go through the same-origin /backend-static proxy (next.config.ts).
+const API_BASE = '/backend-static';
 
 type CategoryOption = {
   id: number;

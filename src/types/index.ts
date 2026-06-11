@@ -23,6 +23,7 @@ export interface User {
   canExportSales: boolean;
   canManageUsers: boolean;
   canManageBlogs: boolean;
+  canManageWebsiteOrders: boolean;
   canViewDashboard: boolean;
   isDoctor: boolean;
   createdAt: string;

@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import { fetchCurrentUser } from '@/lib/current-user';
 import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import s from './orders.module.scss';
 
@@ -39,6 +41,7 @@ const STATUS_TABS: { label: string; value: string }[] = [
 ];
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -64,6 +67,16 @@ export default function OrdersPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   };
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then((user) => {
+        if (user.role !== 'SUPER_ADMIN' && !user.canManageWebsiteOrders) {
+          router.replace('/dashboard');
+        }
+      })
+      .catch(() => {});
+  }, [router]);
 
   useEffect(() => {
     fetchOrders(page, statusFilter);

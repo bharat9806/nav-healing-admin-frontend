@@ -3,7 +3,6 @@
 import { isAxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
-import { setFrontendAuthCookie } from '@/lib/auth-cookie';
 import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './login.module.scss';
 
@@ -42,10 +41,8 @@ export default function LoginPage() {
     }, 1000);
   };
 
-  const completeLogin = (accessToken?: string) => {
-    if (accessToken) {
-      setFrontendAuthCookie(accessToken);
-    }
+  const completeLogin = () => {
+    // Auth is carried by the backend's httpOnly cookie — nothing to store here.
     clearCurrentUserCache();
     window.location.replace('/dashboard');
   };
@@ -96,11 +93,8 @@ export default function LoginPage() {
     setInfo('');
 
     try {
-      const response = await api.post<{ access_token?: string }>('/auth/login', {
-        userCode,
-        password,
-      });
-      completeLogin(response.data.access_token);
+      await api.post('/auth/login', { userCode, password });
+      completeLogin();
     } catch (error) {
       const message = isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
@@ -118,11 +112,8 @@ export default function LoginPage() {
     setInfo('');
 
     try {
-      const response = await api.post<{ access_token?: string }>('/auth/verify-otp', {
-        userCode,
-        otp,
-      });
-      completeLogin(response.data.access_token);
+      await api.post('/auth/verify-otp', { userCode, otp });
+      completeLogin();
     } catch (error) {
       const message = isAxiosError<{ message?: string }>(error)
         ? error.response?.data?.message
