@@ -21,6 +21,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  // Fill the wrapper so an explicit minWidth on the wrap stretches the
+  // button too (keeps filter bars stable when the selected label changes).
+  width: 100%;
+  justify-content: space-between;
   padding: 0.4rem 0.75rem;
   background: var(--shell-control-bg);
   border: 1px solid var(--shell-border);
@@ -66,6 +70,9 @@
 .triggerLabel {
   flex: 1;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // ── Chevron Icon ──────────────────────────────────────────────────
@@ -91,6 +98,8 @@
   position: absolute;
   z-index: 200;
   min-width: 100%;
+  // Never grow wider than the viewport; long labels ellipsize instead.
+  max-width: min(24rem, calc(100vw - 2rem));
   max-height: min(20rem, 45vh);
   background: var(--shell-elevated);
   border: 1px solid var(--shell-border);
@@ -198,6 +207,9 @@
 
 .itemLabel {
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 // ── Check Icon ────────────────────────────────────────────────────

@@ -51,7 +51,11 @@ export function CustomSelect({
   };
 
   return (
-    <div className={`${s.wrap} ${fullWidth ? s.wrapFull : ''} ${className}`} ref={wrapRef}>
+    <div
+      className={`${s.wrap} ${fullWidth ? s.wrapFull : ''} ${className}`}
+      style={minWidth ? { minWidth } : undefined}
+      ref={wrapRef}
+    >
       <button
         type="button"
         className={`${s.trigger} ${fullWidth ? s.triggerFull : ''} ${open ? s.triggerOpen : ''}`}
@@ -76,7 +80,6 @@ export function CustomSelect({
       {open && (
         <ul
           className={`${s.list} ${fullWidth ? s.listFull : ''} ${align === 'left' ? s.listLeft : s.listRight} ${direction === 'up' ? s.listUp : s.listDown}`}
-          style={minWidth ? { minWidth } : undefined}
           role="listbox"
           aria-label="Options"
         >
