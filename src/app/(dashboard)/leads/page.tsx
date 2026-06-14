@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FC } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
@@ -8,6 +8,45 @@ import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './leads.module.scss';
+
+type IconCmp = FC<{ size?: number; color?: string }>;
+const svgProps = (size: number, color: string) => ({
+  width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: color,
+  strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const,
+  'aria-hidden': true,
+});
+const IconPackage: IconCmp = ({ size = 20, color = 'currentColor' }) => (
+  <svg {...svgProps(size, color)}><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="M3.3 7 12 12l8.7-5" /><path d="M12 22V12" /></svg>
+);
+const IconTruck: IconCmp = ({ size = 20, color = 'currentColor' }) => (
+  <svg {...svgProps(size, color)}><path d="M3 6h11v9H3z" /><path d="M14 9h4l3 3v3h-7z" /><circle cx="7.5" cy="18" r="1.6" /><circle cx="17.5" cy="18" r="1.6" /></svg>
+);
+const IconClock: IconCmp = ({ size = 20, color = 'currentColor' }) => (
+  <svg {...svgProps(size, color)}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+);
+const IconPin: IconCmp = ({ size = 20, color = 'currentColor' }) => (
+  <svg {...svgProps(size, color)}><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></svg>
+);
+const IconCheck: IconCmp = ({ size = 20, color = 'currentColor' }) => (
+  <svg {...svgProps(size, color)}><path d="M4 12l5 5 11-12" /></svg>
+);
+const IconAlert: IconCmp = ({ size = 20, color = 'currentColor' }) => (
+  <svg {...svgProps(size, color)}><path d="M12 3 2 20h20L12 3z" /><path d="M12 10v4" /><path d="M12 17h.01" /></svg>
+);
+
+type TrackTheme = { color: string; soft: string; border: string; ring: string; Icon: IconCmp };
+function trackTheme(status?: string): TrackTheme {
+  const v = (status || '').toLowerCase();
+  if (/out for delivery|ofd/.test(v))
+    return { color: '#a78bfa', soft: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.30)', ring: 'rgba(139,92,246,0.22)', Icon: IconTruck };
+  if (/deliver/.test(v))
+    return { color: '#34d399', soft: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.30)', ring: 'rgba(16,185,129,0.22)', Icon: IconCheck };
+  if (/rto|cancel|return|undeliver|fail|lost|exception|hold/.test(v))
+    return { color: '#f87171', soft: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.30)', ring: 'rgba(239,68,68,0.22)', Icon: IconAlert };
+  if (/pending|booked|manifest|pickup|awaiting|not pick|created/.test(v))
+    return { color: '#fbbf24', soft: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.30)', ring: 'rgba(245,158,11,0.22)', Icon: IconClock };
+  return { color: '#60a5fa', soft: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', ring: 'rgba(59,130,246,0.22)', Icon: IconTruck };
+}
 
 const statuses: LeadStatus[] = [
   'NEW', 'CONTACTED', 'CONVERTED', 'CLOSED',
@@ -1100,86 +1139,109 @@ export default function LeadsPage() {
         <div className={s.overlay} onClick={closeTrack}>
           <div
             className={s.deleteModal}
-            style={{ maxWidth: '34rem', width: '100%', padding: 0, overflow: 'hidden' }}
+            style={{ maxWidth: '30rem', width: '100%', padding: 0, overflow: 'hidden' }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div style={{ padding: '1.25rem 1.5rem 1rem', borderBottom: '1px solid var(--shell-border)', textAlign: 'center' }}>
-              <h3 className={s.deleteTitle} style={{ margin: 0 }}>Shipment Tracking</h3>
-              <p style={{ margin: '0.35rem 0 0', fontSize: '0.78rem', color: 'var(--shell-text-subtle)' }}>
-                {track.name} &middot; AWB {track.awb}
-              </p>
+            <div style={{ padding: '1.05rem 1.2rem', display: 'flex', alignItems: 'center', gap: '11px', borderBottom: '0.5px solid var(--shell-border)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--shell-soft-bg, rgba(255,255,255,0.05))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--shell-text-secondary)' }}>
+                <IconPackage size={19} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--shell-text-primary)' }}>Shipment tracking</p>
+                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--shell-text-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {track.name} &middot;{' '}
+                  <span style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.02em' }}>{track.awb}</span>
+                </p>
+              </div>
+              <button onClick={closeTrack} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--shell-text-subtle)', cursor: 'pointer', fontSize: '1.35rem', lineHeight: 1, padding: '0.15rem 0.35rem' }}>&times;</button>
             </div>
 
-            {/* Body */}
-            <div style={{ padding: '1.25rem 1.5rem', maxHeight: '24rem', overflowY: 'auto' }}>
+            <div style={{ padding: '1.1rem 1.2rem 0.4rem', maxHeight: '26rem', overflowY: 'auto' }}>
               {track.loading && (
-                <p style={{ color: 'var(--shell-text-secondary)', fontSize: '0.85rem', textAlign: 'center', margin: 0 }}>
-                  Fetching status&hellip;
-                </p>
+                <p style={{ textAlign: 'center', color: 'var(--shell-text-secondary)', fontSize: '0.85rem', padding: '1.5rem 0', margin: 0 }}>Fetching status&hellip;</p>
               )}
               {track.error && <div className={s.error}>{track.error}</div>}
 
-              {track.data && (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                    <span style={{ padding: '0.35rem 0.9rem', borderRadius: '999px', background: 'rgba(16,185,129,0.14)', color: '#34d399', fontWeight: 700, fontSize: '0.9rem' }}>
-                      {track.data.currentStatus || 'Unknown'}
-                    </span>
-                    {track.data.courier && (
-                      <span style={{ fontSize: '0.8rem', color: 'var(--shell-text-secondary)' }}>{track.data.courier}</span>
+              {track.data && (() => {
+                const d = track.data!;
+                const th = trackTheme(d.currentStatus);
+                const scans = Array.isArray(d.scans) ? d.scans : [];
+                const latest = (scans[0] || {}) as Record<string, unknown>;
+                const latestLoc = String(latest.location ?? latest.city ?? '');
+                return (
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '13px', padding: '1rem 1.1rem', borderRadius: '14px', background: th.soft, border: `0.5px solid ${th.border}` }}>
+                      <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: th.ring, color: th.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <th.Icon size={24} color={th.color} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: th.color }}>{d.currentStatus || 'Unknown'}</p>
+                        {latestLoc && (
+                          <p style={{ margin: '3px 0 0', fontSize: '0.75rem', color: 'var(--shell-text-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{latestLoc}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {(d.expectedDeliveryDate || d.courier) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', padding: '8px 12px', borderRadius: '10px', background: 'var(--shell-soft-bg, rgba(255,255,255,0.03))', fontSize: '0.78rem', color: 'var(--shell-text-secondary)' }}>
+                        {d.courier && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><IconTruck size={14} />{d.courier}</span>
+                        )}
+                        {d.expectedDeliveryDate && (
+                          <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            <IconClock size={14} />ETA{' '}
+                            <span style={{ color: 'var(--shell-text-primary)', fontWeight: 600 }}>{d.expectedDeliveryDate}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {scans.length > 0 ? (
+                      <div style={{ padding: '1.15rem 0 0.2rem' }}>
+                        <p style={{ margin: '0 0 12px', fontSize: '0.68rem', letterSpacing: '0.06em', color: 'var(--shell-text-subtle)', textTransform: 'uppercase' }}>Tracking history</p>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ position: 'absolute', left: '0.45rem', top: '0.5rem', bottom: '1rem', width: '2px', background: 'var(--shell-border)' }} />
+                          {scans.map((scan, idx) => {
+                            const sc = scan as Record<string, unknown>;
+                            const status = String(sc.status ?? sc.activity ?? sc.remark ?? '\u2014');
+                            const time = String(sc.date ?? sc.date_time ?? sc.status_date_time ?? sc.scan_date_time ?? '');
+                            const loc = String(sc.location ?? sc.city ?? sc.scan_location ?? '');
+                            const isLatest = idx === 0;
+                            const isLast = idx === scans.length - 1;
+                            return (
+                              <div key={idx} style={{ position: 'relative', paddingLeft: '1.75rem', paddingBottom: isLast ? 0 : '1.05rem' }}>
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    left: isLatest ? '0.1rem' : '0.25rem',
+                                    top: isLatest ? '0.15rem' : '0.3rem',
+                                    width: isLatest ? '0.95rem' : '0.62rem',
+                                    height: isLatest ? '0.95rem' : '0.62rem',
+                                    borderRadius: '50%',
+                                    background: isLatest ? th.color : 'var(--shell-elevated, #1c2740)',
+                                    border: isLatest ? 'none' : '2px solid var(--shell-border-strong, rgba(255,255,255,0.22))',
+                                    outline: isLatest ? `4px solid ${th.ring}` : 'none',
+                                  }}
+                                />
+                                <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: isLatest ? th.color : 'var(--shell-text-primary)' }}>{status}</p>
+                                <p style={{ margin: '3px 0 0', fontSize: '0.72rem', color: 'var(--shell-text-subtle)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  {time && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><IconClock size={12} />{time}</span>}
+                                  {loc && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><IconPin size={12} />{loc}</span>}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)', margin: '1rem 0' }}>No scan updates yet.</p>
                     )}
                   </div>
-                  {track.data.expectedDeliveryDate && (
-                    <p style={{ margin: '0.6rem 0 0', fontSize: '0.78rem', color: 'var(--shell-text-subtle)' }}>
-                      Expected delivery{' '}
-                      <span style={{ color: 'var(--shell-text-secondary)', fontWeight: 600 }}>{track.data.expectedDeliveryDate}</span>
-                    </p>
-                  )}
-
-                  {Array.isArray(track.data.scans) && track.data.scans.length > 0 ? (
-                    <div style={{ position: 'relative', marginTop: '1.25rem' }}>
-                      <span style={{ position: 'absolute', left: '0.42rem', top: '0.6rem', bottom: '0.6rem', width: '2px', background: 'var(--shell-border)' }} />
-                      {track.data.scans.map((scan, idx) => {
-                        const sc = scan as Record<string, unknown>;
-                        const status = String(sc.status ?? sc.activity ?? sc.remark ?? '\u2014');
-                        const date = String(sc.date ?? sc.date_time ?? sc.status_date_time ?? sc.scan_date_time ?? '');
-                        const location = String(sc.location ?? sc.city ?? sc.scan_location ?? '');
-                        const isLatest = idx === 0;
-                        const isLast = idx === (track.data!.scans!.length - 1);
-                        return (
-                          <div key={idx} style={{ position: 'relative', paddingLeft: '1.5rem', paddingBottom: isLast ? 0 : '1.15rem' }}>
-                            <span
-                              style={{
-                                position: 'absolute', left: '0.15rem', top: '0.3rem',
-                                width: '0.62rem', height: '0.62rem', borderRadius: '50%',
-                                background: isLatest ? '#10b981' : 'var(--shell-elevated, #1f2937)',
-                                border: isLatest ? 'none' : '2px solid var(--shell-border)',
-                                boxShadow: isLatest ? '0 0 0 4px rgba(16,185,129,0.18)' : 'none',
-                              }}
-                            />
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isLatest ? '#34d399' : 'var(--shell-text-primary)' }}>
-                              {status}
-                            </div>
-                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
-                              {date && <span style={{ fontSize: '0.72rem', color: 'var(--shell-text-subtle)' }}>{date}</span>}
-                              {location && <span style={{ fontSize: '0.72rem', color: 'var(--shell-text-secondary)' }}>&middot; {location}</span>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)', margin: '1rem 0 0' }}>
-                      No scan updates yet.
-                    </p>
-                  )}
-                </div>
-              )}
+                );
+              })()}
             </div>
 
-            {/* Footer */}
-            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--shell-border)', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ padding: '0.85rem 1.2rem', borderTop: '0.5px solid var(--shell-border)', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
               <button onClick={closeTrack} className={s.deleteCancelBtn}>Close</button>
             </div>
           </div>
