@@ -695,6 +695,13 @@
 .statusDnc           { background-color: rgba(#ef4444, 0.2); color: #fca5a5; }
 .statusFollowUp      { background-color: rgba(#06b6d4, 0.1); color: #67e8f9; }
 
+.invoiceBtn {
+  @include btn-ghost;
+  margin-right: $s3;
+  color: #10b981;
+  font-weight: 600;
+  &:hover { color: #34d399; }
+}
 .editBtn   { @include btn-ghost; margin-right: $s3; &:hover { color: $text-primary; } }
 .deleteBtn { @include btn-ghost; &:hover { color: $red-light; } }
 
@@ -779,6 +786,15 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(0.65rem, 2.8vw, 0.9rem);
+}
+
+.mobileInvoiceBtn {
+  @include btn-ghost;
+  grid-column: 1 / -1;
+  min-height: clamp(2.75rem, 8vw, 3rem);
+  border: 1px solid #10b981;
+  color: #10b981;
+  font-weight: 600;
 }
 
 .mobileEditBtn {

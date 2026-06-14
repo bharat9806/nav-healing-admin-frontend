@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
+import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './leads.module.scss';
@@ -401,6 +402,45 @@ export default function LeadsPage() {
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to save lead');
     } finally { setSaving(false); }
+  };
+
+  // Regenerate the tax invoice for a lead's order. Reuses the same
+  // generator as website orders so the PDF matches the originals.
+  const downloadInvoice = (l: Lead) => {
+    const items = (l.items || [])
+      .filter((i) => i.product)
+      .map((i) => ({
+        name: i.product!.name,
+        qty: i.quantity,
+        unitPrice: Number(i.product!.price),
+      }));
+
+    if (items.length === 0) {
+      setError(`"${l.name}" has no products, so an invoice can't be generated.`);
+      return;
+    }
+
+    // Prefer an invoice number already recorded in notes (e.g. NNH-2026-001);
+    // otherwise derive one from the order year and lead id.
+    const date = l.deliveredAt || l.createdAt;
+    const year = new Date(date).getFullYear();
+    const fromNotes = l.notes?.match(/NNH-\d{4}-\d+/i)?.[0];
+    const invoiceNumber = fromNotes || `NNH-${year}-${String(l.id).padStart(3, '0')}`;
+
+    const address = [l.address, l.pinCode].filter(Boolean).join(' – ');
+    const totalAmount = items.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
+
+    generateOrderInvoice({
+      invoiceNumber,
+      date,
+      customerName: l.name,
+      customerPhone: [l.phone, l.alternatePhone].filter(Boolean).join(' / ') || undefined,
+      customerEmail: l.email,
+      address: address || undefined,
+      paymentMethod: 'COD',
+      items,
+      totalAmount,
+    });
   };
 
   const handleStatusChange = async (id: number, status: LeadStatus) => {
@@ -864,6 +904,9 @@ export default function LeadsPage() {
                   </div>
 
                   <div className={s.mobileActions}>
+                    {l.items?.length > 0 && (
+                      <button onClick={() => downloadInvoice(l)} className={s.mobileInvoiceBtn}>↓ Invoice</button>
+                    )}
                     <button onClick={() => openEdit(l)} className={s.mobileEditBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(l)} className={s.mobileDeleteBtn}>Delete</button>
                   </div>
@@ -959,6 +1002,9 @@ export default function LeadsPage() {
                   </td>}
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>
+                    {l.items?.length > 0 && (
+                      <button onClick={() => downloadInvoice(l)} className={s.invoiceBtn} title="Download invoice">Invoice</button>
+                    )}
                     <button onClick={() => openEdit(l)} className={s.editBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(l)} className={s.deleteBtn}>Delete</button>
                   </td>
