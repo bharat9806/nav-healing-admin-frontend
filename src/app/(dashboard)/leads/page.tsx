@@ -194,7 +194,6 @@ export default function LeadsPage() {
   });
 
   const [showInlineForm, setShowInlineForm] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<Lead | null>(null);
   const [form, setForm] = useState({
     name: '', phone: '', alternatePhone: '', email: '', description: '',
