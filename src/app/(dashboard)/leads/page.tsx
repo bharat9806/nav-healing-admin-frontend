@@ -393,7 +393,7 @@ export default function LeadsPage() {
       pinCode: form.pinCode || undefined, trackingNumber: form.trackingNumber || undefined,
       diseases: form.diseases || undefined, status: form.status, notes: form.notes || undefined,
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
-      items: validItems.length > 0 ? validItems : undefined,
+      items: validItems.length > 0 ? validItems.map((i) => ({ productId: i.productId, quantity: i.quantity })) : undefined,
     };
     try {
       if (editing) { await api.put(`/leads/${editing.id}`, payload); }
