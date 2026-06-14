@@ -1100,55 +1100,86 @@ export default function LeadsPage() {
         <div className={s.overlay} onClick={closeTrack}>
           <div
             className={s.deleteModal}
-            style={{ maxWidth: '34rem', width: '100%' }}
+            style={{ maxWidth: '34rem', width: '100%', padding: 0, overflow: 'hidden' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className={s.deleteTitle}>Shipment Tracking</h3>
-            <p style={{ margin: '0 0 0.85rem', fontSize: '0.8rem', color: 'var(--shell-text-subtle)' }}>
-              {track.name} &middot; AWB {track.awb}
-            </p>
+            {/* Header */}
+            <div style={{ padding: '1.25rem 1.5rem 1rem', borderBottom: '1px solid var(--shell-border)', textAlign: 'center' }}>
+              <h3 className={s.deleteTitle} style={{ margin: 0 }}>Shipment Tracking</h3>
+              <p style={{ margin: '0.35rem 0 0', fontSize: '0.78rem', color: 'var(--shell-text-subtle)' }}>
+                {track.name} &middot; AWB {track.awb}
+              </p>
+            </div>
 
-            {track.loading && (
-              <p style={{ color: 'var(--shell-text-secondary)', fontSize: '0.85rem' }}>Fetching status&hellip;</p>
-            )}
-            {track.error && <div className={s.error}>{track.error}</div>}
+            {/* Body */}
+            <div style={{ padding: '1.25rem 1.5rem', maxHeight: '24rem', overflowY: 'auto' }}>
+              {track.loading && (
+                <p style={{ color: 'var(--shell-text-secondary)', fontSize: '0.85rem', textAlign: 'center', margin: 0 }}>
+                  Fetching status&hellip;
+                </p>
+              )}
+              {track.error && <div className={s.error}>{track.error}</div>}
 
-            {track.data && (
-              <div>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-                  <span style={{ padding: '0.3rem 0.8rem', borderRadius: '999px', background: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 600, fontSize: '0.85rem' }}>
-                    {track.data.currentStatus || 'Unknown'}
-                  </span>
-                  {track.data.courier && (
-                    <span style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)' }}>{track.data.courier}</span>
+              {track.data && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    <span style={{ padding: '0.35rem 0.9rem', borderRadius: '999px', background: 'rgba(16,185,129,0.14)', color: '#34d399', fontWeight: 700, fontSize: '0.9rem' }}>
+                      {track.data.currentStatus || 'Unknown'}
+                    </span>
+                    {track.data.courier && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--shell-text-secondary)' }}>{track.data.courier}</span>
+                    )}
+                  </div>
+                  {track.data.expectedDeliveryDate && (
+                    <p style={{ margin: '0.6rem 0 0', fontSize: '0.78rem', color: 'var(--shell-text-subtle)' }}>
+                      Expected delivery{' '}
+                      <span style={{ color: 'var(--shell-text-secondary)', fontWeight: 600 }}>{track.data.expectedDeliveryDate}</span>
+                    </p>
                   )}
-                </div>
-                {track.data.expectedDeliveryDate && (
-                  <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-secondary)', margin: '0 0 0.75rem' }}>
-                    Expected delivery: {track.data.expectedDeliveryDate}
-                  </p>
-                )}
-                <div style={{ maxHeight: '16rem', overflowY: 'auto', borderTop: '1px solid var(--shell-border)', paddingTop: '0.5rem' }}>
+
                   {Array.isArray(track.data.scans) && track.data.scans.length > 0 ? (
-                    track.data.scans.map((scan, idx) => (
-                      <div key={idx} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--shell-border)' }}>
-                        {Object.entries(scan).map(([k, v]) => (
-                          <div key={k} style={{ fontSize: '0.78rem', color: 'var(--shell-text-secondary)' }}>
-                            <span style={{ color: 'var(--shell-text-subtle)' }}>{k}:</span> {String(v)}
+                    <div style={{ position: 'relative', marginTop: '1.25rem' }}>
+                      <span style={{ position: 'absolute', left: '0.42rem', top: '0.6rem', bottom: '0.6rem', width: '2px', background: 'var(--shell-border)' }} />
+                      {track.data.scans.map((scan, idx) => {
+                        const sc = scan as Record<string, unknown>;
+                        const status = String(sc.status ?? sc.activity ?? sc.remark ?? '\u2014');
+                        const date = String(sc.date ?? sc.date_time ?? sc.status_date_time ?? sc.scan_date_time ?? '');
+                        const location = String(sc.location ?? sc.city ?? sc.scan_location ?? '');
+                        const isLatest = idx === 0;
+                        const isLast = idx === (track.data!.scans!.length - 1);
+                        return (
+                          <div key={idx} style={{ position: 'relative', paddingLeft: '1.5rem', paddingBottom: isLast ? 0 : '1.15rem' }}>
+                            <span
+                              style={{
+                                position: 'absolute', left: '0.15rem', top: '0.3rem',
+                                width: '0.62rem', height: '0.62rem', borderRadius: '50%',
+                                background: isLatest ? '#10b981' : 'var(--shell-elevated, #1f2937)',
+                                border: isLatest ? 'none' : '2px solid var(--shell-border)',
+                                boxShadow: isLatest ? '0 0 0 4px rgba(16,185,129,0.18)' : 'none',
+                              }}
+                            />
+                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isLatest ? '#34d399' : 'var(--shell-text-primary)' }}>
+                              {status}
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
+                              {date && <span style={{ fontSize: '0.72rem', color: 'var(--shell-text-subtle)' }}>{date}</span>}
+                              {location && <span style={{ fontSize: '0.72rem', color: 'var(--shell-text-secondary)' }}>&middot; {location}</span>}
+                            </div>
                           </div>
-                        ))}
-                      </div>
-                    ))
+                        );
+                      })}
+                    </div>
                   ) : (
-                    <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)', margin: 0 }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)', margin: '1rem 0 0' }}>
                       No scan updates yet.
                     </p>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            <div className={s.deleteActions}>
+            {/* Footer */}
+            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--shell-border)', display: 'flex', justifyContent: 'flex-end' }}>
               <button onClick={closeTrack} className={s.deleteCancelBtn}>Close</button>
             </div>
           </div>
