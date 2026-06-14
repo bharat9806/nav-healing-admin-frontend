@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FC } from 'react';
+import { useEffect, useRef, useState, type FC, type CSSProperties } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
@@ -8,6 +8,7 @@ import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './leads.module.scss';
+import t from './trackingModal.module.scss';
 
 type IconCmp = FC<{ size?: number; color?: string }>;
 const svgProps = (size: number, color: string) => ({
@@ -1137,29 +1138,20 @@ export default function LeadsPage() {
 
       {track.open && (
         <div className={s.overlay} onClick={closeTrack}>
-          <div
-            className={s.deleteModal}
-            style={{ maxWidth: '30rem', width: '100%', padding: 0, overflow: 'hidden' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ padding: '1.05rem 1.2rem', display: 'flex', alignItems: 'center', gap: '11px', borderBottom: '0.5px solid var(--shell-border)' }}>
-              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--shell-soft-bg, rgba(255,255,255,0.05))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: 'var(--shell-text-secondary)' }}>
-                <IconPackage size={19} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: 'var(--shell-text-primary)' }}>Shipment tracking</p>
-                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--shell-text-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {track.name} &middot;{' '}
-                  <span style={{ fontFamily: 'ui-monospace, monospace', letterSpacing: '0.02em' }}>{track.awb}</span>
+          <div className={`${s.deleteModal} ${t.modal}`} onClick={(e) => e.stopPropagation()}>
+            <div className={t.header}>
+              <div className={t.headerIcon}><IconPackage size={19} /></div>
+              <div className={t.headerText}>
+                <p className={t.title}>Shipment tracking</p>
+                <p className={t.sub}>
+                  {track.name} &middot; <span className={t.awb}>{track.awb}</span>
                 </p>
               </div>
-              <button onClick={closeTrack} aria-label="Close" style={{ background: 'none', border: 'none', color: 'var(--shell-text-subtle)', cursor: 'pointer', fontSize: '1.35rem', lineHeight: 1, padding: '0.15rem 0.35rem' }}>&times;</button>
+              <button onClick={closeTrack} aria-label="Close" className={t.close}>&times;</button>
             </div>
 
-            <div style={{ padding: '1.1rem 1.2rem 0.4rem', maxHeight: '26rem', overflowY: 'auto' }}>
-              {track.loading && (
-                <p style={{ textAlign: 'center', color: 'var(--shell-text-secondary)', fontSize: '0.85rem', padding: '1.5rem 0', margin: 0 }}>Fetching status&hellip;</p>
-              )}
+            <div className={t.body}>
+              {track.loading && <p className={t.loading}>Fetching status&hellip;</p>}
               {track.error && <div className={s.error}>{track.error}</div>}
 
               {track.data && (() => {
@@ -1168,65 +1160,57 @@ export default function LeadsPage() {
                 const scans = Array.isArray(d.scans) ? d.scans : [];
                 const latest = (scans[0] || {}) as Record<string, unknown>;
                 const latestLoc = String(latest.location ?? latest.city ?? '');
+                const tkVars = {
+                  '--tk-accent': th.color,
+                  '--tk-soft': th.soft,
+                  '--tk-border': th.border,
+                  '--tk-ring': th.ring,
+                } as CSSProperties;
                 return (
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '13px', padding: '1rem 1.1rem', borderRadius: '14px', background: th.soft, border: `0.5px solid ${th.border}` }}>
-                      <div style={{ width: '46px', height: '46px', borderRadius: '50%', background: th.ring, color: th.color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <th.Icon size={24} color={th.color} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: th.color }}>{d.currentStatus || 'Unknown'}</p>
-                        {latestLoc && (
-                          <p style={{ margin: '3px 0 0', fontSize: '0.75rem', color: 'var(--shell-text-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{latestLoc}</p>
-                        )}
+                  <div style={tkVars}>
+                    <div className={t.hero}>
+                      <div className={t.heroIcon}><th.Icon size={24} /></div>
+                      <div className={t.heroText}>
+                        <p className={t.heroStatus}>{d.currentStatus || 'Unknown'}</p>
+                        {latestLoc && <p className={t.heroLoc}>{latestLoc}</p>}
                       </div>
                     </div>
 
                     {(d.expectedDeliveryDate || d.courier) && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', padding: '8px 12px', borderRadius: '10px', background: 'var(--shell-soft-bg, rgba(255,255,255,0.03))', fontSize: '0.78rem', color: 'var(--shell-text-secondary)' }}>
+                      <div className={t.metaStrip}>
                         {d.courier && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><IconTruck size={14} />{d.courier}</span>
+                          <span className={t.metaCourier}><IconTruck size={14} />{d.courier}</span>
                         )}
                         {d.expectedDeliveryDate && (
-                          <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                            <IconClock size={14} />ETA{' '}
-                            <span style={{ color: 'var(--shell-text-primary)', fontWeight: 600 }}>{d.expectedDeliveryDate}</span>
+                          <span className={t.metaEta}>
+                            <IconClock size={14} />ETA <span className={t.metaEtaValue}>{d.expectedDeliveryDate}</span>
                           </span>
                         )}
                       </div>
                     )}
 
                     {scans.length > 0 ? (
-                      <div style={{ padding: '1.15rem 0 0.2rem' }}>
-                        <p style={{ margin: '0 0 12px', fontSize: '0.68rem', letterSpacing: '0.06em', color: 'var(--shell-text-subtle)', textTransform: 'uppercase' }}>Tracking history</p>
-                        <div style={{ position: 'relative' }}>
-                          <span style={{ position: 'absolute', left: '0.45rem', top: '0.5rem', bottom: '1rem', width: '2px', background: 'var(--shell-border)' }} />
+                      <div className={t.historyWrap}>
+                        <p className={t.historyLabel}>Tracking history</p>
+                        <div className={t.timeline}>
+                          <span className={t.rail} />
                           {scans.map((scan, idx) => {
                             const sc = scan as Record<string, unknown>;
-                            const status = String(sc.status ?? sc.activity ?? sc.remark ?? '\u2014');
+                            const raw = String(sc.status ?? sc.activity ?? sc.remark ?? '\u2014');
+                            const status = raw.charAt(0).toUpperCase() + raw.slice(1);
                             const time = String(sc.date ?? sc.date_time ?? sc.status_date_time ?? sc.scan_date_time ?? '');
                             const loc = String(sc.location ?? sc.city ?? sc.scan_location ?? '');
+                            const prev = idx > 0 ? (scans[idx - 1] as Record<string, unknown>) : null;
+                            const prevLoc = prev ? String(prev.location ?? prev.city ?? prev.scan_location ?? '') : '';
+                            const showLoc = !!loc && loc !== prevLoc;
                             const isLatest = idx === 0;
-                            const isLast = idx === scans.length - 1;
                             return (
-                              <div key={idx} style={{ position: 'relative', paddingLeft: '1.75rem', paddingBottom: isLast ? 0 : '1.05rem' }}>
-                                <span
-                                  style={{
-                                    position: 'absolute',
-                                    left: isLatest ? '0.1rem' : '0.25rem',
-                                    top: isLatest ? '0.15rem' : '0.3rem',
-                                    width: isLatest ? '0.95rem' : '0.62rem',
-                                    height: isLatest ? '0.95rem' : '0.62rem',
-                                    borderRadius: '50%',
-                                    background: isLatest ? th.color : 'var(--shell-elevated, #1c2740)',
-                                    border: isLatest ? 'none' : '2px solid var(--shell-border-strong, rgba(255,255,255,0.22))',
-                                    outline: isLatest ? `4px solid ${th.ring}` : 'none',
-                                  }}
-                                />
-                                <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: isLatest ? th.color : 'var(--shell-text-primary)' }}>{status}</p>
-                                <p style={{ margin: '3px 0 0', fontSize: '0.72rem', color: 'var(--shell-text-subtle)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                  {time && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><IconClock size={12} />{time}</span>}
-                                  {loc && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><IconPin size={12} />{loc}</span>}
+                              <div key={idx} className={t.item}>
+                                <span className={`${t.dot} ${isLatest ? t.dotLatest : ''}`} />
+                                <p className={`${t.itemStatus} ${isLatest ? t.itemStatusLatest : ''}`}>{status}</p>
+                                <p className={t.itemMeta}>
+                                  {time && <span className={t.metaChip}><IconClock size={12} />{time}</span>}
+                                  {showLoc && <span className={t.metaChip}><IconPin size={12} />{loc}</span>}
                                 </p>
                               </div>
                             );
@@ -1234,14 +1218,14 @@ export default function LeadsPage() {
                         </div>
                       </div>
                     ) : (
-                      <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)', margin: '1rem 0' }}>No scan updates yet.</p>
+                      <p className={t.empty}>No scan updates yet.</p>
                     )}
                   </div>
                 );
               })()}
             </div>
 
-            <div style={{ padding: '0.85rem 1.2rem', borderTop: '0.5px solid var(--shell-border)', display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <div className={t.footer}>
               <button onClick={closeTrack} className={s.deleteCancelBtn}>Close</button>
             </div>
           </div>
