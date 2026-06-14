@@ -445,6 +445,34 @@ export default function LeadsPage() {
     });
   };
 
+  // ── Shipment tracking (Shipmozo) ───────────────────────────────
+  interface TrackState {
+    open: boolean; loading: boolean; error: string;
+    awb: string; name: string;
+    data: {
+      currentStatus?: string; courier?: string; expectedDeliveryDate?: string | null;
+      scans?: Record<string, unknown>[];
+    } | null;
+  }
+  const [track, setTrack] = useState<TrackState>({
+    open: false, loading: false, error: '', awb: '', name: '', data: null,
+  });
+  const closeTrack = () => setTrack((t) => ({ ...t, open: false }));
+  const openTrack = async (l: Lead) => {
+    const awb = (l.trackingNumber || '').trim();
+    if (!awb) return;
+    setTrack({ open: true, loading: true, error: '', awb, name: l.name, data: null });
+    try {
+      const res = await api.get('/shipping/track', { params: { awb } });
+      setTrack((t) => ({ ...t, loading: false, data: res.data }));
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        'Could not fetch tracking status. Check the AWB number and Shipmozo keys.';
+      setTrack((t) => ({ ...t, loading: false, error: msg }));
+    }
+  };
+
   const handleStatusChange = async (id: number, status: LeadStatus) => {
     await api.patch(`/leads/${id}/status`, { status });
     fetchData();
@@ -909,6 +937,9 @@ export default function LeadsPage() {
                     {l.items?.length > 0 && (
                       <button onClick={() => downloadInvoice(l)} className={s.mobileInvoiceBtn}>↓ Invoice</button>
                     )}
+                    {l.trackingNumber && (
+                      <button onClick={() => openTrack(l)} className={s.mobileEditBtn}>Track</button>
+                    )}
                     <button onClick={() => openEdit(l)} className={s.mobileEditBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(l)} className={s.mobileDeleteBtn}>Delete</button>
                   </div>
@@ -1007,6 +1038,9 @@ export default function LeadsPage() {
                     {l.items?.length > 0 && (
                       <button onClick={() => downloadInvoice(l)} className={s.invoiceBtn}>Invoice</button>
                     )}
+                    {l.trackingNumber && (
+                      <button onClick={() => openTrack(l)} className={s.editBtn}>Track</button>
+                    )}
                     <button onClick={() => openEdit(l)} className={s.editBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(l)} className={s.deleteBtn}>Delete</button>
                   </td>
@@ -1058,6 +1092,65 @@ export default function LeadsPage() {
             <div className={s.deleteActions}>
               <button onClick={() => setDeleteTarget(null)} className={s.deleteCancelBtn}>Cancel</button>
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {track.open && (
+        <div className={s.overlay} onClick={closeTrack}>
+          <div
+            className={s.deleteModal}
+            style={{ maxWidth: '34rem', width: '100%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className={s.deleteTitle}>Shipment Tracking</h3>
+            <p style={{ margin: '0 0 0.85rem', fontSize: '0.8rem', color: 'var(--shell-text-subtle)' }}>
+              {track.name} &middot; AWB {track.awb}
+            </p>
+
+            {track.loading && (
+              <p style={{ color: 'var(--shell-text-secondary)', fontSize: '0.85rem' }}>Fetching status&hellip;</p>
+            )}
+            {track.error && <div className={s.error}>{track.error}</div>}
+
+            {track.data && (
+              <div>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <span style={{ padding: '0.3rem 0.8rem', borderRadius: '999px', background: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 600, fontSize: '0.85rem' }}>
+                    {track.data.currentStatus || 'Unknown'}
+                  </span>
+                  {track.data.courier && (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)' }}>{track.data.courier}</span>
+                  )}
+                </div>
+                {track.data.expectedDeliveryDate && (
+                  <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-secondary)', margin: '0 0 0.75rem' }}>
+                    Expected delivery: {track.data.expectedDeliveryDate}
+                  </p>
+                )}
+                <div style={{ maxHeight: '16rem', overflowY: 'auto', borderTop: '1px solid var(--shell-border)', paddingTop: '0.5rem' }}>
+                  {Array.isArray(track.data.scans) && track.data.scans.length > 0 ? (
+                    track.data.scans.map((scan, idx) => (
+                      <div key={idx} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--shell-border)' }}>
+                        {Object.entries(scan).map(([k, v]) => (
+                          <div key={k} style={{ fontSize: '0.78rem', color: 'var(--shell-text-secondary)' }}>
+                            <span style={{ color: 'var(--shell-text-subtle)' }}>{k}:</span> {String(v)}
+                          </div>
+                        ))}
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ fontSize: '0.8rem', color: 'var(--shell-text-subtle)', margin: 0 }}>
+                      No scan updates yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div className={s.deleteActions}>
+              <button onClick={closeTrack} className={s.deleteCancelBtn}>Close</button>
             </div>
           </div>
         </div>
