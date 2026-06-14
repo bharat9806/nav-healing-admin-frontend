@@ -683,6 +683,16 @@
   background: transparent;
   outline: none;
   appearance: none;
+  // Render the native option popup in dark mode (Chrome/Edge/Safari)
+  // so it matches the panel instead of the default pale-green list.
+  color-scheme: dark;
+
+  // Style the option rows themselves (respected by Firefox and Chromium).
+  option {
+    background-color: var(--shell-surface, #111827);
+    color: var(--shell-text-primary, #e5e7eb);
+    font-weight: 500;
+  }
 }
 
 .statusNew           { background-color: rgba(#3b82f6, 0.1); color: $blue-light; }
@@ -1100,23 +1110,13 @@
   }
 
   &:disabled {
-    opacity: 0.35;
+    opacity: 0.5;
     cursor: not-allowed;
-  }
-
-  @media (max-width: ($md - 1px)) {
-    flex: 1 1 calc(50% - #{$s2});
-    min-height: clamp(2.75rem, 8vw, 3rem);
   }
 }
 
 .pageInfo {
-  color: var(--shell-text-muted);
   font-size: 0.85rem;
-
-  @media (max-width: ($md - 1px)) {
-    width: 100%;
-    text-align: center;
-    order: -1;
-  }
+  color: var(--shell-text-secondary);
+  white-space: nowrap;
 }

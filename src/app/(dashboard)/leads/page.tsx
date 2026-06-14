@@ -355,9 +355,11 @@ export default function LeadsPage() {
       nextFollowUpDate: l.nextFollowUpDate ? l.nextFollowUpDate.slice(0, 10) : '',
       assignedDoctorId: l.assignedDoctorId ? String(l.assignedDoctorId) : '',
     });
-    setItems(l.items.length > 0 ? l.items.map((i) => ({ productId: i.productId, quantity: i.quantity, search: i.product?.name || '', showDropdown: false })) : [{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
+    const leadItems = l.items ?? [];
+    setItems(leadItems.length > 0 ? leadItems.map((i) => ({ productId: i.productId, quantity: i.quantity, search: i.product?.name || '', showDropdown: false })) : [{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
     setShowInlineForm(true);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const addItem = () => setItems((prev) => [...prev, { productId: 0, quantity: 1, search: '', showDropdown: false }]);
@@ -1003,7 +1005,7 @@ export default function LeadsPage() {
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>
                     {l.items?.length > 0 && (
-                      <button onClick={() => downloadInvoice(l)} className={s.invoiceBtn} title="Download invoice">Invoice</button>
+                      <button onClick={() => downloadInvoice(l)} className={s.invoiceBtn}>Invoice</button>
                     )}
                     <button onClick={() => openEdit(l)} className={s.editBtn}>Edit</button>
                     <button onClick={() => setDeleteTarget(l)} className={s.deleteBtn}>Delete</button>
