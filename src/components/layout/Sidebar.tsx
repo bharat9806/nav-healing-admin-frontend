@@ -14,6 +14,7 @@ type PermissionKey =
   | 'canManageProducts'
   | 'canManageProductSales'
   | 'canManageLeads'
+  | 'canManageProspects'
   | 'canManageSales'
   | 'canManageWebsiteOrders'
   | 'canManageUsers';
@@ -23,6 +24,7 @@ const allNavItems = [
   { label: 'Products', href: '/products', icon: <ProductsIcon />, permission: 'canManageProducts' },
   { label: 'Product Sales', href: '/product-sales', icon: <ProductSalesIcon />, permission: 'canManageProductSales' },
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
+  { label: 'Prospects', href: '/prospects', icon: <ProspectsIcon />, permission: 'canManageProspects' },
   { label: 'Patients', href: '/patients', icon: <PatientsIcon />, permission: 'canManageSales' },
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
   { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageWebsiteOrders' },
@@ -144,6 +146,17 @@ function LeadsIcon() {
       <path d="M6 10h12" />
       <path d="M6 15h7" />
       <path d="M6 19h4" />
+    </IconShell>
+  );
+}
+
+function ProspectsIcon() {
+  return (
+    <IconShell>
+      <path d="M4 5h11" />
+      <path d="M4 10h8" />
+      <path d="M4 15h6" />
+      <path d="M15 13l2.5 2.5L22 11" />
     </IconShell>
   );
 }

@@ -33,6 +33,8 @@ interface EditForm {
   canManageUsers: boolean;
   canManageBlogs: boolean;
   canManageWebsiteOrders: boolean;
+  canManageProspects: boolean;
+  canExportProspects: boolean;
   canViewDashboard: boolean;
 }
 
@@ -54,6 +56,8 @@ interface CreateForm {
   canManageUsers: boolean;
   canManageBlogs: boolean;
   canManageWebsiteOrders: boolean;
+  canManageProspects: boolean;
+  canExportProspects: boolean;
   canViewDashboard: boolean;
 }
 
@@ -62,6 +66,7 @@ const PAGE_PERMISSIONS = [
   { key: 'canManageProducts', label: 'Manage Products' },
   { key: 'canManageProductSales', label: 'Manage Product Sales' },
   { key: 'canManageLeads', label: 'Manage Leads' },
+  { key: 'canManageProspects', label: 'Manage Prospects' },
   { key: 'canManageSales', label: 'Manage Sales' },
   { key: 'canManageWebsiteOrders', label: 'Manage Website Orders' },
   { key: 'canManageUsers', label: 'Manage Users' },
@@ -82,6 +87,11 @@ const EXPORT_PERMISSIONS = [
     key: 'canExportLeads',
     label: 'Export Leads',
     dependsOn: 'canManageLeads',
+  },
+  {
+    key: 'canExportProspects',
+    label: 'Export Prospects',
+    dependsOn: 'canManageProspects',
   },
   {
     key: 'canExportSales',
@@ -111,6 +121,8 @@ const initialEditForm = (): EditForm => ({
   canManageUsers: false,
   canManageBlogs: true,
   canManageWebsiteOrders: false,
+  canManageProspects: true,
+  canExportProspects: true,
   canViewDashboard: true,
 });
 
@@ -132,6 +144,8 @@ const initialCreateForm = (): CreateForm => ({
   canManageUsers: false,
   canManageBlogs: false,
   canManageWebsiteOrders: false,
+  canManageProspects: true,
+  canExportProspects: false,
   canViewDashboard: true,
 });
 
@@ -308,6 +322,8 @@ export default function UsersPage() {
       canManageUsers: user.canManageUsers,
       canManageBlogs: user.canManageBlogs,
       canManageWebsiteOrders: user.canManageWebsiteOrders,
+      canManageProspects: user.canManageProspects,
+      canExportProspects: user.canExportProspects,
       canViewDashboard: user.canViewDashboard,
     });
     setFormError('');

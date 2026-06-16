@@ -24,6 +24,8 @@ export interface User {
   canManageUsers: boolean;
   canManageBlogs: boolean;
   canManageWebsiteOrders: boolean;
+  canManageProspects: boolean;
+  canExportProspects: boolean;
   canViewDashboard: boolean;
   isDoctor: boolean;
   createdAt: string;
@@ -98,6 +100,35 @@ export interface LeadReminderStats {
   overdue: number;
   dueToday: number;
   upcoming: number;
+}
+
+export type ProspectStatus =
+  | 'NEW' | 'CONTACTED' | 'CALL_BACK' | 'NOT_PICK'
+  | 'SWITCH_OFF' | 'NOT_REACHABLE' | 'HANG_UP' | 'NOT_INTERESTED'
+  | 'DNC' | 'FOLLOW_UP_1' | 'FOLLOW_UP_2' | 'FOLLOW_UP_3' | 'CONVERTED';
+
+export interface Prospect {
+  id: number;
+  name?: string | null;
+  phone?: string | null;
+  alternatePhone?: string | null;
+  city?: string | null;
+  source?: string | null;
+  status: ProspectStatus;
+  notes?: string | null;
+  assignedAgentId?: number | null;
+  assignedAgent?: { id: number; username: string } | null;
+  nextFollowUpDate?: string | null;
+  lastContactedAt?: string | null;
+  convertedLeadId?: number | null;
+  convertedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProspectsResponse {
+  data: Prospect[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
 export interface Sale {
