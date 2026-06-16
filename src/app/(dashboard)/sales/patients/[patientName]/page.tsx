@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { PatientSaleHistoryResponse, User } from '@/types';
+import { Loader } from '@/components/ui/Loader';
 import s from './patient-history.module.scss';
 
 const defaultPaymentModes = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque'];
@@ -336,7 +337,7 @@ export default function PatientHistoryPage() {
       </div>
 
       {loading ? (
-        <div className={s.stateCard}>Loading patient history...</div>
+        <Loader label="Loading patient history..." />
       ) : error ? (
         <div className={s.stateCard}>{error}</div>
       ) : !history ? (

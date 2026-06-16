@@ -7,6 +7,7 @@ import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Product, ProductSaleItem, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { SkeletonList } from '@/components/ui/Loader';
 import s from './product-sales.module.scss';
 
 type ProductSaleFormState = {
@@ -523,9 +524,7 @@ export default function ProductSalesPage() {
       )}
 
       {!showInlineForm && (loading ? (
-        <div className={s.skeletonList}>
-          {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
-        </div>
+        <SkeletonList rows={5} />
       ) : items.length === 0 ? (
         <div className={s.emptyBox}>
           <div className={s.emptyText}>No product sales found</div>

@@ -1,0 +1,76 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+// ── Shared Loader ──────────────────────────────────────────────────
+// Dark-theme admin dashboard loading states (spinner + skeleton).
+
+.fill {
+  @include flex-center;
+  flex-direction: column;
+  gap: $s3;
+  width: 100%;
+  min-height: 8rem;
+  padding: $s6;
+}
+
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: $s2;
+}
+
+.spinner {
+  display: inline-block;
+  border-radius: $r-full;
+  border: 2px solid var(--shell-border);
+  border-top-color: var(--brand-primary);
+  animation: spin 0.7s linear infinite;
+}
+
+.sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.md {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.lg {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-width: 3px;
+}
+
+.label {
+  color: var(--shell-text-subtle);
+  font-size: $fs-sm;
+  font-weight: 500;
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+  width: 100%;
+}
+
+.skeletonRow {
+  background-color: var(--shell-elevated);
+  border-radius: $r-md;
+  @include animate-pulse;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

@@ -7,6 +7,7 @@ import { exportToExcel } from '@/lib/exportExcel';
 import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { SkeletonList } from '@/components/ui/Loader';
 import s from './leads.module.scss';
 import t from './trackingModal.module.scss';
 
@@ -895,9 +896,7 @@ export default function LeadsPage() {
       )}
 
       {!showInlineForm && (loading ? (
-        <div className={s.skeletonList}>
-          {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
-        </div>
+        <SkeletonList rows={5} />
       ) : filtered.length === 0 ? (
         <div className={s.emptyBox}>
           <div className={s.emptyText}>No leads found</div>

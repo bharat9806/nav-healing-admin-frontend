@@ -9,6 +9,7 @@ import { exportToExcel } from '@/lib/exportExcel';
 import { Product, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { TypeableSelect } from '@/components/ui/TypeableSelect';
+import { SkeletonList } from '@/components/ui/Loader';
 import s from './products.module.scss';
 
 // Backend-served images go through the same-origin /backend-static proxy (next.config.ts).
@@ -580,9 +581,7 @@ export default function ProductsPage() {
       )}
 
       {!showInlineForm && (loading ? (
-        <div className={s.skeletonList}>
-          {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
-        </div>
+        <SkeletonList rows={5} />
       ) : products.length === 0 ? (
         <div className={s.emptyBox}>
           <div className={s.emptyText}>No products found</div>

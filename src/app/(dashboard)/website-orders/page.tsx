@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
+import { SkeletonList } from '@/components/ui/Loader';
 import s from './orders.module.scss';
 
 type OrderStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -170,11 +171,7 @@ export default function OrdersPage() {
       </div>
 
       {loading ? (
-        <div className={s.skeletonList}>
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className={s.skeletonRow} />
-          ))}
-        </div>
+        <SkeletonList rows={6} />
       ) : orders.length === 0 ? (
         <div className={s.emptyBox}>
           <p className={s.emptyText}>No orders found</p>

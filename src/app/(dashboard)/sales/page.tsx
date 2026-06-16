@@ -9,6 +9,7 @@ import { exportToExcel } from '@/lib/exportExcel';
 import { generateInvoice } from '@/lib/generateInvoice';
 import { Sale, SaleItem, SaleProductsResponse, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
+import { SkeletonList } from '@/components/ui/Loader';
 import s from './sales.module.scss';
 
 const defaultPaymentModes = ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque'];
@@ -881,9 +882,7 @@ export default function SalesPage() {
       )}
 
       {!showInlineForm && (loading ? (
-        <div className={s.skeletonList}>
-          {[...Array(5)].map((_, i) => <div key={i} className={s.skeletonRow} />)}
-        </div>
+        <SkeletonList rows={5} />
       ) : sales.length === 0 ? (
         <div className={s.emptyBox}>
           <div className={s.emptyText}>No sales found</div>
