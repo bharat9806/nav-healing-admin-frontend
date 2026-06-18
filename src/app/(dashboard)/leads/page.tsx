@@ -5,7 +5,7 @@ import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
-import { Lead, Product, LeadStatus, LeadReminderStats, User } from '@/types';
+import { Lead, Product, LeadStatus, DeliveryStatus, PaymentMode, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
 import s from './leads.module.scss';
@@ -86,6 +86,23 @@ const statusCls = (st: string) => {
     default:               return s.statusClosed;
   }
 };
+
+const deliveryStatuses: DeliveryStatus[] = ['NONE', 'DELIVERED', 'RTO', 'CANCELLED'];
+
+const DELIVERY_LABELS: Record<DeliveryStatus, string> = {
+  NONE: 'Not Set', DELIVERED: 'Delivered', RTO: 'RTO', CANCELLED: 'Cancelled',
+};
+
+const deliveryCls = (st?: DeliveryStatus) => {
+  switch (st) {
+    case 'DELIVERED': return s.statusConverted;
+    case 'RTO':       return s.statusNotInterested;
+    case 'CANCELLED': return s.statusDnc;
+    default:          return s.statusNew;
+  }
+};
+
+const paymentModes: PaymentMode[] = ['UPI', 'COD'];
 
 interface LeadItemForm { productId: number; quantity: number; search: string; showDropdown: boolean; }
 
@@ -208,6 +225,8 @@ export default function LeadsPage() {
   const [doctors, setDoctors] = useState<{ id: number; username: string }[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+  const [deliveryFilter, setDeliveryFilter] = useState<string>('');
+  const [paymentFilter, setPaymentFilter] = useState<string>('');
   const [datePreset, setDatePreset] = useState<string>('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -241,6 +260,8 @@ export default function LeadsPage() {
     age: '', height: '', weight: '', gender: '', address: '', pinCode: '',
     trackingNumber: '', diseases: '', status: 'NEW' as LeadStatus, notes: '',
     deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '',
+    deliveryStatus: 'NONE' as DeliveryStatus, paymentReceived: false,
+    paymentAmount: '', paymentMode: '' as PaymentMode | '',
   });
   const [items, setItems] = useState<LeadItemForm[]>([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
   const [saving, setSaving] = useState(false);
@@ -252,6 +273,7 @@ export default function LeadsPage() {
     phone: true, altPhone: true, email: true, diseases: true,
     products: true, doctor: true, status: true, tracking: true,
     createdDate: true, deliveredDate: true, followUpDate: true,
+    delivery: true, payment: true,
   });
   const toggleCol = (col: keyof typeof visibleCols) =>
     setVisibleCols(p => ({ ...p, [col]: !p[col] }));
@@ -342,6 +364,8 @@ export default function LeadsPage() {
     if (reminderFilter) params.set('reminderStatus', reminderFilter);
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
+    if (deliveryFilter) params.set('deliveryStatus', deliveryFilter);
+    if (paymentFilter) params.set('paymentReceived', paymentFilter);
     params.set('page', String(p));
     params.set('limit', String(nextPageSize));
     params.set('sortBy', sortField);
@@ -365,7 +389,7 @@ export default function LeadsPage() {
 
   useEffect(() => {
     fetchData(page);
-  }, [statusFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, pageSize, sortField, sortOrder]);
+  }, [statusFilter, deliveryFilter, paymentFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, pageSize, sortField, sortOrder]);
 
   // Search and status filtering is now done server-side
   const filtered = leads;
@@ -376,7 +400,7 @@ export default function LeadsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '' });
+    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', paymentMode: '' });
     setItems([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
     setShowInlineForm(true);
@@ -394,6 +418,10 @@ export default function LeadsPage() {
       deliveredAt: l.deliveredAt ? l.deliveredAt.slice(0, 10) : '',
       nextFollowUpDate: l.nextFollowUpDate ? l.nextFollowUpDate.slice(0, 10) : '',
       assignedDoctorId: l.assignedDoctorId ? String(l.assignedDoctorId) : '',
+      deliveryStatus: l.deliveryStatus || 'NONE',
+      paymentReceived: l.paymentReceived ?? false,
+      paymentAmount: l.paymentAmount != null ? String(l.paymentAmount) : '',
+      paymentMode: l.paymentMode || '',
     });
     const leadItems = l.items ?? [];
     setItems(leadItems.length > 0 ? leadItems.map((i) => ({ productId: i.productId, quantity: i.quantity, search: i.product?.name || '', showDropdown: false })) : [{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
@@ -432,6 +460,10 @@ export default function LeadsPage() {
       assignedDoctorId: form.assignedDoctorId ? Number(form.assignedDoctorId) : undefined,
       pinCode: form.pinCode || undefined, trackingNumber: form.trackingNumber || undefined,
       diseases: form.diseases || undefined, status: form.status, notes: form.notes || undefined,
+      deliveryStatus: form.deliveryStatus || 'NONE',
+      paymentReceived: form.paymentReceived,
+      paymentAmount: form.paymentReceived && form.paymentAmount ? Number(form.paymentAmount) : undefined,
+      paymentMode: form.paymentReceived && form.paymentMode ? form.paymentMode : undefined,
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
       items: validItems.length > 0 ? validItems.map((i) => ({ productId: i.productId, quantity: i.quantity })) : undefined,
     };
@@ -519,6 +551,11 @@ export default function LeadsPage() {
     fetchStats();
   };
 
+  const handleDeliveryChange = async (id: number, deliveryStatus: DeliveryStatus) => {
+    await api.put(`/leads/${id}`, { deliveryStatus });
+    fetchData();
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     await api.delete(`/leads/${deleteTarget.id}`);
@@ -575,6 +612,8 @@ export default function LeadsPage() {
     if (followUpTo) params.set('followUpTo', followUpTo);
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
+    if (deliveryFilter) params.set('deliveryStatus', deliveryFilter);
+    if (paymentFilter) params.set('paymentReceived', paymentFilter);
     params.set('limit', '10000');
     const res = await api.get(`/leads?${params.toString()}`);
     const allLeads: Lead[] = res.data.data;
@@ -584,6 +623,10 @@ export default function LeadsPage() {
       Phone: l.phone || '',
       Email: l.email || '',
       Status: STATUS_LABELS[l.status] || l.status,
+      'Delivery Status': DELIVERY_LABELS[l.deliveryStatus || 'NONE'],
+      'Payment Received': l.paymentReceived ? 'Yes' : 'No',
+      'Payment Amount': l.paymentAmount != null ? l.paymentAmount : '',
+      'Payment Mode': l.paymentMode || '',
       Age: l.age || '',
       Gender: l.gender || '',
       Address: l.address || '',
@@ -672,6 +715,42 @@ export default function LeadsPage() {
           />
         </div>
       </div>
+      <div className={s.grid2}>
+        <div className={s.formGroup}><label>Delivery Status</label>
+          <CustomSelect
+            options={deliveryStatuses.map((st) => ({ label: DELIVERY_LABELS[st], value: st }))}
+            value={form.deliveryStatus}
+            onChange={(val) => setForm({ ...form, deliveryStatus: val as DeliveryStatus })}
+            align="left"
+            minWidth="100%"
+          />
+        </div>
+        <div className={s.formGroup}>
+          <label>Payment</label>
+          <label className={s.checkboxRow} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: '2.5rem' }}>
+            <input
+              type="checkbox"
+              checked={form.paymentReceived}
+              onChange={(e) => setForm({ ...form, paymentReceived: e.target.checked })}
+            />
+            <span>Payment received</span>
+          </label>
+        </div>
+      </div>
+      {form.paymentReceived && (
+        <div className={s.grid2}>
+          <div className={s.formGroup}><label>Payment Amount (₹)</label><input type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
+          <div className={s.formGroup}><label>Payment Mode</label>
+            <CustomSelect
+              options={[{ label: 'Select...', value: '' }, ...paymentModes.map((m) => ({ label: m, value: m }))]}
+              value={form.paymentMode}
+              onChange={(val) => setForm({ ...form, paymentMode: val as PaymentMode | '' })}
+              align="left"
+              minWidth="100%"
+            />
+          </div>
+        </div>
+      )}
       <div className={s.grid2}>
         <div className={s.formGroup}><label>Delivered At</label><input type="date" value={form.deliveredAt} onChange={(e) => setForm({ ...form, deliveredAt: e.target.value })} className={s.formInput} /></div>
         <div className={s.formGroup}><label>Next Follow-Up Date</label><input type="date" value={form.nextFollowUpDate} onChange={(e) => setForm({ ...form, nextFollowUpDate: e.target.value })} className={s.formInput} /></div>
@@ -764,6 +843,30 @@ export default function LeadsPage() {
             minWidth="11rem"
           />
           <CustomSelect
+            options={[
+              { label: 'Delivery: All', value: '' },
+              { label: 'Delivered', value: 'DELIVERED' },
+              { label: 'RTO', value: 'RTO' },
+              { label: 'Cancelled', value: 'CANCELLED' },
+              { label: 'Not Set', value: 'NONE' },
+            ]}
+            value={deliveryFilter}
+            onChange={(val) => { setDeliveryFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="10rem"
+          />
+          <CustomSelect
+            options={[
+              { label: 'Payment: All', value: '' },
+              { label: 'Payment Received', value: 'true' },
+              { label: 'Not Received', value: 'false' },
+            ]}
+            value={paymentFilter}
+            onChange={(val) => { setPaymentFilter(String(val)); setPage(1); }}
+            align="left"
+            minWidth="10rem"
+          />
+          <CustomSelect
             options={[{ label: 'Created: All', value: '' }, ...DATE_PRESETS.map(({ label, key }) => ({ label, value: key }))]}
             value={datePreset}
             onChange={(val) => handlePreset(String(val))}
@@ -817,6 +920,8 @@ export default function LeadsPage() {
                   ['products', 'Products'],
                   ['doctor', 'Doctor'],
                   ['status', 'Status'],
+                  ['delivery', 'Delivery'],
+                  ['payment', 'Payment'],
                   ['tracking', 'Tracking'],
                 ] as [keyof typeof visibleCols, string][]).map(([key, label]) => (
                   <label key={key} className={s.colMenuItem}>
@@ -963,6 +1068,27 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
+                  <div className={s.mobileMetaGrid}>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Delivery Status</span>
+                      <select
+                        value={l.deliveryStatus || 'NONE'}
+                        onChange={(e) => handleDeliveryChange(l.id, e.target.value as DeliveryStatus)}
+                        className={`${s.statusSelect} ${deliveryCls(l.deliveryStatus)}`}
+                      >
+                        {deliveryStatuses.map((st) => <option key={st} value={st}>{DELIVERY_LABELS[st]}</option>)}
+                      </select>
+                    </div>
+                    <div className={s.mobileMetaItem}>
+                      <span className={s.mobileMetaLabel}>Payment</span>
+                      <span className={s.cellText}>
+                        {l.paymentReceived
+                          ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className={s.mobileNotes}>
                     <span className={s.mobileMetaLabel}>Diseases / Tracking</span>
                     <span className={s.cellText}>
@@ -1009,6 +1135,8 @@ export default function LeadsPage() {
                     ['deliveredDate', 'Delivered Date'],
                     ['followUpDate', 'Follow-Up'],
                     ['status',   'Status'],
+                    ['delivery', 'Delivery'],
+                    ['payment',  'Payment'],
                     ['tracking', 'Tracking'],
                   ] as [keyof typeof visibleCols, string][]).map(([key, label]) => (
                     <label key={key} className={s.colMenuItem}>
@@ -1034,6 +1162,8 @@ export default function LeadsPage() {
                 {visibleCols.deliveredDate && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('deliveredAt')}>Delivered Date{sortField === 'deliveredAt' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
                 {visibleCols.followUpDate && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('nextFollowUpDate')}>Follow-Up{sortField === 'nextFollowUpDate' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
                 {visibleCols.status   && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.delivery && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('deliveryStatus')}>Delivery{sortField === 'deliveryStatus' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.payment  && <th className={s.th}>Payment</th>}
                 {visibleCols.tracking && <th className={s.th}>Tracking</th>}
                 <th className={`${s.th} ${s.thRight}`}>Actions</th>
               </tr>
@@ -1070,6 +1200,19 @@ export default function LeadsPage() {
                       className={`${s.statusSelect} ${statusCls(l.status)}`}>
                       {statuses.map((st) => <option key={st} value={st}>{STATUS_LABELS[st]}</option>)}
                     </select>
+                  </td>}
+                  {visibleCols.delivery && <td className={s.td}>
+                    <select value={l.deliveryStatus || 'NONE'} onChange={(e) => handleDeliveryChange(l.id, e.target.value as DeliveryStatus)}
+                      className={`${s.statusSelect} ${deliveryCls(l.deliveryStatus)}`}>
+                      {deliveryStatuses.map((st) => <option key={st} value={st}>{DELIVERY_LABELS[st]}</option>)}
+                    </select>
+                  </td>}
+                  {visibleCols.payment  && <td className={s.td}>
+                    <span className={s.cellText}>
+                      {l.paymentReceived
+                        ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
+                        : '—'}
+                    </span>
                   </td>}
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>

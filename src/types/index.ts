@@ -6,6 +6,10 @@ export type LeadStatus =
   | 'NOT_INTERESTED' | 'OTHER_TREATMENT' | 'DNC'
   | 'HTU' | 'FOLLOW_UP_1' | 'FOLLOW_UP_2' | 'FOLLOW_UP_3';
 
+export type DeliveryStatus = 'NONE' | 'DELIVERED' | 'RTO' | 'CANCELLED';
+
+export type PaymentMode = 'UPI' | 'COD';
+
 export interface User {
   id: number;
   email: string;
@@ -87,6 +91,10 @@ export interface Lead {
   assignedDoctor?: { id: number; username: string };
   status: LeadStatus;
   notes?: string;
+  deliveryStatus?: DeliveryStatus;
+  paymentReceived?: boolean;
+  paymentAmount?: number;
+  paymentMode?: PaymentMode;
   deliveredAt?: string;
   nextFollowUpDate?: string;
   lastContactedAt?: string;
