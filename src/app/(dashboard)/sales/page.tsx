@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { generateInvoice } from '@/lib/generateInvoice';
+import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import { Sale, SaleItem, SaleProductsResponse, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -849,21 +849,30 @@ export default function SalesPage() {
                 className={s.invoiceBtn}
                 disabled={!form.patientName.trim()}
                 onClick={() => {
-                  void generateInvoice({
+                  // Same TAX-INVOICE format as leads/website orders.
+                  const invItems = validItems.map((it) => ({
+                    name: it.product?.name || '',
+                    qty: it.quantity,
+                    unitPrice: Number(it.product?.price || 0),
+                  }));
+                  // Therapy / consultation becomes a line item so it's taxed and shown like any product.
+                  if (therapyPrice > 0) {
+                    invItems.push({ name: 'Therapy / Consultation', qty: 1, unitPrice: therapyPrice });
+                  }
+                  const year = new Date(form.date).getFullYear();
+                  const invoiceNumber = editing
+                    ? `NNH-${year}-${String(editing.id).padStart(3, '0')}`
+                    : `NNH-${year}-${String(Math.floor(1000 + Math.random() * 9000))}`;
+                  generateOrderInvoice({
+                    invoiceNumber,
                     date: form.date,
-                    patientName: form.patientName,
-                    items: validItems.map((it) => ({
-                      name: it.product?.name || '',
-                      qty: it.quantity,
-                      unitPrice: Number(it.product?.price || 0),
-                    })),
-                    therapyPrice: therapyPrice || undefined,
-                    discount: discount || undefined,
+                    customerName: form.patientName,
+                    paymentMethod: form.paymentMode,
+                    items: invItems,
+                    subtotal: subtotalAmount,
+                    discountAmount: discount || undefined,
+                    discountLabel: discount > 0 ? 'Discount' : undefined,
                     totalAmount: computedAmount,
-                    paymentMode: form.paymentMode,
-                    status: form.status,
-                    pendingAmount: Number(form.pendingAmount || 0),
-                    notes: form.notes || undefined,
                   });
                 }}
               >

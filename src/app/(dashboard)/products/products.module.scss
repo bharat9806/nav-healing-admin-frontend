@@ -568,6 +568,29 @@
   width: 100%;
 }
 
+.fieldHint {
+  display: block;
+  margin-top: $s1;
+  font-size: 0.75rem;
+  color: $text-muted;
+}
+
+.addCompanyBox {
+  margin-top: $s2;
+  padding: $s3;
+  border: 1px dashed $border;
+  border-radius: $r-md;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.addCompanyActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $s2;
+}
+
 .formTextarea {
   @include input;
   resize: none;

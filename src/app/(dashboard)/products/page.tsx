@@ -6,7 +6,7 @@ import * as XLSX from 'xlsx';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { Product, User } from '@/types';
+import { Company, Product, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { TypeableSelect } from '@/components/ui/TypeableSelect';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -28,6 +28,7 @@ type ProductFormState = {
   price: string;
   category: string;
   subcategory: string;
+  companyId: string;
   isActive: boolean;
   currentStock: string;
   reorderLevel: string;
@@ -40,11 +41,16 @@ type ProductFormProps = {
   imagePreview: string;
   saving: boolean;
   categoryOptions: CategoryOption[];
+  companyOptions: Company[];
+  skuPreview: string;
   onSubmit: (e: React.FormEvent) => Promise<void>;
   onCancel: () => void;
   onFormChange: (next: ProductFormState) => void;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAddCompany: (name: string, prefix: string) => Promise<Company | null>;
 };
+
+const ADD_COMPANY = '__add_company__';
 
 function ProductForm({
   editing,
@@ -53,10 +59,13 @@ function ProductForm({
   imagePreview,
   saving,
   categoryOptions,
+  companyOptions,
+  skuPreview,
   onSubmit,
   onCancel,
   onFormChange,
   onImageChange,
+  onAddCompany,
 }: ProductFormProps) {
   const selectedCategory = categoryOptions.find((c) => c.name === form.category);
   const subcategoryOptions = selectedCategory?.subcategories ?? [];
@@ -65,20 +74,110 @@ function ProductForm({
     ...subcategoryOptions.map((option) => ({ label: option.name, value: option.name })),
   ];
 
+  const [addingCompany, setAddingCompany] = useState(false);
+  const [newCompanyName, setNewCompanyName] = useState('');
+  const [newCompanyPrefix, setNewCompanyPrefix] = useState('');
+  const [companyError, setCompanyError] = useState('');
+  const [savingCompany, setSavingCompany] = useState(false);
+
+  const companySelectOptions = [
+    { label: 'Select company', value: '' },
+    ...companyOptions.map((c) => ({ label: `${c.name} (${c.skuPrefix})`, value: String(c.id) })),
+    { label: '+ Add new company', value: ADD_COMPANY },
+  ];
+
+  const handleCompanySelect = (val: string | number) => {
+    const value = String(val);
+    if (value === ADD_COMPANY) {
+      setAddingCompany(true);
+      setCompanyError('');
+      return;
+    }
+    setAddingCompany(false);
+    onFormChange({ ...form, companyId: value });
+  };
+
+  const handleSaveCompany = async () => {
+    setCompanyError('');
+    const name = newCompanyName.trim();
+    const prefix = newCompanyPrefix.trim().toUpperCase();
+    if (!name || !prefix) {
+      setCompanyError('Both company name and prefix are required');
+      return;
+    }
+    if (!/^[A-Z]{2,10}$/.test(prefix)) {
+      setCompanyError('Prefix must be 2–10 letters (A–Z) only');
+      return;
+    }
+    setSavingCompany(true);
+    const created = await onAddCompany(name, prefix);
+    setSavingCompany(false);
+    if (created) {
+      setAddingCompany(false);
+      setNewCompanyName('');
+      setNewCompanyPrefix('');
+      onFormChange({ ...form, companyId: String(created.id) });
+    } else {
+      setCompanyError('Could not create company (name or prefix may already exist)');
+    }
+  };
+
   return (
     <form onSubmit={onSubmit} className={s.inlineForm}>
       <h2 className={s.inlineFormTitle}>{editing ? 'Edit Product' : 'New Product'}</h2>
       {error && <div className={s.error}>{error}</div>}
       <div className={s.productMetaRow}>
         <div className={s.formGroup}>
+          <label>Company {editing ? '' : '*'}</label>
+          <CustomSelect
+            className={s.formSelectWrap}
+            fullWidth
+            options={companySelectOptions}
+            value={addingCompany ? ADD_COMPANY : form.companyId}
+            onChange={handleCompanySelect}
+            align="left"
+            minWidth="100%"
+          />
+          {addingCompany && (
+            <div className={s.addCompanyBox}>
+              <input
+                type="text"
+                value={newCompanyName}
+                onChange={(e) => setNewCompanyName(e.target.value)}
+                className={s.formInput}
+                placeholder="Company name (e.g. Rudhra)"
+              />
+              <input
+                type="text"
+                value={newCompanyPrefix}
+                onChange={(e) => setNewCompanyPrefix(e.target.value.toUpperCase())}
+                className={s.formInput}
+                placeholder="Prefix (e.g. RUD)"
+                maxLength={10}
+              />
+              <div className={s.addCompanyActions}>
+                <button type="button" onClick={() => { setAddingCompany(false); setCompanyError(''); }} className={s.cancelBtn}>Cancel</button>
+                <button type="button" onClick={handleSaveCompany} disabled={savingCompany} className={s.saveBtn}>
+                  {savingCompany ? 'Saving...' : 'Save company'}
+                </button>
+              </div>
+              {companyError && <div className={s.error}>{companyError}</div>}
+            </div>
+          )}
+        </div>
+        <div className={s.formGroup}>
           <label>SKU / Product Code</label>
           <input
             type="text"
-            value={form.sku}
+            value={editing ? form.sku : (form.companyId ? skuPreview : form.sku)}
             onChange={(e) => onFormChange({ ...form, sku: e.target.value.toUpperCase() })}
             className={s.formInput}
-            placeholder="Auto-generated if left blank"
+            readOnly={!editing && !!form.companyId}
+            placeholder={form.companyId ? 'Auto-generated from company' : 'Auto-generated if left blank'}
           />
+          {!editing && !!form.companyId && (
+            <span className={s.fieldHint}>Auto-generated when you save</span>
+          )}
         </div>
         <div className={s.formGroup}>
           <label>Category *</label>
@@ -188,6 +287,7 @@ const initialForm = (): ProductFormState => ({
   price: '',
   category: '',
   subcategory: '',
+  companyId: '',
   isActive: true,
   currentStock: '0',
   reorderLevel: '5',
@@ -197,6 +297,8 @@ export default function ProductsPage() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<CategoryOption[]>([]);
+  const [companyOptions, setCompanyOptions] = useState<Company[]>([]);
+  const [skuPreview, setSkuPreview] = useState('');
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('');
   const [page, setPage] = useState(1);
@@ -261,7 +363,34 @@ export default function ProductsPage() {
       // Set default category for the new-product form
       setForm((prev) => ({ ...prev, category: prev.category || (cats[0]?.name ?? '') }));
     }).catch(() => {});
+    api.get('/companies').then((res) => {
+      setCompanyOptions(res.data as Company[]);
+    }).catch(() => {});
   }, []);
+
+  // Preview the next auto-generated SKU whenever a company is selected on a new product.
+  useEffect(() => {
+    if (editing || !form.companyId) {
+      setSkuPreview('');
+      return;
+    }
+    let cancelled = false;
+    api.get(`/companies/${form.companyId}/next-sku`)
+      .then((res) => { if (!cancelled) setSkuPreview(res.data.sku ?? ''); })
+      .catch(() => { if (!cancelled) setSkuPreview(''); });
+    return () => { cancelled = true; };
+  }, [form.companyId, editing]);
+
+  const handleAddCompany = async (name: string, prefix: string): Promise<Company | null> => {
+    try {
+      const res = await api.post('/companies', { name, skuPrefix: prefix });
+      const created = res.data as Company;
+      setCompanyOptions((prev) => [...prev, created].sort((a, b) => a.name.localeCompare(b.name)));
+      return created;
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     fetchProducts(page);
@@ -294,6 +423,7 @@ export default function ProductsPage() {
       price: String(product.price),
       category: product.category,
       subcategory: product.subcategory || '',
+      companyId: product.companyId != null ? String(product.companyId) : '',
       isActive: product.isActive,
       currentStock: String(product.currentStock),
       reorderLevel: String(product.reorderLevel),
@@ -314,10 +444,21 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editing && !form.companyId) {
+      setError('Please select a company so the SKU can be generated');
+      return;
+    }
     setSaving(true);
     setError('');
     const fd = new FormData();
-    if (form.sku.trim()) fd.append('sku', form.sku.trim());
+    // When a company is chosen on a new product, the backend auto-generates
+    // the SKU from the company prefix — don't send a manual sku.
+    if (form.companyId) {
+      fd.append('companyId', form.companyId);
+      if (editing && form.sku.trim()) fd.append('sku', form.sku.trim());
+    } else if (form.sku.trim()) {
+      fd.append('sku', form.sku.trim());
+    }
     fd.append('name', form.name);
     fd.append('description', form.description);
     fd.append('price', form.price);
@@ -533,10 +674,13 @@ export default function ProductsPage() {
             imagePreview={imagePreview}
             saving={saving}
             categoryOptions={categoryOptions}
+            companyOptions={companyOptions}
+            skuPreview={skuPreview}
             onSubmit={handleSubmit}
             onCancel={cancelCreate}
             onFormChange={setForm}
             onImageChange={handleImageChange}
+            onAddCompany={handleAddCompany}
           />
         </div>
       )}

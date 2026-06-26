@@ -46,6 +46,13 @@ export interface ApiError {
   statusCode: number;
 }
 
+export interface Company {
+  id: number;
+  name: string;
+  skuPrefix: string;
+  isActive: boolean;
+}
+
 export interface Product {
   id: number;
   sku: string;
@@ -58,6 +65,8 @@ export interface Product {
   isActive: boolean;
   currentStock: number;
   reorderLevel: number;
+  companyId?: number | null;
+  company?: Company | null;
   createdAt: string;
   updatedAt: string;
 }

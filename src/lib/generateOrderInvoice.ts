@@ -44,6 +44,7 @@ export interface OrderInvoiceData {
   items: OrderInvoiceItem[];
   subtotal?: number;       // pre-discount total (sum of items)
   discountAmount?: number; // prepaid discount, if any
+  discountLabel?: string;  // label for the discount line (default: 'Prepaid Discount (10%)')
   totalAmount: number;     // final payable
 }
 
@@ -293,7 +294,7 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
     doc.setTextColor(...GREEN_TXT);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9.5);
-    doc.text('Prepaid Discount (10%)', totLabelX, y);
+    doc.text(data.discountLabel ?? 'Prepaid Discount (10%)', totLabelX, y);
     doc.text(`- Rs ${money(discount)}`, totValX, y, { align: 'right' });
     doc.setTextColor(...INK);
     y += rowH;

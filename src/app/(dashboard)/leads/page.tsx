@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FC, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
@@ -220,6 +221,17 @@ const DATE_PRESETS = [
   { label: 'Custom Range', key: 'custom' },
 ];
 
+// Default leads-table columns. Name and Actions are always shown; these 5
+// (Phone, Products, Status, Delivery, Tracking) are on by default and the rest
+// are hidden until the user enables them from the Columns menu.
+const COL_DEFAULTS = {
+  phone: true, altPhone: false, email: false, diseases: false,
+  products: true, doctor: false, status: true, tracking: true,
+  createdDate: false, deliveredDate: false, followUpDate: false,
+  delivery: true, payment: false,
+};
+const COLS_STORAGE_KEY = 'leads.visibleCols';
+
 export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [doctors, setDoctors] = useState<{ id: number; username: string }[]>([]);
@@ -269,14 +281,25 @@ export default function LeadsPage() {
   const [deleteTarget, setDeleteTarget] = useState<Lead | null>(null);
   const [showColMenu, setShowColMenu] = useState(false);
   const colMenuRef = useRef<HTMLDivElement | null>(null);
-  const [visibleCols, setVisibleCols] = useState({
-    phone: true, altPhone: true, email: true, diseases: true,
-    products: true, doctor: true, status: true, tracking: true,
-    createdDate: true, deliveredDate: true, followUpDate: true,
-    delivery: true, payment: true,
-  });
+  const [actionMenu, setActionMenu] = useState<{ lead: Lead; x: number; y: number } | null>(null);
+  const actionMenuRef = useRef<HTMLDivElement | null>(null);
+  const [visibleCols, setVisibleCols] = useState(COL_DEFAULTS);
   const toggleCol = (col: keyof typeof visibleCols) =>
     setVisibleCols(p => ({ ...p, [col]: !p[col] }));
+
+  // Restore the user's saved column choices after mount (avoids SSR mismatch),
+  // then persist any change so the selection sticks across reloads.
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(COLS_STORAGE_KEY);
+      if (saved) setVisibleCols((prev) => ({ ...prev, ...JSON.parse(saved) }));
+    } catch { /* ignore unreadable storage */ }
+  }, []);
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLS_STORAGE_KEY, JSON.stringify(visibleCols));
+    } catch { /* ignore unwritable storage */ }
+  }, [visibleCols]);
 
   const formatDate = (value?: string) => {
     if (!value) return '-';
@@ -331,6 +354,37 @@ export default function LeadsPage() {
       document.removeEventListener('focusin', handleOutsideInteraction);
     };
   }, [showColMenu]);
+
+  // Close the row actions menu on outside click, scroll, or resize.
+  useEffect(() => {
+    if (!actionMenu) return;
+
+    const onDown = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (actionMenuRef.current?.contains(target)) return;
+      if (target.closest?.('[data-kebab]')) return; // let the button's own onClick toggle
+      setActionMenu(null);
+    };
+    const close = () => setActionMenu(null);
+
+    document.addEventListener('mousedown', onDown);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('scroll', close, true);
+      window.removeEventListener('resize', close);
+    };
+  }, [actionMenu]);
+
+  const toggleActionMenu = (event: React.MouseEvent, l: Lead) => {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    setActionMenu((prev) =>
+      prev?.lead.id === l.id ? null : { lead: l, x: rect.right, y: rect.bottom + 6 },
+    );
+  };
 
   const fetchStats = () => {
     api.get('/leads/stats')
@@ -919,6 +973,9 @@ export default function LeadsPage() {
                   ['diseases', 'Diseases'],
                   ['products', 'Products'],
                   ['doctor', 'Doctor'],
+                  ['createdDate', 'Created Date'],
+                  ['deliveredDate', 'Delivered Date'],
+                  ['followUpDate', 'Follow-Up'],
                   ['status', 'Status'],
                   ['delivery', 'Delivery'],
                   ['payment', 'Payment'],
@@ -1216,14 +1273,15 @@ export default function LeadsPage() {
                   </td>}
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>
-                    {l.items?.length > 0 && (
-                      <button onClick={() => downloadInvoice(l)} className={s.invoiceBtn}>Invoice</button>
-                    )}
-                    {l.trackingNumber && (
-                      <button onClick={() => openTrack(l)} className={s.editBtn}>Track</button>
-                    )}
-                    <button onClick={() => openEdit(l)} className={s.editBtn}>Edit</button>
-                    <button onClick={() => setDeleteTarget(l)} className={s.deleteBtn}>Delete</button>
+                    <button
+                      type="button"
+                      data-kebab
+                      aria-label="Actions"
+                      className={`${s.kebabBtn} ${actionMenu?.lead.id === l.id ? s.kebabBtnActive : ''}`}
+                      onClick={(e) => toggleActionMenu(e, l)}
+                    >
+                      ⋮
+                    </button>
                   </td>
                 </tr>
               )})}
@@ -1264,6 +1322,48 @@ export default function LeadsPage() {
           </div>
         </div>
       ))}
+
+      {actionMenu && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={actionMenuRef}
+          className={s.actionMenu}
+          style={{ top: actionMenu.y, left: actionMenu.x }}
+        >
+          {actionMenu.lead.items?.length > 0 && (
+            <button
+              type="button"
+              className={s.actionMenuItem}
+              onClick={() => { downloadInvoice(actionMenu.lead); setActionMenu(null); }}
+            >
+              Invoice
+            </button>
+          )}
+          {actionMenu.lead.trackingNumber && (
+            <button
+              type="button"
+              className={s.actionMenuItem}
+              onClick={() => { openTrack(actionMenu.lead); setActionMenu(null); }}
+            >
+              Track
+            </button>
+          )}
+          <button
+            type="button"
+            className={s.actionMenuItem}
+            onClick={() => { openEdit(actionMenu.lead); setActionMenu(null); }}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className={`${s.actionMenuItem} ${s.actionMenuItemDanger}`}
+            onClick={() => { setDeleteTarget(actionMenu.lead); setActionMenu(null); }}
+          >
+            Delete
+          </button>
+        </div>,
+        document.body,
+      )}
 
       {deleteTarget && (
         <div className={s.overlay}>
