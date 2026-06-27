@@ -42,12 +42,25 @@ type SaleItemForm = {
   productId: number;
   quantity: number;
   product?: ProductOption;
+  // Per-sale overrides. Empty string / undefined means "use the product value".
+  // These never modify the master product record.
+  nameOverride?: string;
+  priceOverride?: string;
 };
 
 const initialItem = (): SaleItemForm => ({
   productId: 0,
   quantity: 1,
 });
+
+// Effective values for an item row, falling back to the master product.
+const itemName = (item: SaleItemForm) =>
+  (item.nameOverride && item.nameOverride.trim()) || item.product?.name || '';
+
+const itemUnitPrice = (item: SaleItemForm) =>
+  item.priceOverride !== undefined && item.priceOverride !== ''
+    ? Number(item.priceOverride)
+    : Number(item.product?.price || 0);
 
 const initialForm = (): SaleFormState => ({
   date: new Date().toISOString().slice(0, 10),
@@ -69,6 +82,8 @@ const getSaleItems = (sale: Sale): SaleItemForm[] => {
     return sale.items.map((item) => ({
       productId: item.productId,
       quantity: item.quantity,
+      nameOverride: item.customName ?? item.product?.name ?? '',
+      priceOverride: item.unitPrice != null ? String(item.unitPrice) : '',
       product: item.product
         ? {
             id: item.product.id,
@@ -300,7 +315,7 @@ export default function SalesPage() {
   const discount = Number(form.discount || 0);
   const validItems = items.filter((item) => item.productId > 0 && item.product);
   const itemsTotal = validItems.reduce(
-    (sum, item) => sum + Number(item.product?.price || 0) * item.quantity,
+    (sum, item) => sum + itemUnitPrice(item) * item.quantity,
     0,
   );
   const subtotalAmount = validItems.length > 0 ? itemsTotal + therapyPrice : Number(form.amount || 0);
@@ -461,6 +476,12 @@ export default function SalesPage() {
         ? validItems.map((item) => ({
             productId: item.productId,
             quantity: item.quantity,
+            unitPrice: itemUnitPrice(item),
+            // Only send a name override when it differs from the master product.
+            name:
+              itemName(item) !== (item.product?.name ?? '')
+                ? itemName(item)
+                : undefined,
           }))
         : undefined,
       therapyPrice: form.therapyPrice ? Number(form.therapyPrice) : undefined,
@@ -683,9 +704,35 @@ export default function SalesPage() {
                           updateItem(index, {
                             productId: product?.id || 0,
                             product,
+                            // Seed editable overrides from the chosen product so
+                            // the inputs show its name/price, ready to be tweaked.
+                            nameOverride: product ? product.name : '',
+                            priceOverride: product ? String(product.price) : '',
                           });
                         }}
                       />
+                      {item.product && (
+                        <div className={s.itemOverrideRow}>
+                          <input
+                            type="text"
+                            value={item.nameOverride ?? ''}
+                            onChange={(e) => updateItem(index, { nameOverride: e.target.value })}
+                            placeholder="Name on this sale"
+                            className={s.formInput}
+                            title="Name shown on this sale only — does not change the product"
+                          />
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.priceOverride ?? ''}
+                            onChange={(e) => updateItem(index, { priceOverride: e.target.value })}
+                            placeholder="Price"
+                            className={s.formInput}
+                            title="Unit price for this sale only — does not change the product"
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className={s.itemQuantityCell}>
                       <input
@@ -711,7 +758,7 @@ export default function SalesPage() {
                     </div>
                     <div className={s.itemPriceCell}>
                       <span className={s.itemPriceText}>
-                        {item.product ? currency(Number(item.product.price) * item.quantity) : '—'}
+                        {item.product ? currency(itemUnitPrice(item) * item.quantity) : '—'}
                       </span>
                     </div>
                     <button
@@ -758,8 +805,8 @@ export default function SalesPage() {
             <div className={s.amountBreakdown}>
               {validItems.map((item, index) => (
                 <div key={`${item.productId}-${index}`} className={s.breakdownRow}>
-                  <span>{item.product?.name} x{item.quantity}</span>
-                  <span>{currency(Number(item.product?.price || 0) * item.quantity)}</span>
+                  <span>{itemName(item)} x{item.quantity}</span>
+                  <span>{currency(itemUnitPrice(item) * item.quantity)}</span>
                 </div>
               ))}
               {therapyPrice > 0 && (
@@ -851,9 +898,9 @@ export default function SalesPage() {
                 onClick={() => {
                   // Same TAX-INVOICE format as leads/website orders.
                   const invItems = validItems.map((it) => ({
-                    name: it.product?.name || '',
+                    name: itemName(it),
                     qty: it.quantity,
-                    unitPrice: Number(it.product?.price || 0),
+                    unitPrice: itemUnitPrice(it),
                   }));
                   // Therapy / consultation becomes a line item so it's taxed and shown like any product.
                   if (therapyPrice > 0) {
@@ -943,7 +990,7 @@ export default function SalesPage() {
                         } as SaleItem]
                     ).map((item, index) => (
                       <p key={`${sale.id}-${item.productId}-${index}`} className={index === 0 ? s.productName : s.productSub}>
-                        {item.product?.name || `Product #${item.productId}`} x{item.quantity}
+                        {item.customName || item.product?.name || `Product #${item.productId}`} x{item.quantity}
                       </p>
                     ))}
                     {sale.therapyPrice ? <p className={s.productSub}>Therapy: {currency(sale.therapyPrice)}</p> : null}

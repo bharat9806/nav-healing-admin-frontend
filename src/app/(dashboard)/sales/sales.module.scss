@@ -547,6 +547,17 @@
   text-align: center;
 }
 
+.itemOverrideRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 7rem;
+  gap: $s2;
+  margin-top: $s2;
+
+  .formInput {
+    font-size: 0.85rem;
+  }
+}
+
 .itemPriceCell {
   text-align: right;
 }

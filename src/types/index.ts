@@ -173,6 +173,7 @@ export interface SaleItem {
   productId: number;
   quantity: number;
   unitPrice: number;
+  customName?: string | null;
   product?: Product;
   createdAt: string;
   updatedAt: string;
