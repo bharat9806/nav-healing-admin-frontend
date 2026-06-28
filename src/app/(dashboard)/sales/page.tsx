@@ -311,6 +311,9 @@ export default function SalesPage() {
   const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const canOverridePrice =
+    currentUser?.role === 'SUPER_ADMIN' || currentUser?.canEditSalePrice === true;
+
   const therapyPrice = Number(form.therapyPrice || 0);
   const discount = Number(form.discount || 0);
   const validItems = items.filter((item) => item.productId > 0 && item.product);
@@ -711,7 +714,7 @@ export default function SalesPage() {
                           });
                         }}
                       />
-                      {item.product && (
+                      {item.product && canOverridePrice && (
                         <div className={s.itemOverrideRow}>
                           <input
                             type="text"

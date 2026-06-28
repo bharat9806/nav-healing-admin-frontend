@@ -30,6 +30,7 @@ export interface User {
   canManageWebsiteOrders: boolean;
   canManageProspects: boolean;
   canExportProspects: boolean;
+  canEditSalePrice: boolean;
   canViewDashboard: boolean;
   isDoctor: boolean;
   createdAt: string;

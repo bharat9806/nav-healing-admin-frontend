@@ -35,6 +35,7 @@ interface EditForm {
   canManageWebsiteOrders: boolean;
   canManageProspects: boolean;
   canExportProspects: boolean;
+  canEditSalePrice: boolean;
   canViewDashboard: boolean;
 }
 
@@ -58,6 +59,7 @@ interface CreateForm {
   canManageWebsiteOrders: boolean;
   canManageProspects: boolean;
   canExportProspects: boolean;
+  canEditSalePrice: boolean;
   canViewDashboard: boolean;
 }
 
@@ -100,10 +102,28 @@ const EXPORT_PERMISSIONS = [
   },
 ] as const;
 
+// Extra capabilities that depend on a page permission but aren't exports.
+const ACTION_PERMISSIONS = [
+  {
+    key: 'canEditSalePrice',
+    label: 'Edit Sale Price/Name',
+    dependsOn: 'canManageSales',
+    hint: 'Can change a line item name & price on a sale',
+  },
+] as const;
+
+// All permissions that hang off a page permission (exports + actions).
+const DEPENDENT_PERMISSIONS = [
+  ...EXPORT_PERMISSIONS,
+  ...ACTION_PERMISSIONS,
+] as const;
+
 type PermissionForm = EditForm | CreateForm;
 type PagePermissionKey = (typeof PAGE_PERMISSIONS)[number]['key'];
 type ExportPermissionKey = (typeof EXPORT_PERMISSIONS)[number]['key'];
-type ExportDependencyKey = (typeof EXPORT_PERMISSIONS)[number]['dependsOn'];
+type ActionPermissionKey = (typeof ACTION_PERMISSIONS)[number]['key'];
+type DependentPermissionKey = ExportPermissionKey | ActionPermissionKey;
+type ExportDependencyKey = (typeof DEPENDENT_PERMISSIONS)[number]['dependsOn'];
 
 const initialEditForm = (): EditForm => ({
   userCode: '',
@@ -123,6 +143,7 @@ const initialEditForm = (): EditForm => ({
   canManageWebsiteOrders: false,
   canManageProspects: true,
   canExportProspects: true,
+  canEditSalePrice: false,
   canViewDashboard: true,
 });
 
@@ -146,6 +167,7 @@ const initialCreateForm = (): CreateForm => ({
   canManageWebsiteOrders: false,
   canManageProspects: true,
   canExportProspects: false,
+  canEditSalePrice: false,
   canViewDashboard: true,
 });
 
@@ -156,18 +178,20 @@ const syncDependentExports = <T extends PermissionForm>(
 ): T => {
   if (checked) return { ...form, [pageKey]: checked };
 
-  const exportPermission = EXPORT_PERMISSIONS.find(
+  // Turning off a page permission also turns off everything that depends on it.
+  const dependents = DEPENDENT_PERMISSIONS.filter(
     (permission) => permission.dependsOn === pageKey,
   );
 
-  if (!exportPermission) {
-    return { ...form, [pageKey]: checked };
-  }
+  const cleared = dependents.reduce(
+    (acc, permission) => ({ ...acc, [permission.key]: false }),
+    {} as Partial<T>,
+  );
 
   return {
     ...form,
+    ...cleared,
     [pageKey]: checked,
-    [exportPermission.key]: false,
   };
 };
 
@@ -183,7 +207,12 @@ function PermissionSection<T extends PermissionForm>({
   description: string;
   items: ReadonlyArray<
     | { key: PagePermissionKey; label: string }
-    | { key: ExportPermissionKey; label: string; dependsOn: ExportDependencyKey }
+    | {
+        key: DependentPermissionKey;
+        label: string;
+        dependsOn: ExportDependencyKey;
+        hint?: string;
+      }
   >;
   values: T;
   onToggle: (key: string, checked: boolean) => void;
@@ -221,7 +250,9 @@ function PermissionSection<T extends PermissionForm>({
                   <span className={s.permissionHint}>
                     {dependencyDisabled
                       ? 'Enable page access first'
-                      : 'Excel export allowed'}
+                      : 'hint' in item && item.hint
+                        ? item.hint
+                        : 'Excel export allowed'}
                   </span>
                 )}
               </span>
@@ -324,6 +355,7 @@ export default function UsersPage() {
       canManageWebsiteOrders: user.canManageWebsiteOrders,
       canManageProspects: user.canManageProspects,
       canExportProspects: user.canExportProspects,
+      canEditSalePrice: user.canEditSalePrice,
       canViewDashboard: user.canViewDashboard,
     });
     setFormError('');
@@ -563,6 +595,19 @@ export default function UsersPage() {
                       }
                       disabledByDependency
                     />
+                    <PermissionSection
+                      title="Action Access"
+                      description="Sensitive in-page actions, granted to a few users."
+                      items={ACTION_PERMISSIONS}
+                      values={createForm}
+                      onToggle={(key, checked) =>
+                        setCreateForm((p) => ({
+                          ...p,
+                          [key]: checked,
+                        }))
+                      }
+                      disabledByDependency
+                    />
                   </div>
                 )}
               </>
@@ -657,6 +702,19 @@ export default function UsersPage() {
                       title="Export Access"
                       description="Keep Excel exports separate from regular page permissions."
                       items={EXPORT_PERMISSIONS}
+                      values={editForm}
+                      onToggle={(key, checked) =>
+                        setEditForm((p) => ({
+                          ...p,
+                          [key]: checked,
+                        }))
+                      }
+                      disabledByDependency
+                    />
+                    <PermissionSection
+                      title="Action Access"
+                      description="Sensitive in-page actions, granted to a few users."
+                      items={ACTION_PERMISSIONS}
                       values={editForm}
                       onToggle={(key, checked) =>
                         setEditForm((p) => ({
