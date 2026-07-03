@@ -17,6 +17,7 @@ type PermissionKey =
   | 'canManageProspects'
   | 'canManageSales'
   | 'canManageWebsiteOrders'
+  | 'canManageExpenses'
   | 'canManageUsers';
 
 const allNavItems = [
@@ -28,6 +29,7 @@ const allNavItems = [
   { label: 'Patients', href: '/patients', icon: <PatientsIcon />, permission: 'canManageSales' },
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
   { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageWebsiteOrders' },
+  { label: 'Expenses', href: '/expenses', icon: <ExpensesIcon />, permission: 'canManageExpenses' },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
   label: string;
@@ -191,6 +193,17 @@ function ProductSalesIcon() {
       <path d="M7 17h10" />
       <path d="M17 10v6" />
       <path d="M14 13h6" />
+    </IconShell>
+  );
+}
+
+function ExpensesIcon() {
+  return (
+    <IconShell>
+      <rect x="3" y="6" width="18" height="13" rx="2" />
+      <path d="M3 10h18" />
+      <path d="M7 15h4" />
+      <circle cx="17" cy="15" r="1" />
     </IconShell>
   );
 }

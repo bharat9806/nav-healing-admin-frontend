@@ -30,6 +30,8 @@ export interface User {
   canManageWebsiteOrders: boolean;
   canManageProspects: boolean;
   canExportProspects: boolean;
+  canManageExpenses: boolean;
+  canExportExpenses: boolean;
   canEditSalePrice: boolean;
   canViewDashboard: boolean;
   isDoctor: boolean;
@@ -52,6 +54,41 @@ export interface Company {
   name: string;
   skuPrefix: string;
   isActive: boolean;
+}
+
+export type ExpensePaymentMethod =
+  | 'CASH' | 'UPI' | 'BANK_TRANSFER' | 'CARD' | 'CHEQUE' | 'OTHER';
+
+export interface Expense {
+  id: number;
+  title: string;
+  amount: number;
+  category: string;
+  vendor?: string | null;
+  paymentMethod: ExpensePaymentMethod;
+  notes?: string | null;
+  expenseDate: string;
+  companyId?: number | null;
+  company?: { id: number; name: string; skuPrefix: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ExpensesResponse {
+  data: Expense[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    totalAmount: number;
+  };
+}
+
+export interface ExpenseStats {
+  totalCount: number;
+  totalAmount: number;
+  thisMonthAmount: number;
 }
 
 export interface Product {

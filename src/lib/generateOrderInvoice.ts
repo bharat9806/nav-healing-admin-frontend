@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 // ── Seller (your business) constants ─────────────────────────────────────────
-const BRAND_NAME   = 'NNavhealing Herbss';
+const BRAND_NAME   = 'Nav Healing Herbs';
 const BRAND_TAGLINE = 'Roots. Remedy. Relief.';
 const GSTIN        = '03NCQPS6429L1ZM';
 const SELLER_STATE = 'Punjab (03)';
@@ -12,6 +12,14 @@ const MFG_LIC      = 'Mfg. Lic. No. 880/AY-PB';
 const MANUFACTURER = 'AKS Lifesciences';
 const DEFAULT_HSN  = '3004';
 const GST_RATE     = 0.05; // 5% IGST, prices are GST-inclusive
+
+// ── Terms & Conditions (printed above the footer) ────────────────────────────
+const TERMS = [
+  'Goods once sold will not be taken back or exchanged.',
+  'Bill not paid by due date will attract 24% interest.',
+  "Subject to 'Punjab' Jurisdiction only.",
+  'Prescribed Sales Tax Declaration will be given.',
+];
 
 // ── Palette (matches sample) ─────────────────────────────────────────────────
 const GREEN_DARK : [number, number, number] = [31,  82,  48];   // table head / brand
@@ -322,6 +330,48 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
     mg, y + 2,
   );
 
+  // ═════════════════════════════════════════════════════════════════════════════════
+  // 5b · TERMS & CONDITIONS  +  STAMP / SIGNATURE
+  // ══════════════════════════════════════════════════════════════════════════════════
+  const tcTop = Math.max(y + 12, pageH - 78);
+
+  // Left · Terms & Conditions
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...GREEN_TXT);
+  doc.text('Terms & Conditions', mg, tcTop);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(7);
+  doc.setTextColor(...SLATE);
+  doc.text('E. & O.E.', mg, tcTop + 4.5);
+  doc.setFont('helvetica', 'normal');
+  let tcY = tcTop + 9;
+  TERMS.forEach((t, i) => {
+    const lines = doc.splitTextToSize(`${i + 1}. ${t}`, 108) as string[];
+    doc.text(lines, mg, tcY);
+    tcY += lines.length * 3.6;
+  });
+
+  // Right · Stamp / signature box
+  const boxW = 55;
+  const boxH = 34;
+  const boxX = pageW - mg - boxW;
+  const boxY = tcTop - 4;
+  doc.setDrawColor(...AMBER);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...GREEN_TXT);
+  doc.text(`For ${BRAND_NAME}`, boxX + boxW / 2, boxY + 5.5, { align: 'center' });
+  doc.setDrawColor(200, 205, 205);
+  doc.setLineWidth(0.3);
+  doc.line(boxX + 6, boxY + boxH - 6, boxX + boxW - 6, boxY + boxH - 6);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.8);
+  doc.setTextColor(...LIGHT);
+  doc.text('Authorised Signatory / Stamp', boxX + boxW / 2, boxY + boxH - 2.5, { align: 'center' });
+
   // ═══════════════════════════════════════════════════════════════════════════
   // 6 · FOOTER
   // ═══════════════════════════════════════════════════════════════════════════
@@ -339,7 +389,7 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
   doc.setFontSize(7.5);
   doc.setTextColor(...LIGHT);
   doc.text(
-    'Use products as directed. For best results, consult your physician. | Computer-generated invoice; no signature required.',
+    'Use products as directed. For best results, consult your physician. | This is a computer-generated invoice.',
     pageW / 2, footY + 14, { align: 'center' },
   );
   doc.text(

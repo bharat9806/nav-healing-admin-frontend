@@ -35,6 +35,8 @@ interface EditForm {
   canManageWebsiteOrders: boolean;
   canManageProspects: boolean;
   canExportProspects: boolean;
+  canManageExpenses: boolean;
+  canExportExpenses: boolean;
   canEditSalePrice: boolean;
   canViewDashboard: boolean;
 }
@@ -59,6 +61,8 @@ interface CreateForm {
   canManageWebsiteOrders: boolean;
   canManageProspects: boolean;
   canExportProspects: boolean;
+  canManageExpenses: boolean;
+  canExportExpenses: boolean;
   canEditSalePrice: boolean;
   canViewDashboard: boolean;
 }
@@ -71,6 +75,7 @@ const PAGE_PERMISSIONS = [
   { key: 'canManageProspects', label: 'Manage Prospects' },
   { key: 'canManageSales', label: 'Manage Sales' },
   { key: 'canManageWebsiteOrders', label: 'Manage Website Orders' },
+  { key: 'canManageExpenses', label: 'Manage Expenses' },
   { key: 'canManageUsers', label: 'Manage Users' },
 ] as const;
 
@@ -94,6 +99,11 @@ const EXPORT_PERMISSIONS = [
     key: 'canExportProspects',
     label: 'Export Prospects',
     dependsOn: 'canManageProspects',
+  },
+  {
+    key: 'canExportExpenses',
+    label: 'Export Expenses',
+    dependsOn: 'canManageExpenses',
   },
   {
     key: 'canExportSales',
@@ -143,6 +153,8 @@ const initialEditForm = (): EditForm => ({
   canManageWebsiteOrders: false,
   canManageProspects: true,
   canExportProspects: true,
+  canManageExpenses: true,
+  canExportExpenses: true,
   canEditSalePrice: false,
   canViewDashboard: true,
 });
@@ -167,6 +179,8 @@ const initialCreateForm = (): CreateForm => ({
   canManageWebsiteOrders: false,
   canManageProspects: true,
   canExportProspects: false,
+  canManageExpenses: true,
+  canExportExpenses: false,
   canEditSalePrice: false,
   canViewDashboard: true,
 });
@@ -355,6 +369,8 @@ export default function UsersPage() {
       canManageWebsiteOrders: user.canManageWebsiteOrders,
       canManageProspects: user.canManageProspects,
       canExportProspects: user.canExportProspects,
+      canManageExpenses: user.canManageExpenses,
+      canExportExpenses: user.canExportExpenses,
       canEditSalePrice: user.canEditSalePrice,
       canViewDashboard: user.canViewDashboard,
     });
