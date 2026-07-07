@@ -273,7 +273,7 @@ export default function LeadsPage() {
     trackingNumber: '', diseases: '', status: 'NEW' as LeadStatus, notes: '',
     deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '',
     deliveryStatus: 'NONE' as DeliveryStatus, paymentReceived: false,
-    paymentAmount: '', paymentMode: '' as PaymentMode | '',
+    paymentAmount: '', discount: '', paymentMode: '' as PaymentMode | '',
   });
   const [items, setItems] = useState<LeadItemForm[]>([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
   const [saving, setSaving] = useState(false);
@@ -454,7 +454,7 @@ export default function LeadsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', paymentMode: '' });
+    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', discount: '', paymentMode: '' });
     setItems([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
     setShowInlineForm(true);
@@ -475,6 +475,7 @@ export default function LeadsPage() {
       deliveryStatus: l.deliveryStatus || 'NONE',
       paymentReceived: l.paymentReceived ?? false,
       paymentAmount: l.paymentAmount != null ? String(l.paymentAmount) : '',
+      discount: l.discount != null ? String(l.discount) : '',
       paymentMode: l.paymentMode || '',
     });
     const leadItems = l.items ?? [];
@@ -517,6 +518,7 @@ export default function LeadsPage() {
       deliveryStatus: form.deliveryStatus || 'NONE',
       paymentReceived: form.paymentReceived,
       paymentAmount: form.paymentReceived && form.paymentAmount ? Number(form.paymentAmount) : undefined,
+      discount: form.paymentReceived && form.discount ? Number(form.discount) : undefined,
       paymentMode: form.paymentReceived && form.paymentMode ? form.paymentMode : undefined,
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
       items: validItems.length > 0 ? validItems.map((i) => ({ productId: i.productId, quantity: i.quantity })) : undefined,
@@ -556,7 +558,9 @@ export default function LeadsPage() {
     const invoiceNumber = fromNotes || `NNH-${year}-${String(l.id).padStart(3, '0')}`;
 
     const address = [l.address, l.pinCode].filter(Boolean).join(' – ');
-    const totalAmount = items.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
+    const subtotal = items.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
+    const discount = l.discount != null ? Number(l.discount) : 0;
+    const totalAmount = Math.max(subtotal - discount, 0);
 
     generateOrderInvoice({
       invoiceNumber,
@@ -567,6 +571,9 @@ export default function LeadsPage() {
       address: address || undefined,
       paymentMethod: 'COD',
       items,
+      ...(discount > 0
+        ? { subtotal, discountAmount: discount, discountLabel: 'Discount' }
+        : {}),
       totalAmount,
     });
   };
@@ -680,6 +687,7 @@ export default function LeadsPage() {
       'Delivery Status': DELIVERY_LABELS[l.deliveryStatus || 'NONE'],
       'Payment Received': l.paymentReceived ? 'Yes' : 'No',
       'Payment Amount': l.paymentAmount != null ? l.paymentAmount : '',
+      Discount: l.discount != null ? l.discount : '',
       'Payment Mode': l.paymentMode || '',
       Age: l.age || '',
       Gender: l.gender || '',
@@ -794,6 +802,7 @@ export default function LeadsPage() {
       {form.paymentReceived && (
         <div className={s.grid2}>
           <div className={s.formGroup}><label>Payment Amount (₹)</label><input type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
+          <div className={s.formGroup}><label>Discount (₹)</label><input type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
           <div className={s.formGroup}><label>Payment Mode</label>
             <CustomSelect
               options={[{ label: 'Select...', value: '' }, ...paymentModes.map((m) => ({ label: m, value: m }))]}
@@ -1140,7 +1149,7 @@ export default function LeadsPage() {
                       <span className={s.mobileMetaLabel}>Payment</span>
                       <span className={s.cellText}>
                         {l.paymentReceived
-                          ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
+                          ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : ''}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
                           : '—'}
                       </span>
                     </div>
@@ -1267,7 +1276,7 @@ export default function LeadsPage() {
                   {visibleCols.payment  && <td className={s.td}>
                     <span className={s.cellText}>
                       {l.paymentReceived
-                        ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
+                        ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : ''}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
                         : '—'}
                     </span>
                   </td>}
