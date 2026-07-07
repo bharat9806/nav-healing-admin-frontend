@@ -141,6 +141,7 @@ export interface Lead {
   deliveryStatus?: DeliveryStatus;
   paymentReceived?: boolean;
   paymentAmount?: number;
+  discount?: number;
   paymentMode?: PaymentMode;
   deliveredAt?: string;
   nextFollowUpDate?: string;
