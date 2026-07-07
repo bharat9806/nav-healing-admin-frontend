@@ -518,7 +518,7 @@ export default function LeadsPage() {
       deliveryStatus: form.deliveryStatus || 'NONE',
       paymentReceived: form.paymentReceived,
       paymentAmount: form.paymentReceived && form.paymentAmount ? Number(form.paymentAmount) : undefined,
-      discount: form.paymentReceived && form.discount ? Number(form.discount) : undefined,
+      discount: form.discount ? Number(form.discount) : null,
       paymentMode: form.paymentReceived && form.paymentMode ? form.paymentMode : undefined,
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
       items: validItems.length > 0 ? validItems.map((i) => ({ productId: i.productId, quantity: i.quantity })) : undefined,
@@ -799,10 +799,12 @@ export default function LeadsPage() {
           </label>
         </div>
       </div>
+      <div className={s.grid2}>
+        <div className={s.formGroup}><label>Discount (₹)</label><input type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
+      </div>
       {form.paymentReceived && (
         <div className={s.grid2}>
           <div className={s.formGroup}><label>Payment Amount (₹)</label><input type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
-          <div className={s.formGroup}><label>Discount (₹)</label><input type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
           <div className={s.formGroup}><label>Payment Mode</label>
             <CustomSelect
               options={[{ label: 'Select...', value: '' }, ...paymentModes.map((m) => ({ label: m, value: m }))]}
@@ -1150,7 +1152,7 @@ export default function LeadsPage() {
                       <span className={s.cellText}>
                         {l.paymentReceived
                           ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : ''}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
-                          : '—'}
+                          : l.discount != null && Number(l.discount) > 0 ? `−₹${Number(l.discount).toFixed(0)} off` : '—'}
                       </span>
                     </div>
                   </div>
@@ -1277,7 +1279,7 @@ export default function LeadsPage() {
                     <span className={s.cellText}>
                       {l.paymentReceived
                         ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : ''}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
-                        : '—'}
+                        : l.discount != null && Number(l.discount) > 0 ? `−₹${Number(l.discount).toFixed(0)} off` : '—'}
                     </span>
                   </td>}
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
