@@ -702,6 +702,155 @@
 .deleteCancelBtn { @include btn-ghost; padding: $s2 $s4; }
 .deleteConfirmBtn { @include btn-danger; padding: $s2 $s4; }
 
+/* Import preview modal */
+.importModal {
+  @include modal-card;
+  max-width: 52rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.importTitle {
+  color: var(--shell-text-primary);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 $s2;
+}
+
+.importSummary {
+  color: var(--shell-text-secondary);
+  font-size: 0.9rem;
+  margin: 0 0 $s1;
+}
+
+.importHint {
+  color: var(--shell-text-muted);
+  font-size: 0.8rem;
+  margin: 0 0 $s4;
+}
+
+.importChipNew,
+.importChipUpdate,
+.importChipDup {
+  display: inline-block;
+  padding: 0.1rem $s2;
+  border-radius: $r-md;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.importChipNew {
+  background: rgba($emerald, 0.12);
+  color: $emerald-light;
+}
+
+.importChipUpdate {
+  background: var(--shell-control-bg-strong);
+  color: var(--shell-text-secondary);
+}
+
+.importChipDup {
+  background: rgba(#d97706, 0.15);
+  color: #f59e0b;
+}
+
+.importScroll {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  margin-bottom: $s4;
+}
+
+.importSection {
+  margin-bottom: $s5;
+}
+
+.importSectionTitle {
+  color: var(--shell-text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 $s3;
+}
+
+.importTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    text-align: left;
+    padding: $s2 $s3;
+    border-bottom: 1px solid var(--shell-table-divider);
+    color: var(--shell-text-secondary);
+  }
+
+  th {
+    color: var(--shell-text-muted);
+    font-weight: 600;
+  }
+}
+
+.importDupCard {
+  border: 1px solid rgba(#d97706, 0.35);
+  border-radius: $r-md;
+  padding: $s3 $s4;
+  margin-bottom: $s3;
+}
+
+.importDupCompare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s4;
+  margin-bottom: $s3;
+
+  strong {
+    display: block;
+    color: var(--shell-text-primary);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.importDupLabel {
+  display: block;
+  color: var(--shell-text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.15rem;
+}
+
+.importDupMeta {
+  display: block;
+  color: var(--shell-text-muted);
+  font-size: 0.8rem;
+}
+
+.importDupActions {
+  display: flex;
+  gap: $s4;
+  flex-wrap: wrap;
+}
+
+.importDupOption {
+  display: inline-flex;
+  align-items: center;
+  gap: $s2;
+  color: var(--shell-text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  input {
+    accent-color: $emerald;
+  }
+}
+
 /* Pagination */
 .pagination {
   display: flex;

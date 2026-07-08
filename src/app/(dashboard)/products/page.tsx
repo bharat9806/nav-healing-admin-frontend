@@ -21,6 +21,39 @@ type CategoryOption = {
   subcategories: { id: number; name: string }[];
 };
 
+type ImportPreviewRow = {
+  rowNumber: number;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  subcategory: string;
+  isActive: boolean;
+  currentStock: number;
+  reorderLevel: number;
+  expiryDate: string | null;
+  sku: string;
+  companyId: number | null;
+  companyName: string | null;
+  plannedSku: string;
+  status: 'new' | 'update' | 'duplicate';
+  match: {
+    id: number;
+    sku: string;
+    name: string;
+    price: number | string;
+    category: string;
+    currentStock: number;
+  } | null;
+};
+
+type ImportPreview = {
+  rows: ImportPreviewRow[];
+  summary: { total: number; new: number; update: number; duplicate: number };
+};
+
+type DuplicateDecision = 'skip' | 'create' | 'update';
+
 type ProductFormState = {
   sku: string;
   name: string;
@@ -323,6 +356,10 @@ export default function ProductsPage() {
   const [importing, setImporting] = useState(false);
   const [importMessage, setImportMessage] = useState('');
   const [importError, setImportError] = useState('');
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [duplicateDecisions, setDuplicateDecisions] = useState<Record<number, DuplicateDecision>>({});
+  const [committing, setCommitting] = useState(false);
+  const [commitError, setCommitError] = useState('');
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -500,9 +537,12 @@ export default function ProductsPage() {
   };
 
   const downloadSampleTemplate = () => {
+    // "sku" is optional — leave it blank and give a "company" (name or SKU
+    // prefix) and the SKU is auto-generated during import.
     const rows = [
       {
-        sku: 'PRD-1001',
+        sku: '',
+        company: 'RUD',
         name: 'Ashwagandha Powder',
         description: 'Stress support herbal powder',
         price: 499,
@@ -513,7 +553,8 @@ export default function ProductsPage() {
         reorderLevel: 15,
       },
       {
-        sku: 'PRD-1002',
+        sku: '',
+        company: 'VRI',
         name: 'Neem Oil',
         description: 'Cold-pressed neem oil',
         price: 299,
@@ -525,6 +566,7 @@ export default function ProductsPage() {
       },
       {
         sku: 'PRD-1003',
+        company: '',
         name: 'Tulsi Drops',
         description: 'Daily immunity drops',
         price: 199,
@@ -548,6 +590,14 @@ export default function ProductsPage() {
     importInputRef.current?.click();
   };
 
+  const extractApiError = (error: unknown, fallback: string) => {
+    const responseData = isAxiosError(error) ? error.response?.data : undefined;
+    const details = (responseData as { errors?: string[] } | undefined)?.errors;
+    if (Array.isArray(details) && details.length > 0) return details.join(' • ');
+    return typeof responseData?.message === 'string' ? responseData.message : fallback;
+  };
+
+  // Step 1: upload the sheet and get a classified preview (no DB writes).
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -560,33 +610,85 @@ export default function ProductsPage() {
     fd.append('file', file);
 
     try {
-      const response = await api.post<{
-        message: string;
-        importedCount: number;
-        createdCount: number;
-        updatedCount: number;
-      }>('/products/import', fd, {
+      const response = await api.post<ImportPreview>('/products/import/preview', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setImportMessage(
-        `${response.data.message}. Created: ${response.data.createdCount}, Updated: ${response.data.updatedCount}.`,
-      );
-      setPage(1);
-      fetchProducts(1);
+      const preview = response.data;
+      const decisions: Record<number, DuplicateDecision> = {};
+      preview.rows.forEach((row) => {
+        if (row.status === 'duplicate') decisions[row.rowNumber] = 'skip';
+      });
+      setDuplicateDecisions(decisions);
+      setCommitError('');
+      setImportPreview(preview);
     } catch (error) {
-      const responseData = isAxiosError(error) ? error.response?.data : undefined;
-      const details = (responseData as { errors?: string[] } | undefined)?.errors;
-      const message =
-        typeof responseData?.message === 'string'
-          ? responseData.message
-          : Array.isArray(details)
-            ? details.join(', ')
-            : 'Failed to import products';
-      setImportError(message);
+      setImportError(extractApiError(error, 'Failed to read the Excel file'));
     } finally {
       e.target.value = '';
       setImporting(false);
     }
+  };
+
+  // Step 2: send the reviewed rows to be applied in one transaction.
+  const handleCommitImport = async () => {
+    if (!importPreview) return;
+    setCommitting(true);
+    setCommitError('');
+
+    const rows = importPreview.rows.map((row) => {
+      const base = {
+        name: row.name,
+        description: row.description || undefined,
+        price: Number(row.price),
+        category: row.category,
+        subcategory: row.subcategory || undefined,
+        isActive: row.isActive,
+        currentStock: row.currentStock,
+        reorderLevel: row.reorderLevel,
+        expiryDate: row.expiryDate || undefined,
+        companyId: row.companyId ?? undefined,
+      };
+      if (row.status === 'update') {
+        return { ...base, action: 'update' as const, targetSku: row.sku };
+      }
+      if (row.status === 'duplicate') {
+        const decision = duplicateDecisions[row.rowNumber] ?? 'skip';
+        if (decision === 'update' && row.match) {
+          return { ...base, action: 'update' as const, targetSku: row.match.sku };
+        }
+        if (decision === 'create') {
+          return { ...base, action: 'create' as const, sku: row.sku || undefined };
+        }
+        return { ...base, action: 'skip' as const };
+      }
+      return { ...base, action: 'create' as const, sku: row.sku || undefined };
+    });
+
+    try {
+      const response = await api.post<{
+        message: string;
+        createdCount: number;
+        updatedCount: number;
+        skippedCount: number;
+      }>('/products/import/commit', { rows });
+      setImportMessage(
+        `${response.data.message}. Created: ${response.data.createdCount}, Updated: ${response.data.updatedCount}, Skipped: ${response.data.skippedCount}.`,
+      );
+      setImportPreview(null);
+      setDuplicateDecisions({});
+      setPage(1);
+      fetchProducts(1);
+    } catch (error) {
+      setCommitError(extractApiError(error, 'Failed to import products'));
+    } finally {
+      setCommitting(false);
+    }
+  };
+
+  const closeImportPreview = () => {
+    setImportPreview(null);
+    setDuplicateDecisions({});
+    setCommitError('');
   };
 
   const handleExport = async () => {
@@ -618,10 +720,14 @@ export default function ProductsPage() {
       <div className={s.header}>
         <h1 className={s.pageTitle}>Products</h1>
         <div className={s.headerActions}>
-          <button onClick={downloadSampleTemplate} className={s.exportBtn}>Download Sample Excel</button>
-          <button onClick={handleImportClick} disabled={importing} className={s.exportBtn}>
-            {importing ? 'Importing...' : 'Import Excel'}
-          </button>
+          {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canManageProducts) && (
+            <>
+              <button onClick={downloadSampleTemplate} className={s.exportBtn}>Download Sample Excel</button>
+              <button onClick={handleImportClick} disabled={importing} className={s.exportBtn}>
+                {importing ? 'Reading file...' : 'Import Excel'}
+              </button>
+            </>
+          )}
           {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportProducts) && (
             <button onClick={handleExport} className={s.exportBtn}>Export Excel</button>
           )}
@@ -866,6 +972,119 @@ export default function ProductsPage() {
           </div>
         </div>
       ))}
+
+      {importPreview && (
+        <div className={s.overlay}>
+          <div className={s.importModal}>
+            <h3 className={s.importTitle}>Review Import</h3>
+            <p className={s.importSummary}>
+              {importPreview.summary.total} rows —{' '}
+              <span className={s.importChipNew}>{importPreview.summary.new} new</span>{' '}
+              <span className={s.importChipUpdate}>{importPreview.summary.update} updates</span>{' '}
+              <span className={s.importChipDup}>{importPreview.summary.duplicate} possible duplicates</span>
+            </p>
+            <p className={s.importHint}>Nothing is saved until you confirm.</p>
+
+            <div className={s.importScroll}>
+              {importPreview.summary.duplicate > 0 && (
+                <div className={s.importSection}>
+                  <h4 className={s.importSectionTitle}>Possible duplicates — choose what to do</h4>
+                  {importPreview.rows.filter((r) => r.status === 'duplicate').map((row) => (
+                    <div key={row.rowNumber} className={s.importDupCard}>
+                      <div className={s.importDupCompare}>
+                        <div>
+                          <span className={s.importDupLabel}>In your sheet</span>
+                          <strong>{row.name}</strong>
+                          <span className={s.importDupMeta}>₹{row.price} · {row.category}{row.companyName ? ` · ${row.companyName}` : ''}</span>
+                        </div>
+                        <div>
+                          <span className={s.importDupLabel}>Already in system</span>
+                          <strong>{row.match?.name}</strong>
+                          <span className={s.importDupMeta}>₹{Number(row.match?.price)} · {row.match?.sku} · stock {row.match?.currentStock}</span>
+                        </div>
+                      </div>
+                      <div className={s.importDupActions}>
+                        {([
+                          ['skip', 'Skip'],
+                          ['update', 'Update existing'],
+                          ['create', 'Create anyway'],
+                        ] as [DuplicateDecision, string][]).map(([value, label]) => (
+                          <label key={value} className={s.importDupOption}>
+                            <input
+                              type="radio"
+                              name={`dup-${row.rowNumber}`}
+                              checked={(duplicateDecisions[row.rowNumber] ?? 'skip') === value}
+                              onChange={() =>
+                                setDuplicateDecisions((prev) => ({ ...prev, [row.rowNumber]: value }))
+                              }
+                            />
+                            {label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {importPreview.summary.new > 0 && (
+                <div className={s.importSection}>
+                  <h4 className={s.importSectionTitle}>New products (will be created)</h4>
+                  <table className={s.importTable}>
+                    <thead>
+                      <tr><th>Name</th><th>SKU</th><th>Company</th><th>Category</th><th>Price</th><th>Stock</th></tr>
+                    </thead>
+                    <tbody>
+                      {importPreview.rows.filter((r) => r.status === 'new').map((row) => (
+                        <tr key={row.rowNumber}>
+                          <td>{row.name}</td>
+                          <td>{row.plannedSku || '—'}</td>
+                          <td>{row.companyName || '—'}</td>
+                          <td>{row.category}</td>
+                          <td>₹{row.price}</td>
+                          <td>{row.currentStock}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {importPreview.summary.update > 0 && (
+                <div className={s.importSection}>
+                  <h4 className={s.importSectionTitle}>Updates (SKU already exists)</h4>
+                  <table className={s.importTable}>
+                    <thead>
+                      <tr><th>SKU</th><th>Name</th><th>New price</th><th>New stock</th></tr>
+                    </thead>
+                    <tbody>
+                      {importPreview.rows.filter((r) => r.status === 'update').map((row) => (
+                        <tr key={row.rowNumber}>
+                          <td>{row.sku}</td>
+                          <td>{row.name}</td>
+                          <td>₹{row.price}</td>
+                          <td>{row.currentStock}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {commitError && <div className={s.error}>{commitError}</div>}
+
+            <div className={s.deleteActions}>
+              <button onClick={closeImportPreview} className={s.deleteCancelBtn} disabled={committing}>
+                Cancel
+              </button>
+              <button onClick={handleCommitImport} className={s.addBtn} disabled={committing}>
+                {committing ? 'Importing...' : 'Confirm Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {deleteTarget && (
         <div className={s.overlay}>
