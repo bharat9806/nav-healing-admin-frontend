@@ -57,6 +57,82 @@
   height: 300px;
 }
 
+// Ranked leaderboard (used instead of bar charts for long product names)
+.rankList {
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+  padding-top: $s1;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.rankRow {
+  display: flex;
+  gap: $s3;
+  align-items: flex-start;
+}
+
+.rankNum {
+  flex: 0 0 1.6rem;
+  height: 1.6rem;
+  border-radius: $r-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $fs-xs;
+  font-weight: 700;
+  background: rgba($emerald, 0.12);
+  color: $emerald-light;
+}
+
+.rankBody { flex: 1; min-width: 0; }
+
+.rankHead {
+  display: flex;
+  justify-content: space-between;
+  gap: $s2;
+  align-items: baseline;
+}
+
+.rankName {
+  font-size: $fs-body;
+  font-weight: 500;
+  color: var(--shell-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.rankMeta {
+  flex-shrink: 0;
+  font-size: $fs-xs;
+  color: var(--shell-text-muted);
+  white-space: nowrap;
+}
+
+.rankValue {
+  color: $emerald-light;
+  font-weight: 700;
+}
+
+.rankTrack {
+  margin-top: $s1;
+  height: 6px;
+  border-radius: $r-full;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.rankFill {
+  height: 100%;
+  border-radius: $r-full;
+  background: linear-gradient(to right, rgba($emerald, 0.55), $emerald);
+  transition: width 0.4s ease;
+}
+
+.rankFillViolet {
+  background: linear-gradient(to right, rgba(#8b5cf6, 0.55), #a78bfa);
+}
+
 .emptyText {
   color: var(--shell-text-muted);
   font-size: $fs-body;

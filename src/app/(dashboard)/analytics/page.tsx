@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend, Tooltip,
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  BarChart, Bar, ComposedChart, Area,
+  Bar, ComposedChart, Area,
 } from 'recharts';
 import api from '@/lib/api';
 import s from './analytics.module.scss';
@@ -59,6 +59,38 @@ const monthLabel = (m: string) => {
   return new Date(y, mo - 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 };
 
+// Leaderboard-style list — full names stay readable regardless of length.
+function RankList({ rows, unit, violet }: {
+  rows: { name: string; value: number; meta: string }[];
+  unit: string;
+  violet?: boolean;
+}) {
+  const max = Math.max(...rows.map((r) => r.value), 1);
+  return (
+    <div className={s.rankList}>
+      {rows.map((r, i) => (
+        <div key={r.name} className={s.rankRow}>
+          <span className={s.rankNum}>{i + 1}</span>
+          <div className={s.rankBody}>
+            <div className={s.rankHead}>
+              <span className={s.rankName}>{r.name}</span>
+              <span className={s.rankMeta}>
+                <span className={s.rankValue}>{r.value}</span> {unit} · {r.meta}
+              </span>
+            </div>
+            <div className={s.rankTrack}>
+              <div
+                className={`${s.rankFill} ${violet ? s.rankFillViolet : ''}`}
+                style={{ width: `${(r.value / max) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,15 +133,9 @@ export default function AnalyticsPage() {
     .filter((d) => d.value > 0);
 
   const timeline = data.timeline.map((t) => ({ ...t, label: monthLabel(t.month) }));
-  const products = data.topProducts.map((p) => ({
-    ...p,
-    shortName: p.name.length > 18 ? `${p.name.slice(0, 17)}…` : p.name,
-  }));
+  const products = data.topProducts;
   const salesTimeline = data.salesTimeline.map((t) => ({ ...t, label: monthLabel(t.month) }));
-  const medicines = data.topMedicines.map((p) => ({
-    ...p,
-    shortName: p.name.length > 18 ? `${p.name.slice(0, 17)}…` : p.name,
-  }));
+  const medicines = data.topMedicines;
   const expenseTimeline = data.expenseTimeline.map((t) => ({
     ...t,
     profit: t.revenue - t.expenses,
@@ -195,17 +221,10 @@ export default function AnalyticsPage() {
           <h3 className={s.panelTitle}>Top Products</h3>
           <p className={s.panelSub}>Units ordered via leads (excluding cancelled &amp; RTO)</p>
           {products.length === 0 ? <p className={s.emptyText}>No product data yet</p> : (
-            <div className={s.chartWrap}>
-              <ResponsiveContainer>
-                <BarChart data={products} layout="vertical" margin={{ top: 6, right: 12, left: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fill: SLATE, fontSize: 11 }} />
-                  <YAxis type="category" dataKey="shortName" width={120} tick={{ fill: SLATE, fontSize: 11 }} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: any, name: any) => [value, name === 'units' ? 'Units' : 'Leads']} labelFormatter={(_: any, payload: any) => payload?.[0]?.payload?.name ?? ''} />
-                  <Bar dataKey="units" name="units" fill={EMERALD} radius={[0, 4, 4, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <RankList
+              rows={products.map((p) => ({ name: p.name, value: p.units, meta: `${p.leads} lead${p.leads === 1 ? '' : 's'}` }))}
+              unit="units"
+            />
           )}
         </div>
 
@@ -234,17 +253,11 @@ export default function AnalyticsPage() {
           <h3 className={s.panelTitle}>Most Given Medicines (Clinic)</h3>
           <p className={s.panelSub}>Units given to patients via the Sales module — last 12 months</p>
           {medicines.length === 0 ? <p className={s.emptyText}>No sales data yet</p> : (
-            <div className={s.chartWrap}>
-              <ResponsiveContainer>
-                <BarChart data={medicines} layout="vertical" margin={{ top: 6, right: 12, left: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fill: SLATE, fontSize: 11 }} />
-                  <YAxis type="category" dataKey="shortName" width={120} tick={{ fill: SLATE, fontSize: 11 }} />
-                  <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: any, name: any) => [value, name === 'units' ? 'Units' : 'Patients']} labelFormatter={(_: any, payload: any) => payload?.[0]?.payload?.name ?? ''} />
-                  <Bar dataKey="units" name="units" fill={VIOLET} radius={[0, 4, 4, 0]} barSize={16} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            <RankList
+              rows={medicines.map((p) => ({ name: p.name, value: p.units, meta: `${p.patients} patient${p.patients === 1 ? '' : 's'}` }))}
+              unit="units"
+              violet
+            />
           )}
         </div>
 
