@@ -1,0 +1,76 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.page {
+  padding: $s6;
+  display: flex;
+  flex-direction: column;
+  gap: $s6;
+  color: var(--shell-text-primary);
+
+  @media (max-width: ($md - 1px)) {
+    padding: $s3;
+    gap: $s4;
+  }
+}
+
+.pageTitle {
+  font-size: $fs-xl;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pageSub {
+  color: var(--shell-text-muted);
+  font-size: $fs-body;
+  margin-top: $s1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $s4;
+
+  @media (min-width: $lg) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.panel {
+  @include card;
+  padding: $s4;
+  min-width: 0; // let charts shrink inside the grid
+}
+
+.panelTitle {
+  font-size: $fs-body;
+  font-weight: 600;
+  margin: 0 0 $s1 0;
+}
+
+.panelSub {
+  color: var(--shell-text-muted);
+  font-size: $fs-xs;
+  margin: 0 0 $s3 0;
+}
+
+.chartWrap {
+  width: 100%;
+  height: 300px;
+}
+
+.emptyText {
+  color: var(--shell-text-muted);
+  font-size: $fs-body;
+  padding: $s6 0;
+  text-align: center;
+}
+
+.skeleton {
+  @include card;
+  height: 340px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

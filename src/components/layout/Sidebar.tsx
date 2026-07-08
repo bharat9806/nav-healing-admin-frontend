@@ -22,6 +22,7 @@ type PermissionKey =
 
 const allNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, permission: 'canViewDashboard' },
+  { label: 'Analytics', href: '/analytics', icon: <AnalyticsIcon />, permission: 'canViewDashboard' },
   { label: 'Products', href: '/products', icon: <ProductsIcon />, permission: 'canManageProducts' },
   { label: 'Product Sales', href: '/product-sales', icon: <ProductSalesIcon />, permission: 'canManageProductSales' },
   { label: 'Leads', href: '/leads', icon: <LeadsIcon />, permission: 'canManageLeads' },
@@ -125,6 +126,17 @@ function DashboardIcon() {
       <rect x="14" y="3" width="7" height="7" rx="1.5" />
       <rect x="3" y="14" width="7" height="7" rx="1.5" />
       <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </IconShell>
+  );
+}
+
+function AnalyticsIcon() {
+  return (
+    <IconShell>
+      <path d="M4 20V10" />
+      <path d="M10 20V4" />
+      <path d="M16 20v-7" />
+      <path d="M22 20H2" />
     </IconShell>
   );
 }
