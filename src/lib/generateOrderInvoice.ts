@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { GREAT_VIBES_TTF_BASE64 } from './signatureFont';
 
 // ── Seller (your business) constants ─────────────────────────────────────────
 const BRAND_NAME   = 'Nav Healing Herbs';
@@ -30,6 +31,12 @@ const WHITE      : [number, number, number] = [255, 255, 255];
 const INK        : [number, number, number] = [17,  24,  39];
 const SLATE      : [number, number, number] = [90, 100, 110];
 const LIGHT      : [number, number, number] = [120, 130, 140];
+const STAMP_BLUE : [number, number, number] = [37,  62, 168];   // rubber-stamp ink
+
+// ── Digital stamp (matches the physical rubber stamp) ────────────────────────
+const STAMP_LINE_1 = 'For NNAVHEALING HERBSS';
+const STAMP_SIGNER = 'Bharat';
+const STAMP_LINE_2 = 'Authorised Signatory';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 export interface OrderInvoiceItem {
@@ -352,25 +359,41 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
     tcY += lines.length * 3.6;
   });
 
-  // Right · Stamp / signature box
+  // Right · Digital stamp + signature (replicates the physical rubber stamp)
   const boxW = 55;
   const boxH = 34;
   const boxX = pageW - mg - boxW;
   const boxY = tcTop - 4;
+  const boxCx = boxX + boxW / 2;
   doc.setDrawColor(...AMBER);
   doc.setLineWidth(0.4);
   doc.roundedRect(boxX, boxY, boxW, boxH, 2, 2, 'S');
+
+  // Stamp ink — blue, like the physical stamp
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...STAMP_BLUE);
+  doc.text(STAMP_LINE_1, boxCx, boxY + 7, { align: 'center' });
+
+  // Handwritten-style signature (Great Vibes cursive)
+  try {
+    doc.addFileToVFS('GreatVibes.ttf', GREAT_VIBES_TTF_BASE64);
+    doc.addFont('GreatVibes.ttf', 'GreatVibes', 'normal');
+    doc.setFont('GreatVibes', 'normal');
+    doc.setFontSize(17);
+  } catch {
+    doc.setFont('helvetica', 'italic'); // fallback if font fails to load
+    doc.setFontSize(13);
+  }
+  doc.text(STAMP_SIGNER, boxCx, boxY + 19.5, { align: 'center' });
+
+  doc.setDrawColor(...STAMP_BLUE);
+  doc.setLineWidth(0.25);
+  doc.line(boxX + 10, boxY + boxH - 9, boxX + boxW - 10, boxY + boxH - 9);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
-  doc.setTextColor(...GREEN_TXT);
-  doc.text(`For ${BRAND_NAME}`, boxX + boxW / 2, boxY + 5.5, { align: 'center' });
-  doc.setDrawColor(200, 205, 205);
-  doc.setLineWidth(0.3);
-  doc.line(boxX + 6, boxY + boxH - 6, boxX + boxW - 6, boxY + boxH - 6);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.8);
-  doc.setTextColor(...LIGHT);
-  doc.text('Authorised Signatory / Stamp', boxX + boxW / 2, boxY + boxH - 2.5, { align: 'center' });
+  doc.text(STAMP_LINE_2, boxCx, boxY + boxH - 4.5, { align: 'center' });
+  doc.setTextColor(...INK);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 6 · FOOTER
