@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
-import { Lead, Product, LeadStatus, DeliveryStatus, PaymentMode, LeadReminderStats, User } from '@/types';
+import { Lead, Product, LeadStatus, DeliveryStatus, PaymentMode, PaymentType, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
 import s from './leads.module.scss';
@@ -104,6 +104,21 @@ const deliveryCls = (st?: DeliveryStatus) => {
 };
 
 const paymentModes: PaymentMode[] = ['UPI', 'COD'];
+
+const paymentTypes: PaymentType[] = ['COD', 'PREPAID', 'PARTIAL'];
+
+const PAYMENT_TYPE_LABELS: Record<PaymentType, string> = {
+  COD: 'COD', PREPAID: 'Prepaid', PARTIAL: 'Partial (Advance)',
+};
+
+// One-line payment summary used by the table cell and mobile card.
+const paymentCellText = (l: Lead) => {
+  const pt = (l.paymentType || 'COD') as PaymentType;
+  const amount = l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : (l.paymentReceived ? 'Paid' : '');
+  const off = l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : '';
+  const mode = l.paymentMode ? ` (${l.paymentMode})` : '';
+  return `${l.paymentReceived ? '✓ ' : ''}${PAYMENT_TYPE_LABELS[pt]}${amount ? ` · ${amount}` : ''}${off}${mode}`;
+};
 
 interface LeadItemForm { productId: number; quantity: number; search: string; showDropdown: boolean; }
 
@@ -274,6 +289,7 @@ export default function LeadsPage() {
     deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '',
     deliveryStatus: 'NONE' as DeliveryStatus, paymentReceived: false,
     paymentAmount: '', discount: '', paymentMode: '' as PaymentMode | '',
+    paymentType: 'COD' as PaymentType,
   });
   const [items, setItems] = useState<LeadItemForm[]>([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
   const [saving, setSaving] = useState(false);
@@ -454,7 +470,7 @@ export default function LeadsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', discount: '', paymentMode: '' });
+    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', discount: '', paymentMode: '', paymentType: 'COD' });
     setItems([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
     setShowInlineForm(true);
@@ -477,6 +493,7 @@ export default function LeadsPage() {
       paymentAmount: l.paymentAmount != null ? String(l.paymentAmount) : '',
       discount: l.discount != null ? String(l.discount) : '',
       paymentMode: l.paymentMode || '',
+      paymentType: l.paymentType || 'COD',
     });
     const leadItems = l.items ?? [];
     setItems(leadItems.length > 0 ? leadItems.map((i) => ({ productId: i.productId, quantity: i.quantity, search: i.product?.name || '', showDropdown: false })) : [{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
@@ -517,9 +534,10 @@ export default function LeadsPage() {
       diseases: form.diseases || undefined, status: form.status, notes: form.notes || undefined,
       deliveryStatus: form.deliveryStatus || 'NONE',
       paymentReceived: form.paymentReceived,
-      paymentAmount: form.paymentReceived && form.paymentAmount ? Number(form.paymentAmount) : undefined,
+      paymentAmount: (form.paymentReceived || form.paymentType !== 'COD') && form.paymentAmount ? Number(form.paymentAmount) : undefined,
       discount: form.discount ? Number(form.discount) : null,
-      paymentMode: form.paymentReceived && form.paymentMode ? form.paymentMode : undefined,
+      paymentMode: (form.paymentReceived || form.paymentType !== 'COD') && form.paymentMode ? form.paymentMode : undefined,
+      paymentType: form.paymentType || 'COD',
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
       items: validItems.length > 0 ? validItems.map((i) => ({ productId: i.productId, quantity: i.quantity })) : undefined,
     };
@@ -561,6 +579,8 @@ export default function LeadsPage() {
     const subtotal = items.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
     const discount = l.discount != null ? Number(l.discount) : 0;
     const totalAmount = Math.max(subtotal - discount, 0);
+    const paymentType = (l.paymentType || 'COD') as PaymentType;
+    const advancePaid = paymentType === 'PARTIAL' && l.paymentAmount != null ? Number(l.paymentAmount) : 0;
 
     generateOrderInvoice({
       invoiceNumber,
@@ -569,12 +589,14 @@ export default function LeadsPage() {
       customerPhone: [l.phone, l.alternatePhone].filter(Boolean).join(' / ') || undefined,
       customerEmail: l.email,
       address: address || undefined,
-      paymentMethod: 'COD',
+      // Prepaid shows the actual mode (e.g. UPI); partial and COD get explicit labels.
+      paymentMethod: paymentType === 'PREPAID' ? (l.paymentMode || 'PREPAID') : paymentType,
       items,
       ...(discount > 0
         ? { subtotal, discountAmount: discount, discountLabel: 'Discount' }
         : {}),
       totalAmount,
+      ...(advancePaid > 0 ? { advancePaid } : {}),
     });
   };
 
@@ -685,6 +707,7 @@ export default function LeadsPage() {
       Email: l.email || '',
       Status: STATUS_LABELS[l.status] || l.status,
       'Delivery Status': DELIVERY_LABELS[l.deliveryStatus || 'NONE'],
+      'Payment Type': PAYMENT_TYPE_LABELS[(l.paymentType || 'COD') as PaymentType],
       'Payment Received': l.paymentReceived ? 'Yes' : 'No',
       'Payment Amount': l.paymentAmount != null ? l.paymentAmount : '',
       Discount: l.discount != null ? l.discount : '',
@@ -800,11 +823,20 @@ export default function LeadsPage() {
         </div>
       </div>
       <div className={s.grid2}>
+        <div className={s.formGroup}><label>Payment Type</label>
+          <CustomSelect
+            options={paymentTypes.map((pt) => ({ label: PAYMENT_TYPE_LABELS[pt], value: pt }))}
+            value={form.paymentType}
+            onChange={(val) => setForm({ ...form, paymentType: val as PaymentType })}
+            align="left"
+            minWidth="100%"
+          />
+        </div>
         <div className={s.formGroup}><label>Discount (₹)</label><input type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
       </div>
-      {form.paymentReceived && (
+      {(form.paymentReceived || form.paymentType !== 'COD') && (
         <div className={s.grid2}>
-          <div className={s.formGroup}><label>Payment Amount (₹)</label><input type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
+          <div className={s.formGroup}><label>{form.paymentType === 'PARTIAL' ? 'Advance Amount (₹)' : 'Payment Amount (₹)'}</label><input type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
           <div className={s.formGroup}><label>Payment Mode</label>
             <CustomSelect
               options={[{ label: 'Select...', value: '' }, ...paymentModes.map((m) => ({ label: m, value: m }))]}
@@ -1149,11 +1181,7 @@ export default function LeadsPage() {
                     </div>
                     <div className={s.mobileMetaItem}>
                       <span className={s.mobileMetaLabel}>Payment</span>
-                      <span className={s.cellText}>
-                        {l.paymentReceived
-                          ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : ''}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
-                          : l.discount != null && Number(l.discount) > 0 ? `−₹${Number(l.discount).toFixed(0)} off` : '—'}
-                      </span>
+                      <span className={s.cellText}>{paymentCellText(l)}</span>
                     </div>
                   </div>
 
@@ -1276,11 +1304,7 @@ export default function LeadsPage() {
                     </select>
                   </td>}
                   {visibleCols.payment  && <td className={s.td}>
-                    <span className={s.cellText}>
-                      {l.paymentReceived
-                        ? `✓ ${l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : 'Paid'}${l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : ''}${l.paymentMode ? ` (${l.paymentMode})` : ''}`
-                        : l.discount != null && Number(l.discount) > 0 ? `−₹${Number(l.discount).toFixed(0)} off` : '—'}
-                    </span>
+                    <span className={s.cellText}>{paymentCellText(l)}</span>
                   </td>}
                   {visibleCols.tracking && <td className={s.td}><span className={s.tracking}>{l.trackingNumber || '-'}</span></td>}
                   <td className={`${s.td} ${s.tdRight}`}>

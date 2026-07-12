@@ -9,6 +9,8 @@ export type LeadStatus =
 export type DeliveryStatus = 'NONE' | 'DELIVERED' | 'RTO' | 'CANCELLED';
 
 export type PaymentMode = 'UPI' | 'COD';
+// How the order is paid: on delivery, fully in advance, or advance + balance on delivery.
+export type PaymentType = 'COD' | 'PREPAID' | 'PARTIAL';
 
 export interface User {
   id: number;
@@ -143,6 +145,7 @@ export interface Lead {
   paymentAmount?: number;
   discount?: number;
   paymentMode?: PaymentMode;
+  paymentType?: PaymentType;
   deliveredAt?: string;
   nextFollowUpDate?: string;
   lastContactedAt?: string;

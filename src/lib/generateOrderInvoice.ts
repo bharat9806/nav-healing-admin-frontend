@@ -61,6 +61,7 @@ export interface OrderInvoiceData {
   discountAmount?: number; // prepaid discount, if any
   discountLabel?: string;  // label for the discount line (default: 'Prepaid Discount (10%)')
   totalAmount: number;     // final payable
+  advancePaid?: number;    // advance already paid (partial payment); shows Advance Paid + Balance Due lines
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -78,6 +79,8 @@ const paymentLabel = (pm?: string) => {
   const v = pm.toUpperCase();
   if (v === 'COD') return 'Cash on Delivery';
   if (v === 'UPI') return 'UPI / Online';
+  if (v === 'PREPAID') return 'Prepaid';
+  if (v === 'PARTIAL') return 'Partial (Advance + COD)';
   return pm;
 };
 
@@ -325,6 +328,22 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
   doc.text('Grand Total', totLabelX, y);
   doc.text(`Rs ${money(data.totalAmount)}`, totValX, y, { align: 'right' });
   y += rowH + 2;
+
+  // Partial payment: show advance already received and balance to collect
+  const advance = data.advancePaid ?? 0;
+  if (advance > 0) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(...GREEN_TXT);
+    doc.text('Advance Paid', totLabelX, y);
+    doc.text(`- Rs ${money(advance)}`, totValX, y, { align: 'right' });
+    y += rowH;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...INK);
+    doc.text('Balance Due (on delivery)', totLabelX, y);
+    doc.text(`Rs ${money(Math.max(data.totalAmount - advance, 0))}`, totValX, y, { align: 'right' });
+    y += rowH;
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 5 · AMOUNT IN WORDS
