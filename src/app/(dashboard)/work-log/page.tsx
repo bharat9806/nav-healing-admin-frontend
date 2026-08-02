@@ -78,41 +78,193 @@ const formatMinutes = (m?: number | null) => {
   return h ? `${h}h ${min}m` : `${min}m`;
 };
 
+type ContactType = 'PATIENT' | 'LEAD' | 'PROSPECT';
+
+interface ContactHit {
+  type: ContactType;
+  id: number;
+  name: string;
+  phone?: string | null;
+}
+
+const CONTACT_LABELS: Record<ContactType, string> = {
+  PATIENT: 'Patient', LEAD: 'Lead', PROSPECT: 'Prospect',
+};
+
 interface CallForm {
   phone: string;
   contactName: string;
   outcome: CallOutcome;
-  durationSeconds: string;
   notes: string;
+  /** Set when the user picked a known contact rather than typing a raw number. */
+  linkType?: ContactType;
+  linkId?: number;
 }
 
 const emptyCall = (): CallForm => ({
-  phone: '', contactName: '', outcome: 'CONNECTED', durationSeconds: '', notes: '',
+  phone: '', contactName: '', outcome: 'CONNECTED', notes: '',
+});
+
+interface TaskForm {
+  title: string;
+  showCalls: boolean;
+  calls: CallForm[];
+  /** Optional extras, hidden behind "More" */
+  showMore: boolean;
+  category: WorkLogCategory | '';
+  description: string;
+  durationMinutes: string;
+  status: WorkLogStatus;
+}
+
+const emptyTask = (): TaskForm => ({
+  title: '',
+  showCalls: false,
+  calls: [],
+  showMore: false,
+  category: '',
+  description: '',
+  durationMinutes: '',
+  status: 'COMPLETED',
 });
 
 interface WorkLogForm {
   logDate: string;
-  category: WorkLogCategory;
-  title: string;
-  description: string;
-  status: WorkLogStatus;
-  startTime: string;
-  endTime: string;
-  durationMinutes: string;
-  calls: CallForm[];
+  tasks: TaskForm[];
 }
 
 const emptyForm = (): WorkLogForm => ({
   logDate: todayStr(),
-  category: 'CALLING',
-  title: '',
-  description: '',
-  status: 'COMPLETED',
-  startTime: '',
-  endTime: '',
-  durationMinutes: '',
-  calls: [],
+  tasks: [emptyTask()],
 });
+
+/** Category is inferred from whether the task involved calling, unless set. */
+const resolveCategory = (t: TaskForm): WorkLogCategory => {
+  if (t.category) return t.category;
+  return t.calls.some((c) => c.phone.trim()) ? 'CALLING' : 'OTHER';
+};
+
+/**
+ * Number box for a logged call. Type a raw number and it's stored as-is;
+ * type a name or number that matches a patient / lead / prospect and you
+ * can pick it from the dropdown to attach the call to that record.
+ */
+function CallNumberInput({
+  call,
+  onChange,
+}: {
+  call: CallForm;
+  onChange: (patch: Partial<CallForm>) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const [hits, setHits] = useState<ContactHit[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2 || call.linkId) {
+      setHits([]);
+      return;
+    }
+    let cancelled = false;
+    setSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await api.get<ContactHit[]>(
+          `/work-logs/contacts?q=${encodeURIComponent(q)}`,
+        );
+        if (!cancelled) {
+          setHits(res.data);
+          setOpen(res.data.length > 0);
+        }
+      } catch {
+        if (!cancelled) setHits([]);
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [query, call.linkId]);
+
+  const pick = (hit: ContactHit) => {
+    onChange({
+      phone: hit.phone || call.phone,
+      contactName: hit.name,
+      linkType: hit.type,
+      linkId: hit.id,
+    });
+    setQuery('');
+    setHits([]);
+    setOpen(false);
+  };
+
+  const unlink = () => {
+    onChange({ linkType: undefined, linkId: undefined, contactName: '' });
+  };
+
+  if (call.linkId && call.linkType) {
+    return (
+      <div className={s.itemSearchWrap}>
+        <div className={s.formInput} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontWeight: 600 }}>{call.contactName}</span>
+          <span className={s.cellText}>{call.phone || 'no number'}</span>
+          <span className={`${s.statusSelect} ${s.statusConverted}`}>
+            {CONTACT_LABELS[call.linkType]}
+          </span>
+          <button
+            type="button"
+            onClick={unlink}
+            className={s.removeItemBtn}
+            style={{ marginLeft: 'auto' }}
+          >
+            Unlink
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={s.itemSearchWrap}>
+      <input
+        type="text"
+        value={call.phone}
+        onChange={(e) => {
+          onChange({ phone: e.target.value });
+          setQuery(e.target.value);
+        }}
+        onFocus={() => { if (hits.length) setOpen(true); }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className={s.itemSearchInput}
+        placeholder="Number, or type a patient name to search"
+      />
+      {open && hits.length > 0 && (
+        <div className={s.productDropdown}>
+          {hits.map((h) => (
+            <button
+              key={`${h.type}-${h.id}`}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => pick(h)}
+              className={s.productOption}
+            >
+              <span>{h.name}</span>
+              <span className={s.productPrice}>
+                {h.phone || 'no number'} · {CONTACT_LABELS[h.type]}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      {open && !hits.length && searching && (
+        <div className={s.productDropdown}>
+          <div className={s.productOptionEmpty}>Searching...</div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function WorkLogPage() {
   const [rows, setRows] = useState<WorkLog[]>([]);
@@ -236,39 +388,81 @@ export default function WorkLogPage() {
     setEditing(w);
     setForm({
       logDate: w.logDate.slice(0, 10),
-      category: w.category,
-      title: w.title,
-      description: w.description || '',
-      status: w.status,
-      startTime: w.startTime || '',
-      endTime: w.endTime || '',
-      durationMinutes: w.durationMinutes != null ? String(w.durationMinutes) : '',
-      calls: w.calls.map((c) => ({
-        phone: c.phone,
-        contactName: c.contactName || '',
-        outcome: c.outcome,
-        durationSeconds: c.durationSeconds != null ? String(c.durationSeconds) : '',
-        notes: c.notes || '',
-      })),
+      tasks: [
+        {
+          title: w.title,
+          showCalls: w.calls.length > 0,
+          calls: w.calls.map((c) => ({
+            phone: c.phone,
+            contactName: c.contactName || '',
+            outcome: c.outcome,
+            notes: c.notes || '',
+            linkType: c.patientId
+              ? ('PATIENT' as const)
+              : c.leadId
+                ? ('LEAD' as const)
+                : c.prospectId
+                  ? ('PROSPECT' as const)
+                  : undefined,
+            linkId: c.patientId ?? c.leadId ?? c.prospectId ?? undefined,
+          })),
+          showMore: !!(w.description || w.durationMinutes || w.status !== 'COMPLETED'),
+          category: w.category,
+          description: w.description || '',
+          durationMinutes: w.durationMinutes != null ? String(w.durationMinutes) : '',
+          status: w.status,
+        },
+      ],
     });
     setError('');
     setShowForm(true);
   };
 
-  const setCall = (idx: number, patch: Partial<CallForm>) => {
+  // ── Task row helpers ───────────────────────────────────────────────────────
+  const setTask = (ti: number, patch: Partial<TaskForm>) =>
     setForm((f) => ({
       ...f,
-      calls: f.calls.map((c, i) => (i === idx ? { ...c, ...patch } : c)),
+      tasks: f.tasks.map((t, i) => (i === ti ? { ...t, ...patch } : t)),
     }));
-  };
 
-  const addCallRow = () => setForm((f) => ({ ...f, calls: [...f.calls, emptyCall()] }));
+  const addTaskRow = () =>
+    setForm((f) => ({ ...f, tasks: [...f.tasks, emptyTask()] }));
 
-  const removeCallRow = (idx: number) =>
-    setForm((f) => ({ ...f, calls: f.calls.filter((_, i) => i !== idx) }));
+  const removeTaskRow = (ti: number) =>
+    setForm((f) => ({
+      ...f,
+      tasks: f.tasks.length === 1 ? f.tasks : f.tasks.filter((_, i) => i !== ti),
+    }));
+
+  // ── Call row helpers (scoped to a task) ────────────────────────────────────
+  const setCall = (ti: number, ci: number, patch: Partial<CallForm>) =>
+    setForm((f) => ({
+      ...f,
+      tasks: f.tasks.map((t, i) =>
+        i !== ti
+          ? t
+          : { ...t, calls: t.calls.map((c, j) => (j === ci ? { ...c, ...patch } : c)) },
+      ),
+    }));
+
+  const addCallRow = (ti: number) =>
+    setForm((f) => ({
+      ...f,
+      tasks: f.tasks.map((t, i) =>
+        i === ti ? { ...t, showCalls: true, calls: [...t.calls, emptyCall()] } : t,
+      ),
+    }));
+
+  const removeCallRow = (ti: number, ci: number) =>
+    setForm((f) => ({
+      ...f,
+      tasks: f.tasks.map((t, i) =>
+        i === ti ? { ...t, calls: t.calls.filter((_, j) => j !== ci) } : t,
+      ),
+    }));
 
   /** Paste a block of numbers (one per line or comma separated) as call rows. */
-  const bulkAddNumbers = () => {
+  const bulkAddNumbers = (ti: number) => {
     const raw = window.prompt('Paste numbers — one per line or comma separated:');
     if (!raw) return;
     const numbers = raw
@@ -278,36 +472,54 @@ export default function WorkLogPage() {
     if (!numbers.length) return;
     setForm((f) => ({
       ...f,
-      calls: [...f.calls, ...numbers.map((phone) => ({ ...emptyCall(), phone }))],
+      tasks: f.tasks.map((t, i) =>
+        i === ti
+          ? {
+              ...t,
+              showCalls: true,
+              calls: [...t.calls, ...numbers.map((phone) => ({ ...emptyCall(), phone }))],
+            }
+          : t,
+      ),
     }));
   };
 
+  const taskToPayload = (t: TaskForm) => ({
+    logDate: form.logDate,
+    category: resolveCategory(t),
+    title: t.title.trim(),
+    description: t.description.trim() || undefined,
+    status: t.status,
+    durationMinutes: t.durationMinutes ? Number(t.durationMinutes) : undefined,
+    calls: t.calls
+      .filter((c) => c.phone.trim() || c.linkId)
+      .map((c) => ({
+        phone: c.phone.trim(),
+        contactName: c.contactName.trim() || undefined,
+        outcome: c.outcome,
+        notes: c.notes.trim() || undefined,
+        patientId: c.linkType === 'PATIENT' ? c.linkId : undefined,
+        leadId: c.linkType === 'LEAD' ? c.linkId : undefined,
+        prospectId: c.linkType === 'PROSPECT' ? c.linkId : undefined,
+      })),
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const filled = form.tasks.filter((t) => t.title.trim());
+    if (filled.length === 0) {
+      setError('Add at least one task');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      const payload: Record<string, unknown> = {
-        logDate: form.logDate,
-        category: form.category,
-        title: form.title.trim(),
-        description: form.description.trim() || undefined,
-        status: form.status,
-        startTime: form.startTime.trim() || undefined,
-        endTime: form.endTime.trim() || undefined,
-        durationMinutes: form.durationMinutes ? Number(form.durationMinutes) : undefined,
-        calls: form.calls
-          .filter((c) => c.phone.trim())
-          .map((c) => ({
-            phone: c.phone.trim(),
-            contactName: c.contactName.trim() || undefined,
-            outcome: c.outcome,
-            durationSeconds: c.durationSeconds ? Number(c.durationSeconds) : undefined,
-            notes: c.notes.trim() || undefined,
-          })),
-      };
-      if (editing) await api.put(`/work-logs/${editing.id}`, payload);
-      else await api.post('/work-logs', payload);
+      if (editing) {
+        await api.put(`/work-logs/${editing.id}`, taskToPayload(filled[0]));
+      } else {
+        // One entry per task line, saved in a single request.
+        await api.post('/work-logs/bulk', { entries: filled.map(taskToPayload) });
+      }
       setShowForm(false);
       setEditing(null);
       fetchData(editing ? page : 1);
@@ -459,177 +671,170 @@ export default function WorkLogPage() {
             <h2 className={s.inlineFormTitle}>{editing ? 'Edit Entry' : 'Log Work Done'}</h2>
             {error && <div className={s.error}>{error}</div>}
 
-            <div className={s.grid2}>
-              <div className={s.formGroup}>
-                <label>Date *</label>
-                <input
-                  type="date"
-                  required
-                  value={form.logDate}
-                  onChange={(e) => setForm({ ...form, logDate: e.target.value })}
-                  className={s.formInput}
-                />
-              </div>
-              <div className={s.formGroup}>
-                <label>Category</label>
-                <CustomSelect
-                  options={categories.map((c) => ({ label: CATEGORY_LABELS[c], value: c }))}
-                  value={form.category}
-                  onChange={(val) => setForm({ ...form, category: val as WorkLogCategory })}
-                  align="left"
-                  minWidth="100%"
-                />
-              </div>
-            </div>
-
             <div className={s.formGroup}>
-              <label>What did you do? *</label>
+              <label>Date</label>
               <input
-                type="text"
+                type="date"
                 required
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                value={form.logDate}
+                onChange={(e) => setForm({ ...form, logDate: e.target.value })}
                 className={s.formInput}
-                placeholder="e.g. Called pending follow-up list"
               />
             </div>
 
-            <div className={s.formGroup}>
-              <label>Details</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className={s.formTextarea}
-                rows={3}
-                placeholder="Optional notes about the work"
-              />
-            </div>
+            {form.tasks.map((t, ti) => (
+              <div key={ti} className={s.itemRow}>
+                <div className={s.formGroup}>
+                  <label>Task {form.tasks.length > 1 ? ti + 1 : ''}</label>
+                  <input
+                    type="text"
+                    value={t.title}
+                    onChange={(e) => setTask(ti, { title: e.target.value })}
+                    className={s.formInput}
+                    placeholder="What did you do?"
+                    autoFocus={ti === form.tasks.length - 1 && !editing}
+                  />
+                </div>
 
-            <div className={s.grid3}>
-              <div className={s.formGroup}>
-                <label>Status</label>
-                <CustomSelect
-                  options={workStatuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))}
-                  value={form.status}
-                  onChange={(val) => setForm({ ...form, status: val as WorkLogStatus })}
-                  align="left"
-                  minWidth="100%"
-                />
-              </div>
-              <div className={s.formGroup}>
-                <label>From</label>
-                <input
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                  className={s.formInput}
-                />
-              </div>
-              <div className={s.formGroup}>
-                <label>To</label>
-                <input
-                  type="time"
-                  value={form.endTime}
-                  onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                  className={s.formInput}
-                />
-              </div>
-            </div>
-
-            <div className={s.formGroup}>
-              <label>Time Spent (minutes)</label>
-              <input
-                type="number"
-                min={0}
-                value={form.durationMinutes}
-                onChange={(e) => setForm({ ...form, durationMinutes: e.target.value })}
-                className={s.formInput}
-                placeholder="e.g. 90"
-              />
-            </div>
-
-            <div className={s.itemsHeader}>
-              <label>Calls Made ({form.calls.length})</label>
-              <div>
-                <button type="button" onClick={bulkAddNumbers} className={s.addItemBtn}>
-                  Paste Numbers
-                </button>
-                <button type="button" onClick={addCallRow} className={s.addItemBtn}>
-                  + Add Call
-                </button>
-              </div>
-            </div>
-
-            {form.calls.length === 0 && (
-              <p className={s.leadDesc}>
-                No calls added. Use “+ Add Call” if this entry involved calling.
-              </p>
-            )}
-
-            {form.calls.map((c, idx) => (
-              <div key={idx} className={s.itemRow}>
-                <div className={s.grid3}>
-                  <div className={s.formGroup}>
-                    <label>Number *</label>
-                    <input
-                      type="tel"
-                      value={c.phone}
-                      onChange={(e) => setCall(idx, { phone: e.target.value })}
-                      className={s.formInput}
-                      placeholder="9876543210"
-                    />
-                  </div>
-                  <div className={s.formGroup}>
-                    <label>Name</label>
-                    <input
-                      type="text"
-                      value={c.contactName}
-                      onChange={(e) => setCall(idx, { contactName: e.target.value })}
-                      className={s.formInput}
-                      placeholder="Optional"
-                    />
-                  </div>
-                  <div className={s.formGroup}>
-                    <label>Outcome</label>
-                    <select
-                      value={c.outcome}
-                      onChange={(e) => setCall(idx, { outcome: e.target.value as CallOutcome })}
-                      className={s.formSelect}
+                <div className={s.itemsHeader}>
+                  <div>
+                    {!t.showCalls ? (
+                      <button
+                        type="button"
+                        onClick={() => addCallRow(ti)}
+                        className={s.addItemBtn}
+                      >
+                        ☎ This was calling — add numbers
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => addCallRow(ti)}
+                          className={s.addItemBtn}
+                        >
+                          + Add Number
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => bulkAddNumbers(ti)}
+                          className={s.addItemBtn}
+                        >
+                          Paste List
+                        </button>
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setTask(ti, { showMore: !t.showMore })}
+                      className={s.addItemBtn}
                     >
-                      {outcomes.map((o) => (
-                        <option key={o} value={o}>{OUTCOME_LABELS[o]}</option>
-                      ))}
-                    </select>
+                      {t.showMore ? 'Hide extras' : 'More'}
+                    </button>
                   </div>
+                  {form.tasks.length > 1 && !editing && (
+                    <button
+                      type="button"
+                      onClick={() => removeTaskRow(ti)}
+                      className={s.removeItemBtn}
+                    >
+                      Remove task
+                    </button>
+                  )}
                 </div>
-                <div className={s.grid2}>
-                  <div className={s.formGroup}>
-                    <label>Call Length (seconds)</label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={c.durationSeconds}
-                      onChange={(e) => setCall(idx, { durationSeconds: e.target.value })}
-                      className={s.formInput}
-                      placeholder="Optional"
-                    />
+
+                {/* Calls for this task */}
+                {t.showCalls && t.calls.map((c, ci) => (
+                  <div key={ci} className={s.grid3} style={{ alignItems: 'end' }}>
+                    <div className={s.formGroup} style={{ gridColumn: 'span 2' }}>
+                      <CallNumberInput
+                        call={c}
+                        onChange={(patch) => setCall(ti, ci, patch)}
+                      />
+                    </div>
+                    <div className={s.formGroup}>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <select
+                          value={c.outcome}
+                          onChange={(e) => setCall(ti, ci, { outcome: e.target.value as CallOutcome })}
+                          className={s.formSelect}
+                        >
+                          {outcomes.map((o) => (
+                            <option key={o} value={o}>{OUTCOME_LABELS[o]}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => removeCallRow(ti, ci)}
+                          className={s.removeItemBtn}
+                          aria-label="Remove number"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className={s.formGroup}>
-                    <label>Call Notes</label>
-                    <input
-                      type="text"
-                      value={c.notes}
-                      onChange={(e) => setCall(idx, { notes: e.target.value })}
-                      className={s.formInput}
-                      placeholder="Optional"
-                    />
-                  </div>
-                </div>
-                <button type="button" onClick={() => removeCallRow(idx)} className={s.removeItemBtn}>
-                  Remove
-                </button>
+                ))}
+
+                {/* Optional extras */}
+                {t.showMore && (
+                  <>
+                    <div className={s.grid3}>
+                      <div className={s.formGroup}>
+                        <label>Category</label>
+                        <CustomSelect
+                          options={[
+                            { label: 'Auto', value: '' },
+                            ...categories.map((c) => ({ label: CATEGORY_LABELS[c], value: c })),
+                          ]}
+                          value={t.category}
+                          onChange={(val) => setTask(ti, { category: String(val) as WorkLogCategory | '' })}
+                          align="left"
+                          minWidth="100%"
+                        />
+                      </div>
+                      <div className={s.formGroup}>
+                        <label>Status</label>
+                        <CustomSelect
+                          options={workStatuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))}
+                          value={t.status}
+                          onChange={(val) => setTask(ti, { status: val as WorkLogStatus })}
+                          align="left"
+                          minWidth="100%"
+                        />
+                      </div>
+                      <div className={s.formGroup}>
+                        <label>Minutes</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={t.durationMinutes}
+                          onChange={(e) => setTask(ti, { durationMinutes: e.target.value })}
+                          className={s.formInput}
+                          placeholder="e.g. 90"
+                        />
+                      </div>
+                    </div>
+                    <div className={s.formGroup}>
+                      <label>Notes</label>
+                      <textarea
+                        value={t.description}
+                        onChange={(e) => setTask(ti, { description: e.target.value })}
+                        className={s.formTextarea}
+                        rows={2}
+                        placeholder="Optional"
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             ))}
+
+            {!editing && (
+              <button type="button" onClick={addTaskRow} className={s.addItemBtn}>
+                + Add Another Task
+              </button>
+            )}
 
             <div className={s.formActions}>
               <button
@@ -640,7 +845,13 @@ export default function WorkLogPage() {
                 Cancel
               </button>
               <button type="submit" disabled={saving} className={s.saveBtn}>
-                {saving ? 'Saving...' : editing ? 'Save Changes' : 'Save Entry'}
+                {saving
+                  ? 'Saving...'
+                  : editing
+                    ? 'Save Changes'
+                    : `Save ${form.tasks.filter((t) => t.title.trim()).length || ''} Task${
+                        form.tasks.filter((t) => t.title.trim()).length === 1 ? '' : 's'
+                      }`}
               </button>
             </div>
           </form>
