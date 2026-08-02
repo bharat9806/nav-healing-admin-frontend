@@ -15,6 +15,64 @@ import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
 import { generateWorkLogReport } from '@/lib/generateWorkLogReport';
 import s from '../leads/leads.module.scss';
+import f from './work-log.module.scss';
+
+// ── Icons (inline SVG — no emoji glyphs in the UI) ──────────────────────────
+const iconProps = {
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 2,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+  'aria-hidden': true,
+};
+
+const PhoneIcon = () => (
+  <svg {...iconProps}>
+    <path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg {...iconProps}>
+    <path d="M12 5v14" />
+    <path d="M5 12h14" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg {...iconProps}>
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg {...iconProps}>
+    <path d="M3 6h18" />
+    <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+  </svg>
+);
+
+const SlidersIcon = () => (
+  <svg {...iconProps}>
+    <path d="M4 6h16" />
+    <path d="M4 12h16" />
+    <path d="M4 18h16" />
+    <circle cx="9" cy="6" r="2" />
+    <circle cx="15" cy="12" r="2" />
+    <circle cx="8" cy="18" r="2" />
+  </svg>
+);
+
+const ClipboardIcon = () => (
+  <svg {...iconProps}>
+    <rect x="8" y="2" width="8" height="4" rx="1" />
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+  </svg>
+);
 
 const categories: WorkLogCategory[] = [
   'CALLING', 'RECEPTION', 'FOLLOW_UP', 'DATA_ENTRY',
@@ -205,30 +263,28 @@ function CallNumberInput({
 
   if (call.linkId && call.linkType) {
     return (
-      <div className={s.itemSearchWrap}>
-        <div className={s.formInput} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 600 }}>{call.contactName}</span>
-          <span className={s.cellText}>{call.phone || 'no number'}</span>
-          <span className={`${s.statusSelect} ${s.statusConverted}`}>
-            {CONTACT_LABELS[call.linkType]}
-          </span>
-          <button
-            type="button"
-            onClick={unlink}
-            className={s.removeItemBtn}
-            style={{ marginLeft: 'auto' }}
-          >
-            Unlink
-          </button>
-        </div>
+      <div className={f.contactChip}>
+        <span className={f.contactChipName}>{call.contactName}</span>
+        <span className={f.contactChipPhone}>{call.phone || 'no number'}</span>
+        <span className={f.contactChipType}>{CONTACT_LABELS[call.linkType]}</span>
+        <button
+          type="button"
+          onClick={unlink}
+          className={f.contactChipUnlink}
+          aria-label={`Unlink ${call.contactName}`}
+          title="Unlink"
+        >
+          <CloseIcon />
+        </button>
       </div>
     );
   }
 
   return (
-    <div className={s.itemSearchWrap}>
+    <div className={f.contactBox}>
       <input
-        type="text"
+        type="tel"
+        inputMode="tel"
         value={call.phone}
         onChange={(e) => {
           onChange({ phone: e.target.value });
@@ -236,30 +292,34 @@ function CallNumberInput({
         }}
         onFocus={() => { if (hits.length) setOpen(true); }}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
-        className={s.itemSearchInput}
-        placeholder="Number, or type a patient name to search"
+        className={f.contactInput}
+        placeholder="Number, or a name to search"
+        aria-label="Phone number or contact name"
       />
       {open && hits.length > 0 && (
-        <div className={s.productDropdown}>
+        <div className={f.contactDropdown} role="listbox">
           {hits.map((h) => (
             <button
               key={`${h.type}-${h.id}`}
               type="button"
+              role="option"
+              aria-selected={false}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => pick(h)}
-              className={s.productOption}
+              className={f.contactOption}
             >
-              <span>{h.name}</span>
-              <span className={s.productPrice}>
-                {h.phone || 'no number'} · {CONTACT_LABELS[h.type]}
+              <span className={f.contactOptionName}>{h.name}</span>
+              <span className={f.contactOptionMeta}>
+                <span>{h.phone || 'no number'}</span>
+                <span className={f.contactChipType}>{CONTACT_LABELS[h.type]}</span>
               </span>
             </button>
           ))}
         </div>
       )}
       {open && !hits.length && searching && (
-        <div className={s.productDropdown}>
-          <div className={s.productOptionEmpty}>Searching...</div>
+        <div className={f.contactDropdown}>
+          <div className={f.contactOptionEmpty}>Searching...</div>
         </div>
       )}
     </div>
@@ -671,170 +731,219 @@ export default function WorkLogPage() {
             <h2 className={s.inlineFormTitle}>{editing ? 'Edit Entry' : 'Log Work Done'}</h2>
             {error && <div className={s.error}>{error}</div>}
 
-            <div className={s.formGroup}>
-              <label>Date</label>
-              <input
-                type="date"
-                required
-                value={form.logDate}
-                onChange={(e) => setForm({ ...form, logDate: e.target.value })}
-                className={s.formInput}
-              />
-            </div>
+            <div className={f.formShell}>
+              <div className={f.dateField}>
+                <label htmlFor="wl-date">Date</label>
+                <input
+                  id="wl-date"
+                  type="date"
+                  required
+                  value={form.logDate}
+                  onChange={(e) => setForm({ ...form, logDate: e.target.value })}
+                />
+              </div>
 
-            {form.tasks.map((t, ti) => (
-              <div key={ti} className={s.itemRow}>
-                <div className={s.formGroup}>
-                  <label>Task {form.tasks.length > 1 ? ti + 1 : ''}</label>
-                  <input
-                    type="text"
-                    value={t.title}
-                    onChange={(e) => setTask(ti, { title: e.target.value })}
-                    className={s.formInput}
-                    placeholder="What did you do?"
-                    autoFocus={ti === form.tasks.length - 1 && !editing}
-                  />
-                </div>
+              <div className={f.tasksList}>
+                {form.tasks.map((t, ti) => (
+                  <div key={ti} className={f.taskCard}>
+                    {form.tasks.length > 1 && (
+                      <div className={f.taskHead}>
+                        <span className={f.taskIndex}>Task {ti + 1}</span>
+                        {!editing && (
+                          <button
+                            type="button"
+                            onClick={() => removeTaskRow(ti)}
+                            className={f.removeTaskBtn}
+                          >
+                            <TrashIcon />
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    )}
 
-                <div className={s.itemsHeader}>
-                  <div>
-                    {!t.showCalls ? (
-                      <button
-                        type="button"
-                        onClick={() => addCallRow(ti)}
-                        className={s.addItemBtn}
-                      >
-                        ☎ This was calling — add numbers
-                      </button>
-                    ) : (
-                      <>
+                    <div className={f.taskTitleField}>
+                      <label htmlFor={`wl-task-${ti}`}>What did you do?</label>
+                      <input
+                        id={`wl-task-${ti}`}
+                        type="text"
+                        value={t.title}
+                        onChange={(e) => setTask(ti, { title: e.target.value })}
+                        placeholder="e.g. Handled front desk walk-ins"
+                        autoFocus={ti === form.tasks.length - 1 && !editing}
+                      />
+                    </div>
+
+                    <div className={f.taskActions}>
+                      {!t.showCalls && (
                         <button
                           type="button"
                           onClick={() => addCallRow(ti)}
-                          className={s.addItemBtn}
+                          className={f.ghostAction}
                         >
-                          + Add Number
+                          <PhoneIcon />
+                          Add numbers called
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => bulkAddNumbers(ti)}
-                          className={s.addItemBtn}
-                        >
-                          Paste List
-                        </button>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setTask(ti, { showMore: !t.showMore })}
-                      className={s.addItemBtn}
-                    >
-                      {t.showMore ? 'Hide extras' : 'More'}
-                    </button>
-                  </div>
-                  {form.tasks.length > 1 && !editing && (
-                    <button
-                      type="button"
-                      onClick={() => removeTaskRow(ti)}
-                      className={s.removeItemBtn}
-                    >
-                      Remove task
-                    </button>
-                  )}
-                </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setTask(ti, { showMore: !t.showMore })}
+                        className={`${f.ghostAction} ${t.showMore ? f.ghostActionActive : ''}`}
+                        aria-expanded={t.showMore}
+                      >
+                        <SlidersIcon />
+                        {t.showMore ? 'Hide options' : 'More options'}
+                      </button>
+                    </div>
 
-                {/* Calls for this task */}
-                {t.showCalls && t.calls.map((c, ci) => (
-                  <div key={ci} className={s.grid3} style={{ alignItems: 'end' }}>
-                    <div className={s.formGroup} style={{ gridColumn: 'span 2' }}>
-                      <CallNumberInput
-                        call={c}
-                        onChange={(patch) => setCall(ti, ci, patch)}
-                      />
-                    </div>
-                    <div className={s.formGroup}>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <select
-                          value={c.outcome}
-                          onChange={(e) => setCall(ti, ci, { outcome: e.target.value as CallOutcome })}
-                          className={s.formSelect}
-                        >
-                          {outcomes.map((o) => (
-                            <option key={o} value={o}>{OUTCOME_LABELS[o]}</option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => removeCallRow(ti, ci)}
-                          className={s.removeItemBtn}
-                          aria-label="Remove number"
-                        >
-                          ✕
-                        </button>
+                    {/* Calls for this task */}
+                    {t.showCalls && (
+                      <div className={f.callsBlock}>
+                        <div className={f.callsHead}>
+                          <span className={f.callsTitle}>
+                            Numbers called ({t.calls.length})
+                          </span>
+                          <div className={f.callsHeadActions}>
+                            <button
+                              type="button"
+                              onClick={() => addCallRow(ti)}
+                              className={f.ghostAction}
+                            >
+                              <PlusIcon />
+                              Add
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => bulkAddNumbers(ti)}
+                              className={f.ghostAction}
+                            >
+                              <ClipboardIcon />
+                              Paste list
+                            </button>
+                          </div>
+                        </div>
+
+                        {t.calls.length === 0 ? (
+                          <p className={f.callsEmpty}>
+                            No numbers yet — use Add for one at a time, or Paste list
+                            to drop in a whole call sheet.
+                          </p>
+                        ) : (
+                          <>
+                            <div className={f.callsColumns} aria-hidden="true">
+                              <span>Number or contact</span>
+                              <span>Outcome</span>
+                              <span />
+                            </div>
+
+                            {t.calls.map((c, ci) => (
+                              <div key={ci} className={f.callRow}>
+                                <div>
+                                  <span className={f.callRowLabel}>Number or contact</span>
+                                  <CallNumberInput
+                                    call={c}
+                                    onChange={(patch) => setCall(ti, ci, patch)}
+                                  />
+                                </div>
+                                <div>
+                                  <span className={f.callRowLabel}>Outcome</span>
+                                  <select
+                                    value={c.outcome}
+                                    onChange={(e) =>
+                                      setCall(ti, ci, { outcome: e.target.value as CallOutcome })
+                                    }
+                                    className={f.outcomeSelect}
+                                    aria-label="Call outcome"
+                                  >
+                                    {outcomes.map((o) => (
+                                      <option key={o} value={o}>{OUTCOME_LABELS[o]}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => removeCallRow(ti, ci)}
+                                  className={f.removeCallBtn}
+                                  aria-label={`Remove ${c.phone || 'number'}`}
+                                  title="Remove number"
+                                >
+                                  <CloseIcon />
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        )}
                       </div>
-                    </div>
+                    )}
+
+                    {/* Optional extras */}
+                    {t.showMore && (
+                      <div className={f.extras}>
+                        <div className={f.extrasGrid}>
+                          <div className={f.extrasField}>
+                            <label>Category</label>
+                            <CustomSelect
+                              options={[
+                                { label: 'Auto', value: '' },
+                                ...categories.map((c) => ({ label: CATEGORY_LABELS[c], value: c })),
+                              ]}
+                              value={t.category}
+                              onChange={(val) =>
+                                setTask(ti, { category: String(val) as WorkLogCategory | '' })
+                              }
+                              align="left"
+                              fullWidth
+                            />
+                          </div>
+                          <div className={f.extrasField}>
+                            <label>Status</label>
+                            <CustomSelect
+                              options={workStatuses.map((st) => ({
+                                label: STATUS_LABELS[st],
+                                value: st,
+                              }))}
+                              value={t.status}
+                              onChange={(val) => setTask(ti, { status: val as WorkLogStatus })}
+                              align="left"
+                              fullWidth
+                            />
+                          </div>
+                          <div className={f.extrasField}>
+                            <label htmlFor={`wl-min-${ti}`}>Minutes spent</label>
+                            <input
+                              id={`wl-min-${ti}`}
+                              type="number"
+                              min={0}
+                              inputMode="numeric"
+                              value={t.durationMinutes}
+                              onChange={(e) => setTask(ti, { durationMinutes: e.target.value })}
+                              placeholder="e.g. 90"
+                            />
+                          </div>
+                        </div>
+                        <div className={f.extrasField}>
+                          <label htmlFor={`wl-notes-${ti}`}>Notes</label>
+                          <textarea
+                            id={`wl-notes-${ti}`}
+                            value={t.description}
+                            onChange={(e) => setTask(ti, { description: e.target.value })}
+                            rows={2}
+                            placeholder="Anything worth remembering about this task"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
-
-                {/* Optional extras */}
-                {t.showMore && (
-                  <>
-                    <div className={s.grid3}>
-                      <div className={s.formGroup}>
-                        <label>Category</label>
-                        <CustomSelect
-                          options={[
-                            { label: 'Auto', value: '' },
-                            ...categories.map((c) => ({ label: CATEGORY_LABELS[c], value: c })),
-                          ]}
-                          value={t.category}
-                          onChange={(val) => setTask(ti, { category: String(val) as WorkLogCategory | '' })}
-                          align="left"
-                          minWidth="100%"
-                        />
-                      </div>
-                      <div className={s.formGroup}>
-                        <label>Status</label>
-                        <CustomSelect
-                          options={workStatuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))}
-                          value={t.status}
-                          onChange={(val) => setTask(ti, { status: val as WorkLogStatus })}
-                          align="left"
-                          minWidth="100%"
-                        />
-                      </div>
-                      <div className={s.formGroup}>
-                        <label>Minutes</label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={t.durationMinutes}
-                          onChange={(e) => setTask(ti, { durationMinutes: e.target.value })}
-                          className={s.formInput}
-                          placeholder="e.g. 90"
-                        />
-                      </div>
-                    </div>
-                    <div className={s.formGroup}>
-                      <label>Notes</label>
-                      <textarea
-                        value={t.description}
-                        onChange={(e) => setTask(ti, { description: e.target.value })}
-                        className={s.formTextarea}
-                        rows={2}
-                        placeholder="Optional"
-                      />
-                    </div>
-                  </>
-                )}
               </div>
-            ))}
 
-            {!editing && (
-              <button type="button" onClick={addTaskRow} className={s.addItemBtn}>
-                + Add Another Task
-              </button>
-            )}
+              {!editing && (
+                <button type="button" onClick={addTaskRow} className={f.addTaskBtn}>
+                  <PlusIcon />
+                  Add another task
+                </button>
+              )}
+            </div>
 
             <div className={s.formActions}>
               <button
@@ -1120,47 +1229,49 @@ export default function WorkLogPage() {
               or widen them for a range.
             </p>
 
-            <div className={s.grid2}>
-              <div className={s.formGroup}>
-                <label>From</label>
-                <input
-                  type="date"
-                  value={pdfFrom}
-                  onChange={(e) => {
-                    setPdfFrom(e.target.value);
-                    if (pdfTo < e.target.value) setPdfTo(e.target.value);
-                  }}
-                  className={s.formInput}
-                />
+            <div className={f.modalBody}>
+              <div className={f.modalRow}>
+                <div className={f.modalField}>
+                  <label htmlFor="pdf-from">From</label>
+                  <input
+                    id="pdf-from"
+                    type="date"
+                    value={pdfFrom}
+                    onChange={(e) => {
+                      setPdfFrom(e.target.value);
+                      if (pdfTo < e.target.value) setPdfTo(e.target.value);
+                    }}
+                  />
+                </div>
+                <div className={f.modalField}>
+                  <label htmlFor="pdf-to">To</label>
+                  <input
+                    id="pdf-to"
+                    type="date"
+                    value={pdfTo}
+                    onChange={(e) => setPdfTo(e.target.value)}
+                  />
+                </div>
               </div>
-              <div className={s.formGroup}>
-                <label>To</label>
-                <input
-                  type="date"
-                  value={pdfTo}
-                  onChange={(e) => setPdfTo(e.target.value)}
-                  className={s.formInput}
-                />
-              </div>
+
+              {isAdmin && stats && stats.byUser.length > 0 && (
+                <div className={f.modalField}>
+                  <label>Staff</label>
+                  <CustomSelect
+                    options={[
+                      { label: 'All staff', value: '' },
+                      ...stats.byUser.map((u) => ({ label: u.username, value: String(u.userId) })),
+                    ]}
+                    value={pdfUser}
+                    onChange={(val) => setPdfUser(String(val))}
+                    align="left"
+                    fullWidth
+                  />
+                </div>
+              )}
+
+              {pdfError && <div className={s.error}>{pdfError}</div>}
             </div>
-
-            {isAdmin && stats && stats.byUser.length > 0 && (
-              <div className={s.formGroup}>
-                <label>Staff</label>
-                <CustomSelect
-                  options={[
-                    { label: 'All staff', value: '' },
-                    ...stats.byUser.map((u) => ({ label: u.username, value: String(u.userId) })),
-                  ]}
-                  value={pdfUser}
-                  onChange={(val) => setPdfUser(String(val))}
-                  align="left"
-                  minWidth="100%"
-                />
-              </div>
-            )}
-
-            {pdfError && <div className={s.error}>{pdfError}</div>}
 
             <div className={s.deleteActions}>
               <button

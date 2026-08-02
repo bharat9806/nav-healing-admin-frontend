@@ -1,0 +1,525 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Log Work form
+// Layout rules applied: 4/8px spacing rhythm, visible label per field,
+// 44px minimum touch targets, progressive disclosure for optional fields,
+// mobile-first stacking at $md.
+// ─────────────────────────────────────────────────────────────────────────────
+
+.formShell {
+  display: flex;
+  flex-direction: column;
+  gap: $s5;
+}
+
+// Date sits alone on its own row and shouldn't stretch edge to edge.
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+  max-width: 15rem;
+
+  label {
+    font-size: $fs-sm;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--shell-text-muted);
+  }
+
+  input {
+    @include input;
+    min-height: 2.75rem; // 44px touch target
+  }
+
+  @media (max-width: ($md - 1px)) {
+    max-width: none;
+  }
+}
+
+.tasksList {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+}
+
+// ── Task card ───────────────────────────────────────────────────────────────
+.taskCard {
+  background-color: var(--shell-soft-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-lg;
+  padding: $s4;
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+  transition: border-color 0.15s;
+
+  &:focus-within {
+    border-color: var(--shell-border-strong);
+  }
+}
+
+.taskHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+}
+
+.taskIndex {
+  font-size: $fs-xs;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--shell-text-muted);
+}
+
+.taskTitleField {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  label {
+    font-size: $fs-sm;
+    font-weight: 500;
+    color: var(--shell-text-secondary);
+  }
+
+  input {
+    @include input;
+    min-height: 2.75rem;
+    font-size: $fs-md;
+  }
+}
+
+// Row of secondary actions under the task title.
+.taskActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $s2;
+}
+
+.ghostAction {
+  display: inline-flex;
+  align-items: center;
+  gap: $s2;
+  min-height: 2.25rem;
+  padding: 0 $s3;
+  background: var(--shell-control-bg);
+  border: 1px solid var(--shell-border);
+  border-radius: $r-md;
+  color: var(--shell-text-secondary);
+  font-size: $fs-sm;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+
+  svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    background: var(--shell-control-bg-strong);
+    color: var(--shell-text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+.ghostActionActive {
+  border-color: var(--brand-primary);
+  color: $emerald-light;
+  background: var(--brand-primary-soft);
+}
+
+.removeTaskBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $s2;
+  min-height: 2.25rem;
+  padding: 0 $s3;
+  margin-left: auto;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: $r-md;
+  color: var(--shell-text-muted);
+  font-size: $fs-sm;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+
+  svg { width: 14px; height: 14px; }
+
+  &:hover {
+    color: $red-light;
+    background: rgba($red-light, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red-light;
+    outline-offset: 2px;
+  }
+}
+
+// ── Calls block ─────────────────────────────────────────────────────────────
+.callsBlock {
+  border-top: 1px dashed var(--shell-border);
+  padding-top: $s3;
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+}
+
+.callsHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $s2;
+}
+
+.callsTitle {
+  font-size: $fs-sm;
+  font-weight: 600;
+  color: var(--shell-text-secondary);
+}
+
+.callsHeadActions {
+  display: flex;
+  gap: $s2;
+}
+
+// Column captions, shown once above the rows on wider screens.
+.callsColumns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 11rem 2.75rem;
+  gap: $s2;
+  padding: 0 $s1;
+
+  span {
+    font-size: $fs-xs;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--shell-text-subtle);
+  }
+
+  @media (max-width: ($md - 1px)) {
+    display: none;
+  }
+}
+
+.callRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 11rem 2.75rem;
+  gap: $s2;
+  align-items: center;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+    gap: $s2;
+    padding: $s3;
+    background: var(--shell-control-bg);
+    border-radius: $r-md;
+  }
+}
+
+// Visible only on mobile, where the column captions are hidden.
+.callRowLabel {
+  display: none;
+
+  @media (max-width: ($md - 1px)) {
+    display: block;
+    font-size: $fs-xs;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--shell-text-subtle);
+  }
+}
+
+.outcomeSelect {
+  @include input;
+  cursor: pointer;
+  min-height: 2.75rem;
+  padding-inline: $s3;
+}
+
+.removeCallBtn {
+  @include flex-center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: $r-md;
+  color: var(--shell-text-muted);
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+
+  svg { width: 16px; height: 16px; }
+
+  &:hover {
+    color: $red-light;
+    background: rgba($red-light, 0.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $red-light;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: ($md - 1px)) {
+    width: 100%;
+    gap: $s2;
+
+    &::after {
+      content: 'Remove';
+      font-size: $fs-sm;
+    }
+  }
+}
+
+.callsEmpty {
+  font-size: $fs-sm;
+  color: var(--shell-text-subtle);
+  padding: $s2 0;
+}
+
+// ── Contact search box ──────────────────────────────────────────────────────
+.contactBox {
+  position: relative;
+}
+
+.contactInput {
+  @include input;
+  min-height: 2.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.contactDropdown {
+  position: absolute;
+  top: calc(100% + #{$s1});
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 15rem;
+  overflow-y: auto;
+  background: var(--shell-elevated);
+  border: 1px solid var(--shell-border-strong);
+  border-radius: $r-md;
+  box-shadow: var(--shell-shadow-soft);
+  padding: $s1;
+}
+
+.contactOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $s3;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: $s2 $s3;
+  background: none;
+  border: none;
+  border-radius: $r-sm;
+  text-align: left;
+  color: var(--shell-text-primary);
+  font-size: $fs-body;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--shell-hover);
+    outline: none;
+  }
+}
+
+.contactOptionName {
+  @include truncate;
+  font-weight: 500;
+}
+
+.contactOptionMeta {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  flex-shrink: 0;
+  font-size: $fs-xs;
+  color: var(--shell-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.contactOptionEmpty {
+  padding: $s3;
+  font-size: $fs-sm;
+  color: var(--shell-text-subtle);
+}
+
+// Chip shown once a call is attached to a patient / lead / prospect.
+.contactChip {
+  display: flex;
+  align-items: center;
+  gap: $s2;
+  min-height: 2.75rem;
+  padding: $s1 $s1 $s1 $s3;
+  background: var(--brand-primary-soft);
+  border: 1px solid var(--brand-primary);
+  border-radius: $r-md;
+  overflow: hidden;
+}
+
+.contactChipName {
+  @include truncate;
+  font-size: $fs-body;
+  font-weight: 500;
+  color: var(--shell-text-primary);
+}
+
+.contactChipPhone {
+  @include truncate;
+  font-size: $fs-sm;
+  color: var(--shell-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.contactChipType {
+  @include status-badge;
+  flex-shrink: 0;
+  background: var(--brand-primary-soft-strong);
+  color: $emerald-light;
+}
+
+.contactChipUnlink {
+  @include flex-center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: $r-sm;
+  color: var(--shell-text-muted);
+  cursor: pointer;
+
+  svg { width: 14px; height: 14px; }
+
+  &:hover { color: $red-light; background: rgba($red-light, 0.12); }
+  &:focus-visible { outline: 2px solid $red-light; outline-offset: 1px; }
+}
+
+// ── Optional extras (progressive disclosure) ────────────────────────────────
+.extras {
+  border-top: 1px dashed var(--shell-border);
+  padding-top: $s3;
+  display: flex;
+  flex-direction: column;
+  gap: $s3;
+}
+
+.extrasGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.extrasField {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  label {
+    font-size: $fs-sm;
+    font-weight: 500;
+    color: var(--shell-text-secondary);
+  }
+
+  input,
+  textarea {
+    @include input;
+    min-height: 2.75rem;
+  }
+
+  textarea {
+    min-height: 4.5rem;
+    resize: vertical;
+  }
+}
+
+// ── Add-task button ─────────────────────────────────────────────────────────
+.addTaskBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $s2;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 $s4;
+  background: none;
+  border: 1px dashed var(--shell-border-strong);
+  border-radius: $r-md;
+  color: var(--shell-text-secondary);
+  font-size: $fs-body;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+
+  svg { width: 16px; height: 16px; }
+
+  &:hover {
+    border-color: var(--brand-primary);
+    color: $emerald-light;
+    background: var(--brand-primary-soft);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+// ── PDF modal fields ────────────────────────────────────────────────────────
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: $s4;
+  text-align: left;
+  margin-bottom: $s5;
+}
+
+.modalRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $s3;
+
+  @media (max-width: ($md - 1px)) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.modalField {
+  display: flex;
+  flex-direction: column;
+  gap: $s2;
+
+  label {
+    font-size: $fs-sm;
+    font-weight: 500;
+    color: var(--shell-text-secondary);
+  }
+
+  input {
+    @include input;
+    min-height: 2.75rem;
+  }
+}
