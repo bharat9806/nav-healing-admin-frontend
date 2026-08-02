@@ -20,6 +20,8 @@ type PermissionKey =
   | 'canManageExpenses'
   | 'canManageUsers';
 
+// `permission` is optional: an item without one is visible to every
+// signed-in user (e.g. the personal work log).
 const allNavItems = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, permission: 'canViewDashboard' },
   { label: 'Analytics', href: '/analytics', icon: <AnalyticsIcon />, permission: 'canViewDashboard' },
@@ -31,12 +33,13 @@ const allNavItems = [
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
   { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageWebsiteOrders' },
   { label: 'Expenses', href: '/expenses', icon: <ExpensesIcon />, permission: 'canManageExpenses' },
+  { label: 'Work Log', href: '/work-log', icon: <WorkLogIcon /> },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
   label: string;
   href: string;
   icon: ReactNode;
-  permission: PermissionKey;
+  permission?: PermissionKey;
 }>;
 
 export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
@@ -50,6 +53,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
   const navItems = allNavItems.filter((item) => {
     if (!user) return false;
+    if (!item.permission) return true;
     if (user.role === 'SUPER_ADMIN') return true;
     return user[item.permission] === true;
   });
@@ -216,6 +220,18 @@ function ExpensesIcon() {
       <path d="M3 10h18" />
       <path d="M7 15h4" />
       <circle cx="17" cy="15" r="1" />
+    </IconShell>
+  );
+}
+
+function WorkLogIcon() {
+  return (
+    <IconShell>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M8 9h5" />
+      <path d="M8 13h8" />
+      <path d="M8 17h4" />
+      <path d="M16 7v4" />
     </IconShell>
   );
 }

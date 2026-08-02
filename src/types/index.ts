@@ -325,3 +325,83 @@ export interface PatientDetail {
   }>;
   interactions: PatientInteraction[];
 }
+
+// ─── STAFF WORK LOG ──────────────────────────────────────────────
+
+export type WorkLogCategory =
+  | 'CALLING'
+  | 'RECEPTION'
+  | 'FOLLOW_UP'
+  | 'DATA_ENTRY'
+  | 'DISPATCH'
+  | 'MEETING'
+  | 'ADMIN_WORK'
+  | 'OTHER';
+
+export type WorkLogStatus = 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
+
+export type CallOutcome =
+  | 'CONNECTED'
+  | 'NOT_PICKED'
+  | 'BUSY'
+  | 'SWITCHED_OFF'
+  | 'NOT_REACHABLE'
+  | 'WRONG_NUMBER'
+  | 'CALL_BACK'
+  | 'INTERESTED'
+  | 'NOT_INTERESTED'
+  | 'ORDER_PLACED';
+
+export interface WorkLogCall {
+  id: number;
+  workLogId: number;
+  phone: string;
+  contactName?: string | null;
+  outcome: CallOutcome;
+  durationSeconds?: number | null;
+  notes?: string | null;
+  calledAt?: string | null;
+  leadId?: number | null;
+  prospectId?: number | null;
+  patientId?: number | null;
+  lead?: { id: number; name: string } | null;
+  prospect?: { id: number; name?: string | null } | null;
+  patient?: { id: number; name: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkLog {
+  id: number;
+  userId: number;
+  user?: { id: number; username: string; userCode: string };
+  logDate: string;
+  category: WorkLogCategory;
+  title: string;
+  description?: string | null;
+  status: WorkLogStatus;
+  startTime?: string | null;
+  endTime?: string | null;
+  durationMinutes?: number | null;
+  calls: WorkLogCall[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkLogsResponse {
+  data: WorkLog[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+}
+
+export interface WorkLogStats {
+  entries: number;
+  minutes: number;
+  calls: number;
+  callsConnected: number;
+  byUser: Array<{
+    userId: number;
+    username: string;
+    entries: number;
+    minutes: number;
+  }>;
+}
