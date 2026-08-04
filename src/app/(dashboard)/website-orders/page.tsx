@@ -27,6 +27,7 @@ interface Order {
   notes?: string;
   subtotal?: number;
   discountAmount?: number;
+  shippingCharges?: number;
   totalAmount: number;
   paymentMethod?: string;
   status: OrderStatus;
@@ -129,6 +130,7 @@ export default function OrdersPage() {
       })),
       subtotal: o.subtotal != null ? Number(o.subtotal) : undefined,
       discountAmount: o.discountAmount != null ? Number(o.discountAmount) : undefined,
+      shippingCharges: o.shippingCharges != null ? Number(o.shippingCharges) : undefined,
       totalAmount: Number(o.totalAmount),
     });
   };

@@ -60,6 +60,7 @@ export interface OrderInvoiceData {
   subtotal?: number;       // pre-discount total (sum of items)
   discountAmount?: number; // prepaid discount, if any
   discountLabel?: string;  // label for the discount line (default: 'Prepaid Discount (10%)')
+  shippingCharges?: number; // delivery charge added on top; omitted/0 prints "Free"
   totalAmount: number;     // final payable
   advancePaid?: number;    // advance already paid (partial payment); shows Advance Paid + Balance Due lines
 }
@@ -317,7 +318,8 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
     doc.setTextColor(...INK);
     y += rowH;
   }
-  totRow('Shipping', 'Free');
+  const shipping = data.shippingCharges ?? 0;
+  totRow('Shipping', shipping > 0 ? `Rs ${money(shipping)}` : 'Free');
 
   // Grand total highlighted band
   doc.setFillColor(...GREEN_PALE);

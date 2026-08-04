@@ -144,6 +144,7 @@ export interface Lead {
   paymentReceived?: boolean;
   paymentAmount?: number;
   discount?: number;
+  shippingCharges?: number;
   paymentMode?: PaymentMode;
   paymentType?: PaymentType;
   deliveredAt?: string;

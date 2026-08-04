@@ -116,8 +116,9 @@ const paymentCellText = (l: Lead) => {
   const pt = (l.paymentType || 'COD') as PaymentType;
   const amount = l.paymentAmount != null ? `₹${Number(l.paymentAmount).toFixed(0)}` : (l.paymentReceived ? 'Paid' : '');
   const off = l.discount != null && Number(l.discount) > 0 ? ` −₹${Number(l.discount).toFixed(0)} off` : '';
+  const ship = l.shippingCharges != null && Number(l.shippingCharges) > 0 ? ` +₹${Number(l.shippingCharges).toFixed(0)} ship` : '';
   const mode = l.paymentMode ? ` (${l.paymentMode})` : '';
-  return `${l.paymentReceived ? '✓ ' : ''}${PAYMENT_TYPE_LABELS[pt]}${amount ? ` · ${amount}` : ''}${off}${mode}`;
+  return `${l.paymentReceived ? '✓ ' : ''}${PAYMENT_TYPE_LABELS[pt]}${amount ? ` · ${amount}` : ''}${off}${ship}${mode}`;
 };
 
 interface LeadItemForm { productId: number; quantity: number; search: string; showDropdown: boolean; }
@@ -288,7 +289,7 @@ export default function LeadsPage() {
     trackingNumber: '', diseases: '', status: 'NEW' as LeadStatus, notes: '',
     deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '',
     deliveryStatus: 'NONE' as DeliveryStatus, paymentReceived: false,
-    paymentAmount: '', discount: '', paymentMode: '' as PaymentMode | '',
+    paymentAmount: '', discount: '', shippingCharges: '', paymentMode: '' as PaymentMode | '',
     paymentType: 'COD' as PaymentType,
   });
   const [items, setItems] = useState<LeadItemForm[]>([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
@@ -470,7 +471,7 @@ export default function LeadsPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', discount: '', paymentMode: '', paymentType: 'COD' });
+    setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', discount: '', shippingCharges: '', paymentMode: '', paymentType: 'COD' });
     setItems([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
     setError('');
     setShowInlineForm(true);
@@ -492,6 +493,7 @@ export default function LeadsPage() {
       paymentReceived: l.paymentReceived ?? false,
       paymentAmount: l.paymentAmount != null ? String(l.paymentAmount) : '',
       discount: l.discount != null ? String(l.discount) : '',
+      shippingCharges: l.shippingCharges != null ? String(l.shippingCharges) : '',
       paymentMode: l.paymentMode || '',
       paymentType: l.paymentType || 'COD',
     });
@@ -536,6 +538,7 @@ export default function LeadsPage() {
       paymentReceived: form.paymentReceived,
       paymentAmount: (form.paymentReceived || form.paymentType !== 'COD') && form.paymentAmount ? Number(form.paymentAmount) : undefined,
       discount: form.discount ? Number(form.discount) : null,
+      shippingCharges: form.shippingCharges ? Number(form.shippingCharges) : null,
       paymentMode: (form.paymentReceived || form.paymentType !== 'COD') && form.paymentMode ? form.paymentMode : undefined,
       paymentType: form.paymentType || 'COD',
       deliveredAt: form.deliveredAt || undefined, nextFollowUpDate: form.nextFollowUpDate || undefined,
@@ -578,7 +581,8 @@ export default function LeadsPage() {
     const address = [l.address, l.pinCode].filter(Boolean).join(' – ');
     const subtotal = items.reduce((sum, it) => sum + it.unitPrice * it.qty, 0);
     const discount = l.discount != null ? Number(l.discount) : 0;
-    const totalAmount = Math.max(subtotal - discount, 0);
+    const shipping = l.shippingCharges != null ? Number(l.shippingCharges) : 0;
+    const totalAmount = Math.max(subtotal - discount, 0) + shipping;
     const paymentType = (l.paymentType || 'COD') as PaymentType;
     const advancePaid = paymentType === 'PARTIAL' && l.paymentAmount != null ? Number(l.paymentAmount) : 0;
 
@@ -595,6 +599,7 @@ export default function LeadsPage() {
       ...(discount > 0
         ? { subtotal, discountAmount: discount, discountLabel: 'Discount' }
         : {}),
+      ...(shipping > 0 ? { shippingCharges: shipping } : {}),
       totalAmount,
       ...(advancePaid > 0 ? { advancePaid } : {}),
     });
@@ -711,6 +716,7 @@ export default function LeadsPage() {
       'Payment Received': l.paymentReceived ? 'Yes' : 'No',
       'Payment Amount': l.paymentAmount != null ? l.paymentAmount : '',
       Discount: l.discount != null ? l.discount : '',
+      'Shipping Charges': l.shippingCharges != null ? l.shippingCharges : '',
       'Payment Mode': l.paymentMode || '',
       Age: l.age || '',
       Gender: l.gender || '',
@@ -833,6 +839,10 @@ export default function LeadsPage() {
           />
         </div>
         <div className={s.formGroup}><label>Discount (₹)</label><input type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
+      </div>
+      <div className={s.grid2}>
+        <div className={s.formGroup}><label>Shipping Charges (₹)</label><input type="number" min={0} step="0.01" value={form.shippingCharges} onChange={(e) => setForm({ ...form, shippingCharges: e.target.value })} className={s.formInput} placeholder="e.g. 60 (leave blank for free)" /></div>
+        <div className={s.formGroup} />
       </div>
       {(form.paymentReceived || form.paymentType !== 'COD') && (
         <div className={s.grid2}>
