@@ -6,7 +6,7 @@ import { fetchCurrentUser } from '@/lib/current-user';
 import { DailyReport, DailyReportTotals, DailyReportsResponse } from '@/types';
 import { SkeletonList } from '@/components/ui/Loader';
 import { exportToExcel } from '@/lib/exportExcel';
-import { generateDailyReport } from '@/lib/generateDailyReport';
+import { generateDailyReportImage } from '@/lib/generateDailyReportImage';
 import s from '../leads/leads.module.scss';
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -157,8 +157,8 @@ export default function DailyReportPage() {
     }
   };
 
-  const handleDownloadPdf = () => {
-    generateDailyReport({
+  const handleDownloadImage = () => {
+    generateDailyReportImage({
       rows,
       totals,
       dateFrom: dateFrom || undefined,
@@ -204,8 +204,8 @@ export default function DailyReportPage() {
           <button onClick={handleExportExcel} className={s.exportBtn} disabled={rows.length === 0}>
             Export Excel
           </button>
-          <button onClick={handleDownloadPdf} className={s.exportBtn} disabled={rows.length === 0}>
-            Download PDF
+          <button onClick={handleDownloadImage} className={s.exportBtn} disabled={rows.length === 0}>
+            Download Image
           </button>
           {canManage && (
             <button onClick={openCreate} className={s.addBtn}>+ Add Day</button>
