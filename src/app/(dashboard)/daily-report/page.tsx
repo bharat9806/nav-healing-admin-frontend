@@ -302,16 +302,17 @@ export default function DailyReportPage() {
                   placeholder="e.g. 2314"
                 />
               </div>
-              <div className={s.formGroup}>
-                <label>Notes</label>
-                <input
-                  type="text"
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  className={s.formInput}
-                  placeholder="Optional"
-                />
-              </div>
+              <div className={s.formGroup} />
+            </div>
+            <div className={s.formGroup}>
+              <label>Notes</label>
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                rows={3}
+                className={s.formTextarea}
+                placeholder="Optional — e.g. Dr Krishan 5 kit order, 2 RTOs came back"
+              />
             </div>
             <div className={s.formActions}>
               <button
@@ -379,7 +380,9 @@ export default function DailyReportPage() {
                   <div className={s.mobileCardHeader}>
                     <div>
                       <p className={s.leadName}>{formatDate(r.reportDate)}</p>
-                      {r.notes && <p className={s.leadDesc}>{r.notes}</p>}
+                      {r.notes && (
+                        <p className={s.leadDesc} style={{ whiteSpace: 'pre-wrap' }}>{r.notes}</p>
+                      )}
                     </div>
                     <span className={s.reminderValue}>{formatMoney(r.totalSale)}</span>
                   </div>
@@ -432,7 +435,9 @@ export default function DailyReportPage() {
                     <span className={s.leadName}>{formatMoney(r.totalSale)}</span>
                   </td>
                   <td className={`${s.td} ${s.hideMd}`}>
-                    <span className={s.cellText}>{r.notes || '-'}</span>
+                    <span className={s.cellText} style={{ whiteSpace: 'pre-wrap' }}>
+                      {r.notes || '-'}
+                    </span>
                   </td>
                   <td className={`${s.td} ${s.tdRight}`}>
                     {canManage && (

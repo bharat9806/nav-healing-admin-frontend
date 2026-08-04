@@ -25,6 +25,8 @@ const MARGIN = 40;
 const CONTENT_W = WIDTH - MARGIN * 2;
 const ROW_H = 38;
 const HEAD_H = 44;
+const LINE_H = 19;   // line spacing inside a wrapped Notes cell
+const CELL_PAD = 12;
 
 export interface DailyReportImageOptions {
   rows: DailyReport[];
@@ -64,6 +66,33 @@ function fit(ctx: CanvasRenderingContext2D, text: string, maxW: number): string 
   return `${out}...`;
 }
 
+/** Greedy word wrap; falls back to a hard break for words longer than the column. */
+function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const out: string[] = [];
+  for (const paragraph of text.split(/\r?\n/)) {
+    let line = '';
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const next = line ? `${line} ${word}` : word;
+      if (ctx.measureText(next).width <= maxW) {
+        line = next;
+        continue;
+      }
+      if (line) out.push(line);
+      // A single word wider than the column gets broken across lines.
+      let chunk = word;
+      while (ctx.measureText(chunk).width > maxW && chunk.length > 1) {
+        let cut = chunk.length - 1;
+        while (cut > 1 && ctx.measureText(chunk.slice(0, cut)).width > maxW) cut--;
+        out.push(chunk.slice(0, cut));
+        chunk = chunk.slice(cut);
+      }
+      line = chunk;
+    }
+    out.push(line);
+  }
+  return out.length ? out : [''];
+}
+
 function drawCell(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -71,7 +100,7 @@ function drawCell(
   w: number,
   centreY: number,
   align: Align,
-  pad = 12,
+  pad = CELL_PAD,
 ) {
   const safe = fit(ctx, text, w - pad * 2);
   ctx.textBaseline = 'middle';
@@ -97,7 +126,7 @@ export function generateDailyReportImage({
   const headers = ['Date', 'Total Calls', 'Verified Orders', '10% Off Orders', 'Total Sale (Rs.)'];
   const aligns: Align[] = ['center', 'center', 'center', 'center', 'right'];
   const fractions = hasNotes
-    ? [0.16, 0.13, 0.16, 0.15, 0.17, 0.23]
+    ? [0.15, 0.12, 0.155, 0.15, 0.155, 0.27]
     : [0.22, 0.17, 0.21, 0.20, 0.20];
   if (hasNotes) {
     headers.push('Notes');
@@ -108,17 +137,30 @@ export function generateDailyReportImage({
   const xs: number[] = [];
   widths.reduce((acc, w) => { xs.push(acc); return acc + w; }, MARGIN);
 
-  // Body rows + the TOTAL row.
-  const bodyCount = sorted.length + 1;
-  const tableTop = 210;
-  const tableH = HEAD_H + ROW_H * bodyCount;
-  const height = tableTop + tableH + 78;
-
   const canvas = document.createElement('canvas');
-  canvas.width = WIDTH * SCALE;
-  canvas.height = height * SCALE;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+
+  // Measure first: notes wrap onto as many lines as they need, so each row's
+  // height (and therefore the canvas height) depends on the wrapped text.
+  ctx.font = `15px ${FONT}`;
+  const notesW = hasNotes ? widths[5] - CELL_PAD * 2 : 0;
+  const noteLines = sorted.map((r) =>
+    hasNotes ? wrapLines(ctx, r.notes || '-', notesW) : [''],
+  );
+  const rowHeights = noteLines.map((lines) =>
+    Math.max(ROW_H, lines.length * LINE_H + CELL_PAD * 2),
+  );
+
+  // Body rows + the TOTAL row.
+  const tableTop = 210;
+  const bodyH = rowHeights.reduce((a, h) => a + h, 0);
+  const tableH = HEAD_H + bodyH + ROW_H;
+  const height = tableTop + tableH + 78;
+
+  // Setting the size resets the context, so do it before any drawing.
+  canvas.width = WIDTH * SCALE;
+  canvas.height = height * SCALE;
   ctx.scale(SCALE, SCALE);
 
   // Opaque background — a transparent PNG looks broken when pasted into chat.
@@ -210,12 +252,16 @@ export function generateDailyReportImage({
     drawCell(ctx, h, xs[i], widths[i], tableTop + HEAD_H / 2, 'center');
   });
 
-  // Body
+  // Body — row tops accumulate because rows can be taller than ROW_H.
+  const rowTops: number[] = [];
+  rowHeights.reduce((acc, h) => { rowTops.push(acc); return acc + h; }, tableTop + HEAD_H);
+
   sorted.forEach((r, i) => {
-    const rowY = tableTop + HEAD_H + ROW_H * i;
+    const rowY = rowTops[i];
+    const rowH = rowHeights[i];
     if (i % 2 === 1) {
       ctx.fillStyle = ZEBRA;
-      ctx.fillRect(MARGIN, rowY, CONTENT_W, ROW_H);
+      ctx.fillRect(MARGIN, rowY, CONTENT_W, rowH);
     }
 
     const values = [
@@ -225,17 +271,29 @@ export function generateDailyReportImage({
       String(r.tenPercentOffOrders),
       money(r.totalSale),
     ];
-    if (hasNotes) values.push(r.notes || '-');
 
     values.forEach((v, c) => {
       ctx.fillStyle = INK;
       ctx.font = c === 4 ? `bold 15px ${FONT}` : `15px ${FONT}`;
-      drawCell(ctx, v, xs[c], widths[c], rowY + ROW_H / 2, aligns[c]);
+      drawCell(ctx, v, xs[c], widths[c], rowY + rowH / 2, aligns[c]);
     });
+
+    // Notes: every wrapped line, vertically centred as a block.
+    if (hasNotes) {
+      const lines = noteLines[i];
+      ctx.fillStyle = INK;
+      ctx.font = `15px ${FONT}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const blockTop = rowY + rowH / 2 - ((lines.length - 1) * LINE_H) / 2;
+      lines.forEach((line, li) => {
+        ctx.fillText(line, xs[5] + CELL_PAD, blockTop + li * LINE_H);
+      });
+    }
   });
 
   // TOTAL row
-  const totalY = tableTop + HEAD_H + ROW_H * sorted.length;
+  const totalY = tableTop + HEAD_H + bodyH;
   ctx.fillStyle = GREEN_PALE;
   ctx.fillRect(MARGIN, totalY, CONTENT_W, ROW_H);
 
@@ -257,13 +315,12 @@ export function generateDailyReportImage({
   // Grid lines
   ctx.strokeStyle = BORDER;
   ctx.lineWidth = 1;
-  for (let r = 0; r <= bodyCount; r++) {
-    const ly = tableTop + HEAD_H + ROW_H * r;
+  [...rowTops, totalY, totalY + ROW_H].forEach((ly) => {
     ctx.beginPath();
     ctx.moveTo(MARGIN, ly);
     ctx.lineTo(WIDTH - MARGIN, ly);
     ctx.stroke();
-  }
+  });
   xs.slice(1).forEach((x) => {
     ctx.beginPath();
     ctx.moveTo(x, tableTop);
