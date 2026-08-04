@@ -593,8 +593,11 @@ export default function LeadsPage() {
       customerPhone: [l.phone, l.alternatePhone].filter(Boolean).join(' / ') || undefined,
       customerEmail: l.email,
       address: address || undefined,
-      // Prepaid shows the actual mode (e.g. UPI); partial and COD get explicit labels.
-      paymentMethod: paymentType === 'PREPAID' ? (l.paymentMode || 'PREPAID') : paymentType,
+      // Prepaid is labelled as such, with the actual mode in brackets (e.g. "Prepaid (UPI)");
+      // partial and COD get their own explicit labels from the generator.
+      paymentMethod: paymentType === 'PREPAID'
+        ? (l.paymentMode ? `Prepaid (${l.paymentMode})` : 'Prepaid')
+        : paymentType,
       items,
       ...(discount > 0
         ? { subtotal, discountAmount: discount, discountLabel: 'Discount' }
