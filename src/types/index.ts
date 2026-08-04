@@ -406,3 +406,30 @@ export interface WorkLogStats {
     minutes: number;
   }>;
 }
+
+// ─── DAILY REPORT ────────────────────────────────────────────────
+// Hand-entered end-of-day summary of ad enquiries, orders and sales.
+export interface DailyReport {
+  id: number;
+  /** ISO date string; the column is a DATE so treat it as date-only. */
+  reportDate: string;
+  totalCalls: number;
+  verifiedOrders: number;
+  tenPercentOffOrders: number;
+  totalSale: number;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DailyReportTotals {
+  totalCalls: number;
+  verifiedOrders: number;
+  tenPercentOffOrders: number;
+  totalSale: number;
+}
+
+export interface DailyReportsResponse {
+  data: DailyReport[];
+  meta: DailyReportTotals & { count: number };
+}

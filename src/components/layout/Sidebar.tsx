@@ -33,6 +33,7 @@ const allNavItems = [
   { label: 'Sales', href: '/sales', icon: <SalesIcon />, permission: 'canManageSales' },
   { label: 'Website Orders', href: '/website-orders', icon: <OrdersIcon />, permission: 'canManageWebsiteOrders' },
   { label: 'Expenses', href: '/expenses', icon: <ExpensesIcon />, permission: 'canManageExpenses' },
+  { label: 'Daily Report', href: '/daily-report', icon: <DailyReportIcon />, permission: 'canViewDashboard' },
   { label: 'Work Log', href: '/work-log', icon: <WorkLogIcon /> },
   { label: 'Users', href: '/users', icon: <UsersIcon />, permission: 'canManageUsers' },
 ] satisfies Array<{
@@ -130,6 +131,19 @@ function DashboardIcon() {
       <rect x="14" y="3" width="7" height="7" rx="1.5" />
       <rect x="3" y="14" width="7" height="7" rx="1.5" />
       <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    </IconShell>
+  );
+}
+
+function DailyReportIcon() {
+  return (
+    <IconShell>
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="M3.5 9h17" />
+      <path d="M8 4v3" />
+      <path d="M16 4v3" />
+      <path d="M7.5 13h4" />
+      <path d="M7.5 16.5h7" />
     </IconShell>
   );
 }
