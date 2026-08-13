@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
+import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/generateOrderInvoice';
 import { Lead, Product, LeadStatus, DeliveryStatus, PaymentMode, PaymentType, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -304,6 +304,16 @@ export default function LeadsPage() {
   const toggleCol = (col: keyof typeof visibleCols) =>
     setVisibleCols(p => ({ ...p, [col]: !p[col] }));
 
+  // Leads ticked for bulk invoice download. Ids only, so the set survives a
+  // refetch of the same page without holding stale lead objects.
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const toggleSelected = (id: number) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+
   // Restore the user's saved column choices after mount (avoids SSR mismatch),
   // then persist any change so the selection sticks across reloads.
   useEffect(() => {
@@ -465,6 +475,22 @@ export default function LeadsPage() {
   // Search and status filtering is now done server-side
   const filtered = leads;
 
+  // Selection is scoped to what's on screen, so drop it whenever the page or
+  // filters change and different leads come back.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [statusFilter, deliveryFilter, paymentFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, page, pageSize, sortField, sortOrder]);
+
+  const selectedCount = selectedIds.size;
+  const allOnPageSelected = filtered.length > 0 && filtered.every((l) => selectedIds.has(l.id));
+  const toggleSelectAll = () =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) filtered.forEach((l) => next.delete(l.id));
+      else filtered.forEach((l) => next.add(l.id));
+      return next;
+    });
+
   const goToPage = (p: number) => {
     setPage(p);
   };
@@ -555,9 +581,9 @@ export default function LeadsPage() {
     } finally { setSaving(false); }
   };
 
-  // Regenerate the tax invoice for a lead's order. Reuses the same
-  // generator as website orders so the PDF matches the originals.
-  const downloadInvoice = (l: Lead) => {
+  // Build the invoice payload for a lead. Returns null when the lead has no
+  // products, since there is nothing to bill for.
+  const buildInvoiceData = (l: Lead): OrderInvoiceData | null => {
     const items = (l.items || [])
       .filter((i) => i.product)
       .map((i) => ({
@@ -566,10 +592,7 @@ export default function LeadsPage() {
         unitPrice: Number(i.product!.price),
       }));
 
-    if (items.length === 0) {
-      setError(`"${l.name}" has no products, so an invoice can't be generated.`);
-      return;
-    }
+    if (items.length === 0) return null;
 
     // Prefer an invoice number already recorded in notes (e.g. NNH-2026-001);
     // otherwise derive one from the order year and lead id.
@@ -586,7 +609,7 @@ export default function LeadsPage() {
     const paymentType = (l.paymentType || 'COD') as PaymentType;
     const advancePaid = paymentType === 'PARTIAL' && l.paymentAmount != null ? Number(l.paymentAmount) : 0;
 
-    generateOrderInvoice({
+    return {
       invoiceNumber,
       date,
       customerName: l.name,
@@ -605,7 +628,47 @@ export default function LeadsPage() {
       ...(shipping > 0 ? { shippingCharges: shipping } : {}),
       totalAmount,
       ...(advancePaid > 0 ? { advancePaid } : {}),
+    };
+  };
+
+  // Regenerate the tax invoice for a lead's order. Reuses the same
+  // generator as website orders so the PDF matches the originals.
+  const downloadInvoice = (l: Lead) => {
+    const data = buildInvoiceData(l);
+    if (!data) {
+      setError(`"${l.name}" has no products, so an invoice can't be generated.`);
+      return;
+    }
+    generateOrderInvoice(data);
+  };
+
+  // ── Bulk invoice download ──────────────────────────────────────
+  // Every selected lead becomes one page of a single PDF. Leads without
+  // products are skipped and named back to the user.
+  const downloadSelectedInvoices = () => {
+    const chosen = filtered.filter((l) => selectedIds.has(l.id));
+    if (chosen.length === 0) return;
+
+    const skipped: string[] = [];
+    const invoices: OrderInvoiceData[] = [];
+    chosen.forEach((l) => {
+      const data = buildInvoiceData(l);
+      if (data) invoices.push(data);
+      else skipped.push(l.name);
     });
+
+    if (invoices.length === 0) {
+      setError('None of the selected leads have products, so no invoice could be generated.');
+      return;
+    }
+
+    generateBulkOrderInvoices(invoices, `Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`);
+    setError(
+      skipped.length > 0
+        ? `Downloaded ${invoices.length} invoice${invoices.length === 1 ? '' : 's'}. Skipped (no products): ${skipped.join(', ')}`
+        : '',
+    );
+    setSelectedIds(new Set());
   };
 
   // ── Shipment tracking (Shipmozo) ───────────────────────────────
@@ -1113,6 +1176,14 @@ export default function LeadsPage() {
         </div>
       )}
 
+      {/* Notices from list-level actions (e.g. invoices skipped for leads with no products) */}
+      {!showInlineForm && error && (
+        <div className={s.noticeBar}>
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')} className={s.noticeClose} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+
       {!showInlineForm && (loading ? (
         <SkeletonList rows={5} />
       ) : filtered.length === 0 ? (
@@ -1121,16 +1192,40 @@ export default function LeadsPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          {selectedCount > 0 && (
+            <div className={s.selectionBar}>
+              <span className={s.selectionCount}>
+                {selectedCount} lead{selectedCount === 1 ? '' : 's'} selected
+              </span>
+              <div className={s.selectionActions}>
+                <button type="button" onClick={downloadSelectedInvoices} className={s.bulkInvoiceBtn}>
+                  ↓ Download Invoices
+                </button>
+                <button type="button" onClick={() => setSelectedIds(new Set())} className={s.selectionClearBtn}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
           <div className={s.mobileList}>
             {filtered.map((l) => {
               const reminderState = getReminderState(l);
               return (
-                <article key={`mobile-${l.id}`} className={`${s.mobileCard} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
+                <article key={`mobile-${l.id}`} className={`${s.mobileCard} ${selectedIds.has(l.id) ? s.rowSelected : ''} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
                   <div className={s.mobileCardTop}>
                     <div className={s.mobileCardHeader}>
-                      <div>
-                        <p className={s.leadName}>{l.name}</p>
-                        {l.description && <p className={s.leadDesc}>{l.description}</p>}
+                      <div className={s.mobileNameWrap}>
+                        <input
+                          type="checkbox"
+                          className={s.rowCheckbox}
+                          checked={selectedIds.has(l.id)}
+                          onChange={() => toggleSelected(l.id)}
+                          aria-label={`Select ${l.name}`}
+                        />
+                        <div>
+                          <p className={s.leadName}>{l.name}</p>
+                          {l.description && <p className={s.leadDesc}>{l.description}</p>}
+                        </div>
                       </div>
                       <select
                         value={l.status}
@@ -1260,6 +1355,16 @@ export default function LeadsPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
+                <th className={`${s.th} ${s.thSelect}`}>
+                  <input
+                    type="checkbox"
+                    className={s.rowCheckbox}
+                    checked={allOnPageSelected}
+                    onChange={toggleSelectAll}
+                    aria-label="Select all leads on this page"
+                    title="Select all on this page"
+                  />
+                </th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('name')}>Name{sortField === 'name' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 {visibleCols.phone    && <th className={s.th}>Phone</th>}
                 {visibleCols.altPhone && <th className={s.th}>Alt. Number</th>}
@@ -1281,7 +1386,16 @@ export default function LeadsPage() {
               {filtered.map((l) => {
                 const reminderState = getReminderState(l);
                 return (
-                <tr key={l.id} className={`${s.tr} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
+                <tr key={l.id} className={`${s.tr} ${selectedIds.has(l.id) ? s.rowSelected : ''} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
+                  <td className={`${s.td} ${s.tdSelect}`}>
+                    <input
+                      type="checkbox"
+                      className={s.rowCheckbox}
+                      checked={selectedIds.has(l.id)}
+                      onChange={() => toggleSelected(l.id)}
+                      aria-label={`Select ${l.name}`}
+                    />
+                  </td>
                   <td className={s.td}>
                     <p className={s.leadName}>{l.name}</p>
                     {l.description && <p className={s.leadDesc}>{l.description}</p>}

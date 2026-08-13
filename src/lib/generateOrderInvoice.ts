@@ -127,8 +127,10 @@ function numberToWords(num: number): string {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export function generateOrderInvoice(data: OrderInvoiceData): void {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+// Draws one complete invoice onto the *current* page of `doc`. Kept separate
+// from the save step so several invoices can share a single document (bulk
+// download) without duplicating any of the layout code.
+function renderInvoice(doc: jsPDF, data: OrderInvoiceData): void {
   const pageW = doc.internal.pageSize.getWidth();   // 210
   const pageH = doc.internal.pageSize.getHeight();  // 297
   const mg = 14;
@@ -440,8 +442,29 @@ export function generateOrderInvoice(data: OrderInvoiceData): void {
     `${MFG_LIC} | Manufactured by ${MANUFACTURER}`,
     pageW / 2, footY + 19, { align: 'center' },
   );
+}
 
-  // ── Save ───────────────────────────────────────────────────────────────────
+const newDoc = () => new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+// Single invoice — one page, saved immediately.
+export function generateOrderInvoice(data: OrderInvoiceData): void {
+  const doc = newDoc();
+  renderInvoice(doc, data);
   const safe = data.customerName.replace(/[^a-z0-9]/gi, '_');
   doc.save(`Invoice_${safe}_${data.invoiceNumber}.pdf`);
+}
+
+// Bulk — every invoice becomes one page of a single PDF, in the order given.
+export function generateBulkOrderInvoices(list: OrderInvoiceData[], fileName?: string): void {
+  if (list.length === 0) return;
+  if (list.length === 1) { generateOrderInvoice(list[0]); return; }
+
+  const doc = newDoc();
+  list.forEach((data, i) => {
+    if (i > 0) doc.addPage();
+    renderInvoice(doc, data);
+  });
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  doc.save(fileName ?? `Invoices_${list.length}_${stamp}.pdf`);
 }
