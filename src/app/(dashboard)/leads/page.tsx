@@ -481,6 +481,12 @@ export default function LeadsPage() {
     setSelectedIds(new Set());
   }, [statusFilter, deliveryFilter, paymentFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, page, pageSize, sortField, sortOrder]);
 
+  // Invoices bundle customer contact details and order values, so downloading
+  // them (single or bulk) is its own permission rather than being open to
+  // everyone with leads access. SUPER_ADMIN is always allowed.
+  const canDownloadInvoices =
+    currentUser?.role === 'SUPER_ADMIN' || currentUser?.canDownloadLeadInvoices === true;
+
   const selectedCount = selectedIds.size;
   const allOnPageSelected = filtered.length > 0 && filtered.every((l) => selectedIds.has(l.id));
   const toggleSelectAll = () =>
@@ -634,6 +640,7 @@ export default function LeadsPage() {
   // Regenerate the tax invoice for a lead's order. Reuses the same
   // generator as website orders so the PDF matches the originals.
   const downloadInvoice = (l: Lead) => {
+    if (!canDownloadInvoices) return;
     const data = buildInvoiceData(l);
     if (!data) {
       setError(`"${l.name}" has no products, so an invoice can't be generated.`);
@@ -646,6 +653,7 @@ export default function LeadsPage() {
   // Every selected lead becomes one page of a single PDF. Leads without
   // products are skipped and named back to the user.
   const downloadSelectedInvoices = () => {
+    if (!canDownloadInvoices) return;
     const chosen = filtered.filter((l) => selectedIds.has(l.id));
     if (chosen.length === 0) return;
 
@@ -1192,7 +1200,7 @@ export default function LeadsPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
-          {selectedCount > 0 && (
+          {canDownloadInvoices && selectedCount > 0 && (
             <div className={s.selectionBar}>
               <span className={s.selectionCount}>
                 {selectedCount} lead{selectedCount === 1 ? '' : 's'} selected
@@ -1215,13 +1223,15 @@ export default function LeadsPage() {
                   <div className={s.mobileCardTop}>
                     <div className={s.mobileCardHeader}>
                       <div className={s.mobileNameWrap}>
-                        <input
-                          type="checkbox"
-                          className={s.rowCheckbox}
-                          checked={selectedIds.has(l.id)}
-                          onChange={() => toggleSelected(l.id)}
-                          aria-label={`Select ${l.name}`}
-                        />
+                        {canDownloadInvoices && (
+                          <input
+                            type="checkbox"
+                            className={s.rowCheckbox}
+                            checked={selectedIds.has(l.id)}
+                            onChange={() => toggleSelected(l.id)}
+                            aria-label={`Select ${l.name}`}
+                          />
+                        )}
                         <div>
                           <p className={s.leadName}>{l.name}</p>
                           {l.description && <p className={s.leadDesc}>{l.description}</p>}
@@ -1302,7 +1312,7 @@ export default function LeadsPage() {
                   </div>
 
                   <div className={s.mobileActions}>
-                    {l.items?.length > 0 && (
+                    {canDownloadInvoices && l.items?.length > 0 && (
                       <button onClick={() => downloadInvoice(l)} className={s.mobileInvoiceBtn}>↓ Invoice</button>
                     )}
                     {l.trackingNumber && (
@@ -1355,16 +1365,18 @@ export default function LeadsPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
-                <th className={`${s.th} ${s.thSelect}`}>
-                  <input
-                    type="checkbox"
-                    className={s.rowCheckbox}
-                    checked={allOnPageSelected}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all leads on this page"
-                    title="Select all on this page"
-                  />
-                </th>
+                {canDownloadInvoices && (
+                  <th className={`${s.th} ${s.thSelect}`}>
+                    <input
+                      type="checkbox"
+                      className={s.rowCheckbox}
+                      checked={allOnPageSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all leads on this page"
+                      title="Select all on this page"
+                    />
+                  </th>
+                )}
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('name')}>Name{sortField === 'name' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 {visibleCols.phone    && <th className={s.th}>Phone</th>}
                 {visibleCols.altPhone && <th className={s.th}>Alt. Number</th>}
@@ -1387,15 +1399,17 @@ export default function LeadsPage() {
                 const reminderState = getReminderState(l);
                 return (
                 <tr key={l.id} className={`${s.tr} ${selectedIds.has(l.id) ? s.rowSelected : ''} ${reminderState === 'overdue' ? s.rowOverdue : reminderState === 'today' ? s.rowDueToday : ''}`}>
-                  <td className={`${s.td} ${s.tdSelect}`}>
-                    <input
-                      type="checkbox"
-                      className={s.rowCheckbox}
-                      checked={selectedIds.has(l.id)}
-                      onChange={() => toggleSelected(l.id)}
-                      aria-label={`Select ${l.name}`}
-                    />
-                  </td>
+                  {canDownloadInvoices && (
+                    <td className={`${s.td} ${s.tdSelect}`}>
+                      <input
+                        type="checkbox"
+                        className={s.rowCheckbox}
+                        checked={selectedIds.has(l.id)}
+                        onChange={() => toggleSelected(l.id)}
+                        aria-label={`Select ${l.name}`}
+                      />
+                    </td>
+                  )}
                   <td className={s.td}>
                     <p className={s.leadName}>{l.name}</p>
                     {l.description && <p className={s.leadDesc}>{l.description}</p>}
@@ -1491,7 +1505,7 @@ export default function LeadsPage() {
           className={s.actionMenu}
           style={{ top: actionMenu.y, left: actionMenu.x }}
         >
-          {actionMenu.lead.items?.length > 0 && (
+          {canDownloadInvoices && actionMenu.lead.items?.length > 0 && (
             <button
               type="button"
               className={s.actionMenuItem}

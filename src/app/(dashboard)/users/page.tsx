@@ -38,6 +38,8 @@ interface EditForm {
   canManageExpenses: boolean;
   canExportExpenses: boolean;
   canEditSalePrice: boolean;
+  canDownloadLeadInvoices: boolean;
+  canDownloadSalesInvoices: boolean;
   canViewDashboard: boolean;
 }
 
@@ -64,6 +66,8 @@ interface CreateForm {
   canManageExpenses: boolean;
   canExportExpenses: boolean;
   canEditSalePrice: boolean;
+  canDownloadLeadInvoices: boolean;
+  canDownloadSalesInvoices: boolean;
   canViewDashboard: boolean;
 }
 
@@ -120,6 +124,18 @@ const ACTION_PERMISSIONS = [
     dependsOn: 'canManageSales',
     hint: 'Can change a line item name & price on a sale',
   },
+  {
+    key: 'canDownloadLeadInvoices',
+    label: 'Download Lead Invoices',
+    dependsOn: 'canManageLeads',
+    hint: 'Can download single & bulk tax invoices from Leads',
+  },
+  {
+    key: 'canDownloadSalesInvoices',
+    label: 'Download Sales Invoices',
+    dependsOn: 'canManageSales',
+    hint: 'Can download single & bulk tax invoices from Sales',
+  },
 ] as const;
 
 // All permissions that hang off a page permission (exports + actions).
@@ -156,6 +172,8 @@ const initialEditForm = (): EditForm => ({
   canManageExpenses: true,
   canExportExpenses: true,
   canEditSalePrice: false,
+  canDownloadLeadInvoices: false,
+  canDownloadSalesInvoices: false,
   canViewDashboard: true,
 });
 
@@ -182,6 +200,8 @@ const initialCreateForm = (): CreateForm => ({
   canManageExpenses: true,
   canExportExpenses: false,
   canEditSalePrice: false,
+  canDownloadLeadInvoices: false,
+  canDownloadSalesInvoices: false,
   canViewDashboard: true,
 });
 
@@ -372,6 +392,8 @@ export default function UsersPage() {
       canManageExpenses: user.canManageExpenses,
       canExportExpenses: user.canExportExpenses,
       canEditSalePrice: user.canEditSalePrice,
+      canDownloadLeadInvoices: user.canDownloadLeadInvoices,
+      canDownloadSalesInvoices: user.canDownloadSalesInvoices,
       canViewDashboard: user.canViewDashboard,
     });
     setFormError('');

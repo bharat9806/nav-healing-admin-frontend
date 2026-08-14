@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
+import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/generateOrderInvoice';
 import { Sale, SaleItem, SaleProductsResponse, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -314,6 +314,31 @@ export default function SalesPage() {
   const canOverridePrice =
     currentUser?.role === 'SUPER_ADMIN' || currentUser?.canEditSalePrice === true;
 
+  // Invoices carry patient names and amounts, so downloading them (single or
+  // bulk) is its own permission. The backend enforces the same flag on the
+  // /sales/invoices endpoint — this only hides the UI.
+  const canDownloadInvoices =
+    currentUser?.role === 'SUPER_ADMIN' || currentUser?.canDownloadSalesInvoices === true;
+
+  // Sales ticked for bulk invoice download.
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const toggleSelected = (id: number) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const selectedCount = selectedIds.size;
+  const allOnPageSelected = sales.length > 0 && sales.every((sale) => selectedIds.has(sale.id));
+  const toggleSelectAll = () =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allOnPageSelected) sales.forEach((sale) => next.delete(sale.id));
+      else sales.forEach((sale) => next.add(sale.id));
+      return next;
+    });
+
   const therapyPrice = Number(form.therapyPrice || 0);
   const discount = Number(form.discount || 0);
   const validItems = items.filter((item) => item.productId > 0 && item.product);
@@ -380,6 +405,87 @@ export default function SalesPage() {
   useEffect(() => {
     fetchSales(page);
   }, [paymentModeFilter, statusFilter, dateFrom, dateTo, page, pageSize, sortField, sortOrder]);
+
+  // Selection only covers what's on screen, so drop it when the rows change.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [paymentModeFilter, statusFilter, dateFrom, dateTo, page, pageSize, sortField, sortOrder]);
+
+  // ── Invoices ───────────────────────────────────────────────────
+  // Same TAX-INVOICE format as leads and website orders. Therapy /
+  // consultation becomes a line item so it's taxed and shown like a product.
+  const buildSaleInvoiceData = (sale: Sale): OrderInvoiceData | null => {
+    const lineItems = getSaleItems(sale)
+      .filter((item) => item.productId > 0 && item.product)
+      .map((item) => ({
+        name: itemName(item),
+        qty: item.quantity,
+        unitPrice: itemUnitPrice(item),
+      }));
+
+    const therapy = Number(sale.therapyPrice || 0);
+    if (therapy > 0) {
+      lineItems.push({ name: 'Therapy / Consultation', qty: 1, unitPrice: therapy });
+    }
+    if (lineItems.length === 0) return null;
+
+    const saleDiscount = Number(sale.discount || 0);
+    const subtotal = lineItems.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
+    const year = new Date(sale.date).getFullYear();
+
+    return {
+      invoiceNumber: `NNH-${year}-${String(sale.id).padStart(3, '0')}`,
+      date: sale.date,
+      customerName: sale.patientName,
+      paymentMethod: sale.paymentMode,
+      items: lineItems,
+      subtotal,
+      ...(saleDiscount > 0 ? { discountAmount: saleDiscount, discountLabel: 'Discount' } : {}),
+      totalAmount: Number(sale.amount || 0),
+    };
+  };
+
+  // The list endpoint returns only an item count, so fetch the full selected
+  // sales (with line items) in one batch before building the PDF.
+  const downloadSelectedInvoices = async () => {
+    if (!canDownloadInvoices || selectedCount === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    setError('');
+    try {
+      const ids = [...selectedIds].join(',');
+      const res = await api.get<Sale[]>(`/sales/invoices?ids=${ids}`);
+
+      const skipped: string[] = [];
+      const invoices: OrderInvoiceData[] = [];
+      (res.data || []).forEach((sale) => {
+        const data = buildSaleInvoiceData(sale);
+        if (data) invoices.push(data);
+        else skipped.push(sale.patientName);
+      });
+
+      if (invoices.length === 0) {
+        setError('None of the selected sales have products or a therapy charge, so no invoice could be generated.');
+        return;
+      }
+
+      generateBulkOrderInvoices(
+        invoices,
+        `Sales_Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`,
+      );
+      if (skipped.length > 0) {
+        setError(`Downloaded ${invoices.length} invoice${invoices.length === 1 ? '' : 's'}. Skipped (nothing to bill): ${skipped.join(', ')}`);
+      }
+      setSelectedIds(new Set());
+    } catch (err) {
+      setError(
+        isAxiosError(err) && err.response?.status === 403
+          ? 'You do not have permission to download invoices.'
+          : 'Could not load the selected sales. Please try again.',
+      );
+    } finally {
+      setBulkBusy(false);
+    }
+  };
 
   const goToPage = (nextPage: number) => {
     setPage(nextPage);
@@ -894,6 +1000,7 @@ export default function SalesPage() {
 
             <div className={s.formActions}>
               <button type="button" onClick={cancelForm} className={s.cancelBtn}>Cancel</button>
+              {canDownloadInvoices && (
               <button
                 type="button"
                 className={s.invoiceBtn}
@@ -928,6 +1035,7 @@ export default function SalesPage() {
               >
                 ↓ Download Invoice
               </button>
+              )}
               <button
                 type="submit"
                 disabled={saving || (!validItems.length && !form.amount)}
@@ -940,6 +1048,14 @@ export default function SalesPage() {
         </div>
       )}
 
+      {/* Notices from list-level actions (e.g. bulk invoice results) */}
+      {!showInlineForm && error && (
+        <div className={s.noticeBar}>
+          <span>{error}</span>
+          <button type="button" onClick={() => setError('')} className={s.noticeClose} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+
       {!showInlineForm && (loading ? (
         <SkeletonList rows={5} />
       ) : sales.length === 0 ? (
@@ -948,16 +1064,47 @@ export default function SalesPage() {
         </div>
       ) : (
         <div className={s.tableWrap}>
+          {canDownloadInvoices && selectedCount > 0 && (
+            <div className={s.selectionBar}>
+              <span className={s.selectionCount}>
+                {selectedCount} sale{selectedCount === 1 ? '' : 's'} selected
+              </span>
+              <div className={s.selectionActions}>
+                <button
+                  type="button"
+                  onClick={downloadSelectedInvoices}
+                  disabled={bulkBusy}
+                  className={s.bulkInvoiceBtn}
+                >
+                  {bulkBusy ? 'Preparing...' : '↓ Download Invoices'}
+                </button>
+                <button type="button" onClick={() => setSelectedIds(new Set())} className={s.selectionClearBtn}>
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
           <div className={s.mobileList}>
             {sales.map((sale) => (
-              <article key={`mobile-${sale.id}`} className={s.mobileCard}>
+              <article key={`mobile-${sale.id}`} className={`${s.mobileCard} ${selectedIds.has(sale.id) ? s.rowSelected : ''}`}>
                 <div className={s.mobileCardTop}>
                   <div className={s.mobileCardHeader}>
-                    <div>
+                    <div className={s.mobileNameWrap}>
+                      {canDownloadInvoices && (
+                        <input
+                          type="checkbox"
+                          className={s.rowCheckbox}
+                          checked={selectedIds.has(sale.id)}
+                          onChange={() => toggleSelected(sale.id)}
+                          aria-label={`Select sale for ${sale.patientName}`}
+                        />
+                      )}
+                      <div>
                       <Link href={patientHistoryHref(sale.patientName)} className={s.patientLink}>
                         {sale.patientName}
                       </Link>
                       <p className={s.noteText}>{sale.date.slice(0, 10)}</p>
+                      </div>
                     </div>
                     <span className={statusClass(sale.status)}>{sale.status}</span>
                   </div>
@@ -1017,6 +1164,18 @@ export default function SalesPage() {
           <table className={s.table}>
             <thead className={s.thead}>
               <tr>
+                {canDownloadInvoices && (
+                  <th className={`${s.th} ${s.thSelect}`}>
+                    <input
+                      type="checkbox"
+                      className={s.rowCheckbox}
+                      checked={allOnPageSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all sales on this page"
+                      title="Select all on this page"
+                    />
+                  </th>
+                )}
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('date')}>Date{sortField === 'date' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('patientName')}>Patient Name{sortField === 'patientName' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 {visibleCols.products    && <th className={s.th}>Products</th>}
@@ -1030,7 +1189,18 @@ export default function SalesPage() {
             </thead>
             <tbody>
               {sales.map((sale) => (
-                <tr key={sale.id} className={s.tr}>
+                <tr key={sale.id} className={`${s.tr} ${selectedIds.has(sale.id) ? s.rowSelected : ''}`}>
+                  {canDownloadInvoices && (
+                    <td className={`${s.td} ${s.tdSelect}`}>
+                      <input
+                        type="checkbox"
+                        className={s.rowCheckbox}
+                        checked={selectedIds.has(sale.id)}
+                        onChange={() => toggleSelected(sale.id)}
+                        aria-label={`Select sale for ${sale.patientName}`}
+                      />
+                    </td>
+                  )}
                   <td className={s.td}><span className={s.cellText}>{sale.date.slice(0, 10)}</span></td>
                   <td className={s.td}>
                     <Link href={patientHistoryHref(sale.patientName)} className={s.patientLink}>

@@ -35,6 +35,8 @@ export interface User {
   canManageExpenses: boolean;
   canExportExpenses: boolean;
   canEditSalePrice: boolean;
+  canDownloadLeadInvoices: boolean;
+  canDownloadSalesInvoices: boolean;
   canViewDashboard: boolean;
   isDoctor: boolean;
   createdAt: string;
