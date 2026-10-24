@@ -40,7 +40,15 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchCurrentUser(), api.get('/dashboard/stats'), api.get('/leads?limit=5')])
+    fetchCurrentUser().then(async (me) => {
+      const [statsRes, leadsRes] = await Promise.all([
+        api.get('/dashboard/stats'),
+        me.role === 'SUPER_ADMIN' || me.canManageLeads
+          ? api.get('/leads?limit=5')
+          : Promise.resolve({ data: { data: [] } }),
+      ]);
+      return [me, statsRes, leadsRes] as const;
+    })
       .then(([me, statsRes, leadsRes]) => {
         setUser(me);
         setStats(statsRes.data);

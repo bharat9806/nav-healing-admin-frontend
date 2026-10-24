@@ -639,44 +639,48 @@ export default function LeadsPage() {
 
   // Regenerate the tax invoice for a lead's order. Reuses the same
   // generator as website orders so the PDF matches the originals.
-  const downloadInvoice = (l: Lead) => {
+  const downloadInvoice = async (l: Lead) => {
     if (!canDownloadInvoices) return;
-    const data = buildInvoiceData(l);
-    if (!data) {
-      setError(`"${l.name}" has no products, so an invoice can't be generated.`);
-      return;
+    try {
+      const { data: leads } = await api.get<Lead[]>('/leads/invoices', { params: { ids: l.id } });
+      const data = leads[0] ? buildInvoiceData(leads[0]) : null;
+      if (!data) {
+        setError(`"${l.name}" has no products, so an invoice can't be generated.`);
+        return;
+      }
+      generateOrderInvoice(data);
+    } catch {
+      setError('Unable to download invoice. Check your permissions and try again.');
     }
-    generateOrderInvoice(data);
   };
 
-  // ── Bulk invoice download ──────────────────────────────────────
-  // Every selected lead becomes one page of a single PDF. Leads without
-  // products are skipped and named back to the user.
-  const downloadSelectedInvoices = () => {
+  const downloadSelectedInvoices = async () => {
     if (!canDownloadInvoices) return;
     const chosen = filtered.filter((l) => selectedIds.has(l.id));
     if (chosen.length === 0) return;
-
-    const skipped: string[] = [];
-    const invoices: OrderInvoiceData[] = [];
-    chosen.forEach((l) => {
-      const data = buildInvoiceData(l);
-      if (data) invoices.push(data);
-      else skipped.push(l.name);
-    });
-
-    if (invoices.length === 0) {
-      setError('None of the selected leads have products, so no invoice could be generated.');
-      return;
-    }
-
-    generateBulkOrderInvoices(invoices, `Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`);
-    setError(
-      skipped.length > 0
+    try {
+      const { data: leads } = await api.get<Lead[]>('/leads/invoices', {
+        params: { ids: chosen.map((l) => l.id).join(',') },
+      });
+      const skipped: string[] = [];
+      const invoices: OrderInvoiceData[] = [];
+      leads.forEach((l) => {
+        const data = buildInvoiceData(l);
+        if (data) invoices.push(data);
+        else skipped.push(l.name);
+      });
+      if (invoices.length === 0) {
+        setError('None of the selected leads have products, so no invoice could be generated.');
+        return;
+      }
+      generateBulkOrderInvoices(invoices, `Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      setError(skipped.length > 0
         ? `Downloaded ${invoices.length} invoice${invoices.length === 1 ? '' : 's'}. Skipped (no products): ${skipped.join(', ')}`
-        : '',
-    );
-    setSelectedIds(new Set());
+        : '');
+      setSelectedIds(new Set());
+    } catch {
+      setError('Unable to download invoices. Check your permissions and try again.');
+    }
   };
 
   // ── Shipment tracking (Shipmozo) ───────────────────────────────
