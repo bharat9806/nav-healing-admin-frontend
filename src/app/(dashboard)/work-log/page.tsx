@@ -15,7 +15,7 @@ import {
 } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
-import { generateWorkLogReport } from '@/lib/generateWorkLogReport';
+import { generateWorkLogReport } from '@/lib/downloadWorkLogReport';
 import s from '../leads/leads.module.scss';
 import f from './work-log.module.scss';
 
@@ -668,7 +668,7 @@ export default function WorkLogPage() {
         staffName = names.size === 1 ? (names.values().next().value as string) : undefined;
       }
 
-      generateWorkLogReport({ logs, dateFrom: pdfFrom, dateTo: pdfTo, staffName });
+      await generateWorkLogReport({ logs, dateFrom: pdfFrom, dateTo: pdfTo, staffName });
       setShowPdfModal(false);
     } catch {
       setPdfError('Failed to build the report');

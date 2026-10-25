@@ -10,7 +10,7 @@ import Dialog from '@/components/ui/Dialog';
 import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/generateOrderInvoice';
+import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/downloadInvoice';
 import { Sale, SaleItem, SaleProductsResponse, SalesResponse, SalesSummary, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -379,6 +379,8 @@ export default function SalesPage() {
 
   const [loadError, setLoadError] = useState('');
   const listRequest = useRef(0);
+  const filtersLoaded = useRef(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const fetchSales = (nextPage = page, nextPageSize = pageSize, searchValue = search) => {
     const requestId = ++listRequest.current;
@@ -394,10 +396,16 @@ export default function SalesPage() {
     params.set('limit', String(nextPageSize));
     params.set('sortBy', sortField);
     params.set('order', sortOrder);
+    if (!filtersLoaded.current) params.set('includeFilters', 'true');
 
     api.get<SalesResponse>(`/sales?${params.toString()}`)
       .then((res) => {
         if (requestId !== listRequest.current) return;
+        if (res.data.filters) {
+          if (res.data.filters.paymentModes.length) setPaymentModes(res.data.filters.paymentModes);
+          if (res.data.filters.statuses.length) setStatuses(res.data.filters.statuses);
+          filtersLoaded.current = true;
+        }
         setSales(res.data.data);
         setSalesSummary(res.data.summary ?? null);
         setTotalPages(res.data.meta.totalPages);
@@ -410,18 +418,19 @@ export default function SalesPage() {
   };
 
   useEffect(() => {
-    fetchCurrentUser().then(setCurrentUser).catch(() => {});
-    api.get('/sales/filters')
-      .then((res) => {
-        if (res.data.paymentModes?.length) setPaymentModes(res.data.paymentModes);
-        if (res.data.statuses?.length) setStatuses(res.data.statuses);
-      })
-      .catch(() => {});
+    let active = true;
+    // Share the layout's session lookup before loading sales so startup does not open
+    // extra database connections for concurrent session checks.
+    fetchCurrentUser()
+      .then((user) => { if (active) setCurrentUser(user); })
+      .catch(() => {})
+      .finally(() => { if (active) setSessionReady(true); });
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
-    fetchSales(page);
-  }, [paymentModeFilter, statusFilter, dateFrom, dateTo, page, pageSize, sortField, sortOrder]);
+    if (sessionReady) fetchSales(page);
+  }, [sessionReady, paymentModeFilter, statusFilter, dateFrom, dateTo, page, pageSize, sortField, sortOrder]);
 
   // Selection only covers what's on screen, so drop it when the rows change.
   useEffect(() => {
@@ -485,7 +494,7 @@ export default function SalesPage() {
         return;
       }
 
-      generateBulkOrderInvoices(
+      await generateBulkOrderInvoices(
         invoices,
         `Sales_Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`,
       );
@@ -674,7 +683,7 @@ export default function SalesPage() {
       'Created At': new Date(sale.createdAt).toLocaleDateString(),
     }));
 
-    exportToExcel(rows, `sales_${new Date().toISOString().slice(0, 10)}`);
+    await exportToExcel(rows, `sales_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (
@@ -1027,7 +1036,7 @@ export default function SalesPage() {
                 type="button"
                 className={s.invoiceBtn}
                 disabled={!form.patientName.trim()}
-                onClick={() => {
+                onClick={async () => {
                   // Same TAX-INVOICE format as leads/website orders.
                   const invItems = validItems.map((it) => ({
                     name: itemName(it),
@@ -1042,7 +1051,7 @@ export default function SalesPage() {
                   const invoiceNumber = editing
                     ? `NNH-${year}-${String(editing.id).padStart(3, '0')}`
                     : `NNH-${year}-${String(Math.floor(1000 + Math.random() * 9000))}`;
-                  generateOrderInvoice({
+                  await generateOrderInvoice({
                     invoiceNumber,
                     date: form.date,
                     customerName: form.patientName,
@@ -1052,7 +1061,7 @@ export default function SalesPage() {
                     discountAmount: discount || undefined,
                     discountLabel: discount > 0 ? 'Discount' : undefined,
                     totalAmount: computedAmount,
-                  });
+                  }).catch(() => setError('Unable to download invoice. Please try again.'));
                 }}
               >
                 ↓ Download Invoice

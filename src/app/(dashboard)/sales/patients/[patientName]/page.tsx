@@ -198,7 +198,10 @@ export default function PatientHistoryPage() {
   const fieldIds = useId();
   const params = useParams<{ patientName: string }>();
   const patientParam = typeof params?.patientName === 'string' ? params.patientName : '';
-  const patientName = useMemo(() => decodeURIComponent(patientParam), [patientParam]);
+  const patientName = useMemo(() => {
+    try { return decodeURIComponent(patientParam); }
+    catch { return patientParam; }
+  }, [patientParam]);
 
   const [history, setHistory] = useState<PatientSaleHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);

@@ -9,7 +9,7 @@ import Dialog from '@/components/ui/Dialog';
 import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
-import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/generateOrderInvoice';
+import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/downloadInvoice';
 import { Lead, Product, LeadStatus, DeliveryStatus, PaymentMode, PaymentType, LeadReminderStats, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -683,7 +683,7 @@ export default function LeadsPage() {
         setError(`"${l.name}" has no products, so an invoice can't be generated.`);
         return;
       }
-      generateOrderInvoice(data);
+      await generateOrderInvoice(data);
     } catch {
       setError('Unable to download invoice. Check your permissions and try again.');
     }
@@ -708,7 +708,7 @@ export default function LeadsPage() {
         setError('None of the selected leads have products, so no invoice could be generated.');
         return;
       }
-      generateBulkOrderInvoices(invoices, `Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      await generateBulkOrderInvoices(invoices, `Invoices_${invoices.length}_${new Date().toISOString().slice(0, 10)}.pdf`);
       setError(skipped.length > 0
         ? `Downloaded ${invoices.length} invoice${invoices.length === 1 ? '' : 's'}. Skipped (no products): ${skipped.join(', ')}`
         : '');
@@ -843,7 +843,7 @@ export default function LeadsPage() {
       Notes: l.notes || '',
       'Created At': new Date(l.createdAt).toLocaleDateString(),
     }));
-    exportToExcel(rows, `leads_${new Date().toISOString().slice(0, 10)}`);
+    await exportToExcel(rows, `leads_${new Date().toISOString().slice(0, 10)}`);
   };
 
   const hasActiveDateFilters = Boolean(

@@ -422,7 +422,7 @@ export default function ProductSalesPage() {
       'Created At': new Date(item.createdAt).toLocaleDateString(),
     }));
 
-    exportToExcel(rows, `product_sales_${new Date().toISOString().slice(0, 10)}`);
+    await exportToExcel(rows, `product_sales_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (

@@ -94,6 +94,9 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={false}
+                onMouseEnter={() => router.prefetch(item.href)}
+                onFocus={() => router.prefetch(item.href)}
                 aria-current={isActive ? 'page' : undefined}
                 className={`${s.navItem} ${isActive ? s.navItemActive : ''}`}
                 onClick={onNavigate}

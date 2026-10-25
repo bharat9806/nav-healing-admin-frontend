@@ -125,13 +125,12 @@ export default function PatientsPage() {
 
   useEffect(() => {
     fetchCurrentUser().then(setCurrentUser).catch(() => {});
-    void loadPatients('');
   }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       void loadPatients(search);
-    }, 250);
+    }, search ? 250 : 0);
 
     return () => clearTimeout(timeout);
   }, [search]);

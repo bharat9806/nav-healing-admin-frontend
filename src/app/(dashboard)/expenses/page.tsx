@@ -247,7 +247,7 @@ export default function ExpensesPage() {
         Date: formatDate(x.expenseDate),
         Notes: x.notes || '',
       }));
-      exportToExcel(data, `expenses-${today()}`);
+      await exportToExcel(data, `expenses-${today()}`);
     } catch {
       setError('Failed to export');
     }

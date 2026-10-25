@@ -2,7 +2,6 @@
 
 import { isAxiosError } from 'axios';
 import { useId, useEffect, useRef, useState } from 'react';
-import * as XLSX from 'xlsx';
 import api from '@/lib/api';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import Dialog from '@/components/ui/Dialog';
@@ -556,7 +555,8 @@ export default function ProductsPage() {
     fetchProducts();
   };
 
-  const downloadSampleTemplate = () => {
+  const downloadSampleTemplate = async () => {
+    const XLSX = await import('xlsx');
     // "sku" is optional — leave it blank and give a "company" (name or SKU
     // prefix) and the SKU is auto-generated during import.
     const rows = [
@@ -732,7 +732,7 @@ export default function ProductsPage() {
       Active: product.isActive ? 'Yes' : 'No',
       'Created At': new Date(product.createdAt).toLocaleDateString(),
     }));
-    exportToExcel(rows, `products_${new Date().toISOString().slice(0, 10)}`);
+    await exportToExcel(rows, `products_${new Date().toISOString().slice(0, 10)}`);
   };
 
   return (

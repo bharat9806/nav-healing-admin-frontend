@@ -172,7 +172,7 @@ export default function DailyReportPage() {
     });
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const data = rows.map((r) => ({
       Date: formatDate(r.reportDate),
       'Total Calls': r.totalCalls,
@@ -189,7 +189,7 @@ export default function DailyReportPage() {
       'Total Sale (Rs.)': totals.totalSale,
       Notes: '',
     });
-    exportToExcel(data, `daily-report-${today()}`);
+    await exportToExcel(data, `daily-report-${today()}`);
   };
 
   const conversion = totals.totalCalls > 0

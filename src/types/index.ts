@@ -223,6 +223,7 @@ export interface SalesResponse {
   data: Sale[];
   meta: { total: number; page: number; limit: number; totalPages: number };
   summary: SalesSummary;
+  filters?: { paymentModes: string[]; statuses: string[] };
 }
 
 export interface SaleItem {

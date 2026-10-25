@@ -12,6 +12,8 @@ import s from './analytics.module.scss';
 
 // ── API payload ───────────────────────────────────────────────────────────────
 interface Analytics {
+  period: { months: number; start: string; end: string };
+  summary: { revenue: number; expenses: number; net: number; totalLeads: number; convertedLeads: number; conversionRate: number };
   statusBreakdown: { status: string; count: number }[];
   deliveryBreakdown: { deliveryStatus: string; count: number }[];
   timeline: { month: string; leads: number; delivered: number; revenue: number }[];
@@ -100,12 +102,13 @@ export default function AnalyticsPage() {
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     let active = true;
-    api.get('/analytics')
+    setLoading(true);
+    api.get('/analytics', { params: { months } })
       .then((res) => { if (active) setData(res.data); })
       .catch(() => { if (active) setData(null); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [refresh]);
+  }, [refresh, months]);
 
   if (loading) {
     return (
@@ -137,11 +140,11 @@ export default function AnalyticsPage() {
     }))
     .filter((d) => d.value > 0);
 
-  const timeline = data.timeline.slice(-months).map((t) => ({ ...t, label: monthLabel(t.month) }));
+  const timeline = data.timeline.map((t) => ({ ...t, label: monthLabel(t.month) }));
   const products = data.topProducts;
-  const salesTimeline = data.salesTimeline.slice(-months).map((t) => ({ ...t, label: monthLabel(t.month) }));
+  const salesTimeline = data.salesTimeline.map((t) => ({ ...t, label: monthLabel(t.month) }));
   const medicines = data.topMedicines;
-  const expenseTimeline = data.expenseTimeline.slice(-months).map((t) => ({
+  const expenseTimeline = data.expenseTimeline.map((t) => ({
     ...t,
     profit: t.revenue - t.expenses,
     label: monthLabel(t.month),
@@ -158,24 +161,35 @@ export default function AnalyticsPage() {
     <div className={s.page}>
       <div>
         <h2 className={s.pageTitle}>Analytics</h2>
-        <p className={s.pageSub}>Monthly charts show the selected period. Lead and delivery totals cover all records.</p>
+        <p className={s.pageSub}>Every chart and summary uses the selected period, including the current month to date.</p>
       </div>
 
-      <div className={s.periodControl}><label htmlFor="analytics-period">Monthly chart period</label><select id="analytics-period" value={months} onChange={(e) => setMonths(Number(e.target.value))}><option value={3}>Last 3 months</option><option value={6}>Last 6 months</option><option value={12}>Last 12 months</option></select></div>
+      <div className={s.reportingToolbar}>
+      <div className={s.periodControl}><label htmlFor="analytics-period">Reporting period</label><select id="analytics-period" value={months} onChange={(e) => setMonths(Number(e.target.value))}><option value={3}>Last 3 months</option><option value={6}>Last 6 months</option><option value={12}>Last 12 months</option></select></div>
+      <p className={s.dateRange}>{new Date(data.period.start).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })} – {new Date(data.period.end).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })} · UTC</p>
+      </div>
+      <dl className={s.summaryGrid} aria-label="Period summary">
+        {[
+          { label: 'Revenue', value: inr(data.summary.revenue), detail: 'Lead payments + clinic sale amounts' },
+          { label: 'Expenses', value: inr(data.summary.expenses), detail: 'Recorded expenses in this period' },
+          { label: 'Net amount', value: inr(data.summary.net), detail: 'Revenue minus recorded expenses' },
+          { label: 'Lead conversion', value: `${data.summary.conversionRate}%`, detail: `${data.summary.convertedLeads} converted of ${data.summary.totalLeads} leads created` },
+        ].map((card) => <div className={s.summaryCard} key={card.label}><dt className={s.summaryLabel}>{card.label}</dt><dd className={s.summaryValue}>{card.value}</dd><dd className={s.summaryDetail}>{card.detail}</dd></div>)}
+      </dl>
       <div className={s.grid}>
         {/* 1 · Lead status breakdown */}
         <div className={s.panel}>
           <h3 className={s.panelTitle}>Lead Status Breakdown</h3>
-          <p className={s.panelSub}>All leads, grouped by call outcome</p>
+          <p className={s.panelSub}>Leads created in this period, grouped by current call outcome</p>
           {statusData.length === 0 ? <p className={s.emptyText}>No leads yet</p> : (
             <div className={s.chartWrap}>
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie data={statusData} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2} strokeWidth={0} label={(e: any) => `${e.name} (${e.value})`}>
+                  <Pie data={statusData} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2} strokeWidth={0} label={false}>
                     {statusData.map((d) => <Cell key={d.name} fill={d.color} />)}
                   </Pie>
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} formatter={(name) => { const row = statusData.find((item) => item.name === name); return row ? `${name} (${row.value.toLocaleString('en-IN')})` : name; }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -185,16 +199,16 @@ export default function AnalyticsPage() {
         {/* 2 · Delivery outcomes */}
         <div className={s.panel}>
           <h3 className={s.panelTitle}>Delivery Outcomes</h3>
-          <p className={s.panelSub}>Delivered vs RTO vs Cancelled — watch the RTO rate</p>
+          <p className={s.panelSub}>Current outcomes of leads created in this period</p>
           {deliveryData.length === 0 ? <p className={s.emptyText}>No orders yet</p> : (
             <div className={s.chartWrap}>
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie data={deliveryData} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2} strokeWidth={0} label={(e: any) => `${e.name} (${e.value})`}>
+                  <Pie data={deliveryData} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2} strokeWidth={0} label={false}>
                     {deliveryData.map((d) => <Cell key={d.name} fill={d.color} />)}
                   </Pie>
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} formatter={(name) => { const row = deliveryData.find((item) => item.name === name); return row ? `${name} (${row.value.toLocaleString('en-IN')})` : name; }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -225,7 +239,7 @@ export default function AnalyticsPage() {
         {/* 4 · Top products */}
         <div className={s.panel}>
           <h3 className={s.panelTitle}>Top Products</h3>
-          <p className={s.panelSub}>Units ordered via leads (excluding cancelled &amp; RTO)</p>
+          <p className={s.panelSub}>Leads created in this period; excludes cancelled &amp; RTO</p>
           {products.length === 0 ? <p className={s.emptyText}>No product data yet</p> : (
             <RankList
               rows={products.map((p) => ({ name: p.name, value: p.units, meta: `${p.leads} lead${p.leads === 1 ? '' : 's'}` }))}
@@ -257,7 +271,7 @@ export default function AnalyticsPage() {
         {/* 6 · Sales module — top medicines */}
         <div className={s.panel}>
           <h3 className={s.panelTitle}>Most Given Medicines (Clinic)</h3>
-          <p className={s.panelSub}>Units given to patients via the Sales module — last 12 months</p>
+          <p className={s.panelSub}>Units given through clinic sales in the selected period</p>
           {medicines.length === 0 ? <p className={s.emptyText}>No sales data yet</p> : (
             <RankList
               rows={medicines.map((p) => ({ name: p.name, value: p.units, meta: `${p.patients} patient${p.patients === 1 ? '' : 's'}` }))}
@@ -270,7 +284,7 @@ export default function AnalyticsPage() {
         {/* 7 · Revenue vs Expenses */}
         <div className={s.panel}>
           <h3 className={s.panelTitle}>Revenue vs Expenses</h3>
-          <p className={s.panelSub}>Monthly money in vs money out (all modules)</p>
+          <p className={s.panelSub}>Recorded lead payments + clinic sale amounts vs expenses; excludes website orders</p>
           <div className={s.chartWrap}>
             <ResponsiveContainer>
               <ComposedChart data={expenseTimeline} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
@@ -290,16 +304,16 @@ export default function AnalyticsPage() {
         {/* 8 · Expenses by category */}
         <div className={s.panel}>
           <h3 className={s.panelTitle}>Expenses by Category</h3>
-          <p className={s.panelSub}>Where the money went — last 12 months</p>
+          <p className={s.panelSub}>Expenses recorded in the selected period</p>
           {categories.length === 0 ? <p className={s.emptyText}>No expenses yet</p> : (
             <div className={s.chartWrap}>
               <ResponsiveContainer>
                 <PieChart>
-                  <Pie data={categories} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2} strokeWidth={0} label={(e: any) => `${e.name} (${inr(e.value)})`}>
+                  <Pie data={categories} dataKey="value" nameKey="name" innerRadius="45%" outerRadius="75%" paddingAngle={2} strokeWidth={0} label={false}>
                     {categories.map((d) => <Cell key={d.name} fill={d.color} />)}
                   </Pie>
                   <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: any) => inr(value)} />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} formatter={(name) => { const row = categories.find((item) => item.name === name); return row ? `${name} (${inr(row.value)})` : name; }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>

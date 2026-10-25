@@ -201,7 +201,7 @@ export default function DashboardPage() {
             Your team administrator can update your access. You can still open
             your work log.
           </p>
-          <Link className={s.button} href="/work-log">
+          <Link prefetch={false} className={s.button} href="/work-log">
             Open my work log
           </Link>
         </div>
@@ -295,7 +295,7 @@ export default function DashboardPage() {
           </div>
         </div>
         <div className={s.bannerActions}>
-          <Link className={s.button} href="/work-log">
+          <Link prefetch={false} className={s.button} href="/work-log">
             <Icon name="plus" /> Log today’s work
           </Link>
           <button className={s.refresh} onClick={retry} disabled={loading}>
@@ -400,7 +400,7 @@ export default function DashboardPage() {
               <h3 id="recent-title">Recent leads</h3>
             </div>
             {allowed("canManageLeads") && (
-              <Link className={s.textLink} href="/leads">
+              <Link prefetch={false} className={s.textLink} href="/leads">
                 View all <span aria-hidden="true">↗</span>
               </Link>
             )}
@@ -427,7 +427,7 @@ export default function DashboardPage() {
           ) : (
             <div className={s.leadList}>
               {leads.data.map((lead) => (
-                <Link key={lead.id} className={s.leadRow} href={`/leads?leadId=${lead.id}`}>
+                <Link prefetch={false} key={lead.id} className={s.leadRow} href={`/leads?leadId=${lead.id}`}>
                   <span className={s.leadAvatar} aria-hidden="true">
                     {lead.name.charAt(0).toUpperCase()}
                   </span>
@@ -467,6 +467,7 @@ export default function DashboardPage() {
               .filter((a) => !a.permission || allowed(a.permission))
               .map((action) => (
                 <Link
+                  prefetch={false}
                   href={action.href}
                   className={s.actionItem}
                   key={action.href}
@@ -524,6 +525,7 @@ function Attention({
 }) {
   return (
     <Link
+      prefetch={false}
       className={`${s.attentionCard} ${urgent && value ? s.urgent : ""}`}
       href={href}
     >

@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import Dialog from '@/components/ui/Dialog';
 import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
-import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
+import { generateOrderInvoice } from '@/lib/downloadInvoice';
 import { SkeletonList } from '@/components/ui/Loader';
 import s from './orders.module.scss';
 
@@ -140,26 +140,30 @@ export default function OrdersPage() {
     }
   };
 
-  const downloadInvoice = (o: Order) => {
-    const year = new Date(o.createdAt).getFullYear();
-    generateOrderInvoice({
-      invoiceNumber: `NNH-${year}-${String(o.id).padStart(3, '0')}`,
-      date: o.createdAt,
-      customerName: o.customerName,
-      customerPhone: o.customerPhone,
-      customerEmail: o.customerEmail,
-      address: o.address,
-      paymentMethod: o.paymentMethod,
-      items: o.items.map((i) => ({
-        name: i.productName,
-        qty: i.quantity,
-        unitPrice: Number(i.unitPrice),
-      })),
-      subtotal: o.subtotal != null ? Number(o.subtotal) : undefined,
-      discountAmount: o.discountAmount != null ? Number(o.discountAmount) : undefined,
-      shippingCharges: o.shippingCharges != null ? Number(o.shippingCharges) : undefined,
-      totalAmount: Number(o.totalAmount),
-    });
+  const downloadInvoice = async (o: Order) => {
+    try {
+      const year = new Date(o.createdAt).getFullYear();
+      await generateOrderInvoice({
+        invoiceNumber: `NNH-${year}-${String(o.id).padStart(3, '0')}`,
+        date: o.createdAt,
+        customerName: o.customerName,
+        customerPhone: o.customerPhone,
+        customerEmail: o.customerEmail,
+        address: o.address,
+        paymentMethod: o.paymentMethod,
+        items: o.items.map((i) => ({
+          name: i.productName,
+          qty: i.quantity,
+          unitPrice: Number(i.unitPrice),
+        })),
+        subtotal: o.subtotal != null ? Number(o.subtotal) : undefined,
+        discountAmount: o.discountAmount != null ? Number(o.discountAmount) : undefined,
+        shippingCharges: o.shippingCharges != null ? Number(o.shippingCharges) : undefined,
+        totalAmount: Number(o.totalAmount),
+      });
+    } catch {
+      setActionError('Unable to download invoice. Please try again.');
+    }
   };
 
   const fmt = (d: string) =>
