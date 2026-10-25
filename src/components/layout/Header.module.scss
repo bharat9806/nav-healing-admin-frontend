@@ -32,6 +32,8 @@
   color: var(--shell-text-secondary);
   cursor: pointer;
   padding: $s1;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: $r-sm;
   transition: color 0.15s, background-color 0.15s;
 
@@ -67,32 +69,6 @@
   min-width: 0;
 }
 
-.themeToggle {
-  width: clamp(2.35rem, 2.15rem + 0.8vw, 2.75rem);
-  height: clamp(2.35rem, 2.15rem + 0.8vw, 2.75rem);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  border: 1px solid var(--shell-border);
-  background: var(--shell-control-bg);
-  color: var(--shell-text-secondary);
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-
-  &:hover {
-    background: var(--shell-hover);
-    color: var(--shell-text-primary);
-    border-color: var(--shell-border-strong);
-    transform: translateY(-1px);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--shell-focus-ring);
-  }
-}
-
 .userInfo {
   text-align: right;
 
@@ -116,18 +92,18 @@
 }
 
 .roleSuperAdmin {
-  background-color: rgba(#059669, 0.1);
-  color: #34d399;
+  background-color: var(--brand-primary-soft);
+  color: var(--status-success);
 }
 
 .roleAdmin {
-  background-color: rgba(#8b5cf6, 0.1);
-  color: #a78bfa;
+  background-color: color-mix(in srgb, var(--status-special) 10%, transparent);
+  color: var(--status-special);
 }
 
 .roleTeamMember {
-  background-color: rgba(#3b82f6, 0.1);
-  color: #60a5fa;
+  background-color: color-mix(in srgb, var(--status-info) 10%, transparent);
+  color: var(--status-info);
 }
 
 .avatar {

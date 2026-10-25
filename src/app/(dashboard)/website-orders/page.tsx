@@ -1,8 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
+import Dialog from '@/components/ui/Dialog';
+import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { generateOrderInvoice } from '@/lib/generateOrderInvoice';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -48,12 +50,24 @@ export default function OrdersPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
+  const [dashboardFiltersReady, setDashboardFiltersReady] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('status') === 'PENDING') setStatusFilter('PENDING');
+    setDashboardFiltersReady(true);
+  }, []);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selected, setSelected] = useState<Order | null>(null);
   const [actioning, setActioning] = useState<number | null>(null);
+  const [actionError, setActionError] = useState('');
+  const [actionMessage, setActionMessage] = useState('');
+
+  const [loadError, setLoadError] = useState('');
+  const listRequest = useRef(0);
 
   const fetchOrders = (p = page, status = statusFilter) => {
+    const requestId = ++listRequest.current;
+    setLoadError('');
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), limit: '20' });
     if (status) params.set('status', status);
@@ -62,12 +76,15 @@ export default function OrdersPage() {
         `/website-orders?${params.toString()}`,
       )
       .then((res) => {
+        if (requestId !== listRequest.current) return;
         setOrders(res.data.data);
         setTotal(res.data.total);
         setTotalPages(Math.ceil(res.data.total / 20));
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((error: unknown) => {
+        if (requestId === listRequest.current) setLoadError(loadErrorMessage(error, 'Unable to load website orders. Check your connection and try again.'));
+      })
+      .finally(() => { if (requestId === listRequest.current) setLoading(false); });
   };
 
   useEffect(() => {
@@ -81,8 +98,8 @@ export default function OrdersPage() {
   }, [router]);
 
   useEffect(() => {
-    fetchOrders(page, statusFilter);
-  }, [page, statusFilter]);
+    if (dashboardFiltersReady) fetchOrders(page, statusFilter);
+  }, [dashboardFiltersReady, page, statusFilter]);
 
   const handleStatusChange = (filter: string) => {
     setStatusFilter(filter);
@@ -91,11 +108,16 @@ export default function OrdersPage() {
 
   const handleApprove = async (id: number) => {
     setActioning(id);
+    setActionError('');
+    setActionMessage('');
     try {
       await api.patch(`/website-orders/${id}/approve`);
       fetchOrders();
       if (selected?.id === id)
         setSelected((o) => (o ? { ...o, status: 'APPROVED' } : null));
+      setActionMessage('Order approved.');
+    } catch (error: unknown) {
+      setActionError(loadErrorMessage(error, 'The order could not be approved. Please try again.'));
     } finally {
       setActioning(null);
     }
@@ -103,11 +125,16 @@ export default function OrdersPage() {
 
   const handleReject = async (id: number) => {
     setActioning(id);
+    setActionError('');
+    setActionMessage('');
     try {
       await api.patch(`/website-orders/${id}/reject`);
       fetchOrders();
       if (selected?.id === id)
         setSelected((o) => (o ? { ...o, status: 'REJECTED' } : null));
+      setActionMessage('Order rejected.');
+    } catch (error: unknown) {
+      setActionError(loadErrorMessage(error, 'The order could not be rejected. Please try again.'));
     } finally {
       setActioning(null);
     }
@@ -172,7 +199,9 @@ export default function OrdersPage() {
         ))}
       </div>
 
-      {loading ? (
+      {actionError && <div role="alert" className={s.actionNotice}>{actionError}</div>}
+      {actionMessage && <div role="status" className={s.actionNotice}>{actionMessage}</div>}
+      {loadError ? <LoadError message={loadError} onRetry={() => fetchOrders()} loading={loading} /> : loading ? (
         <SkeletonList rows={6} />
       ) : orders.length === 0 ? (
         <div className={s.emptyBox}>
@@ -333,7 +362,7 @@ export default function OrdersPage() {
 
       {/* Order detail modal */}
       {selected && (
-        <div className={s.overlay} onClick={() => setSelected(null)}>
+        <Dialog className={s.overlay} onClose={() => setSelected(null)} closeDisabled={actioning !== null}>
           <div className={s.modal} onClick={(e) => e.stopPropagation()}>
             <div className={s.modalHeader}>
               <div>
@@ -353,6 +382,8 @@ export default function OrdersPage() {
             </div>
 
             <div className={s.modalBody}>
+              {actionError && <p role="alert" className={s.actionNotice}>{actionError}</p>}
+              {actionMessage && <p role="status" className={s.actionNotice}>{actionMessage}</p>}
               <div className={s.modalSection}>
                 <h3 className={s.modalSectionTitle}>Customer</h3>
                 <p><strong>Name:</strong> {selected.customerName}</p>
@@ -441,7 +472,7 @@ export default function OrdersPage() {
               )}
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

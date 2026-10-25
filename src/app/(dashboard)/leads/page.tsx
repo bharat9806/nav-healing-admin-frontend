@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState, type FC, type CSSProperties } from 'react';
+import { useCallback, useId, useEffect, useRef, useState, type FC, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useComboboxKeyboard } from '@/hooks/useComboboxKeyboard';
+import Dialog from '@/components/ui/Dialog';
+import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/generateOrderInvoice';
@@ -41,14 +45,14 @@ type TrackTheme = { color: string; soft: string; border: string; ring: string; I
 function trackTheme(status?: string): TrackTheme {
   const v = (status || '').toLowerCase();
   if (/out for delivery|ofd/.test(v))
-    return { color: '#a78bfa', soft: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.30)', ring: 'rgba(139,92,246,0.22)', Icon: IconTruck };
+    return { color: 'var(--status-special)', soft: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.30)', ring: 'rgba(139,92,246,0.22)', Icon: IconTruck };
   if (/deliver/.test(v))
-    return { color: '#34d399', soft: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.30)', ring: 'rgba(16,185,129,0.22)', Icon: IconCheck };
+    return { color: 'var(--status-success)', soft: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.30)', ring: 'rgba(16,185,129,0.22)', Icon: IconCheck };
   if (/rto|cancel|return|undeliver|fail|lost|exception|hold/.test(v))
-    return { color: '#f87171', soft: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.30)', ring: 'rgba(239,68,68,0.22)', Icon: IconAlert };
+    return { color: 'var(--status-danger)', soft: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.30)', ring: 'rgba(239,68,68,0.22)', Icon: IconAlert };
   if (/pending|booked|manifest|pickup|awaiting|not pick|created/.test(v))
-    return { color: '#fbbf24', soft: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.30)', ring: 'rgba(245,158,11,0.22)', Icon: IconClock };
-  return { color: '#60a5fa', soft: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', ring: 'rgba(59,130,246,0.22)', Icon: IconTruck };
+    return { color: 'var(--status-warning)', soft: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.30)', ring: 'rgba(245,158,11,0.22)', Icon: IconClock };
+  return { color: 'var(--status-info)', soft: 'rgba(59,130,246,0.12)', border: 'rgba(59,130,246,0.30)', ring: 'rgba(59,130,246,0.22)', Icon: IconTruck };
 }
 
 const statuses: LeadStatus[] = [
@@ -183,9 +187,10 @@ function LeadProductSearch({
     return () => document.removeEventListener('mousedown', handler);
   }, [displayName]);
 
+  const combo = useComboboxKeyboard({ open, setOpen, options: results, onSelect: (p) => { onSelect(p.id, p.name); setQuery(p.name); } });
   return (
     <div className={s.itemSearchWrap} ref={wrapRef}>
-      <input
+      <input {...combo.inputProps} aria-label="Search product"
         type="text"
         className={s.itemSearchInput}
         placeholder="Search medicine..."
@@ -202,14 +207,14 @@ function LeadProductSearch({
         }}
       />
       {open && (
-        <div className={s.productDropdown}>
+        <div {...combo.listProps} className={s.productDropdown}>
           {searching ? (
             <div className={s.productOptionEmpty}>Searching...</div>
           ) : results.length === 0 ? (
             <div className={s.productOptionEmpty}>No medicines found</div>
           ) : (
-            results.map((p) => (
-              <div
+            results.map((p, optionIndex) => (
+              <div {...combo.optionProps(optionIndex)}
                 key={p.id}
                 className={`${s.productOption} ${value === p.id ? s.productOptionSelected : ''}`}
                 onMouseDown={() => {
@@ -249,6 +254,7 @@ const COL_DEFAULTS = {
 const COLS_STORAGE_KEY = 'leads.visibleCols';
 
 export default function LeadsPage() {
+  const fieldIds = useId();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [doctors, setDoctors] = useState<{ id: number; username: string }[]>([]);
   const [search, setSearch] = useState('');
@@ -265,6 +271,12 @@ export default function LeadsPage() {
   const [followUpFrom, setFollowUpFrom] = useState('');
   const [followUpTo, setFollowUpTo] = useState('');
   const [reminderFilter, setReminderFilter] = useState('');
+  const [dashboardFiltersReady, setDashboardFiltersReady] = useState(false);
+  useEffect(() => {
+    const reminder = new URLSearchParams(window.location.search).get('reminderStatus');
+    if (reminder && ['overdue', 'today', 'upcoming', 'scheduled', 'none'].includes(reminder)) setReminderFilter(reminder);
+    setDashboardFiltersReady(true);
+  }, []);
   const [showDateFilters, setShowDateFilters] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -413,14 +425,16 @@ export default function LeadsPage() {
     );
   };
 
+  const [reminderStatsError, setReminderStatsError] = useState(false);
   const fetchStats = () => {
+    setReminderStatsError(false);
     api.get('/leads/stats')
       .then((res) => {
         if (res.data.reminders) {
           setReminderStats(res.data.reminders);
         }
       })
-      .catch(() => {});
+      .catch(() => setReminderStatsError(true));
   };
 
   const handleSort = (field: string) => {
@@ -433,7 +447,12 @@ export default function LeadsPage() {
     setPage(1);
   };
 
-  const fetchData = (p = page, nextPageSize = pageSize) => {
+  const [loadError, setLoadError] = useState('');
+  const listRequest = useRef(0);
+
+  const fetchData = (p = page, nextPageSize = pageSize, searchValue = search) => {
+    const requestId = ++listRequest.current;
+    setLoadError('');
     setLoading(true);
     const params = new URLSearchParams();
     if (dateFrom) params.set('dateFrom', dateFrom);
@@ -443,7 +462,7 @@ export default function LeadsPage() {
     if (followUpFrom) params.set('followUpFrom', followUpFrom);
     if (followUpTo) params.set('followUpTo', followUpTo);
     if (reminderFilter) params.set('reminderStatus', reminderFilter);
-    if (search) params.set('search', search);
+    if (searchValue) params.set('search', searchValue);
     if (statusFilter) params.set('status', statusFilter);
     if (deliveryFilter) params.set('deliveryStatus', deliveryFilter);
     if (paymentFilter) params.set('paymentReceived', paymentFilter);
@@ -454,12 +473,15 @@ export default function LeadsPage() {
     const query = `?${params.toString()}`;
     api.get(`/leads${query}`)
       .then((leadsRes) => {
+        if (requestId !== listRequest.current) return;
         setLeads(leadsRes.data.data);
         setTotalPages(leadsRes.data.meta.totalPages);
         setTotal(leadsRes.data.meta.total);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((error: unknown) => {
+        if (requestId === listRequest.current) setLoadError(loadErrorMessage(error, 'Unable to load leads. Check your connection and try again.'));
+      })
+      .finally(() => { if (requestId === listRequest.current) setLoading(false); });
   };
 
   useEffect(() => {
@@ -469,8 +491,8 @@ export default function LeadsPage() {
   }, []);
 
   useEffect(() => {
-    fetchData(page);
-  }, [statusFilter, deliveryFilter, paymentFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, pageSize, sortField, sortOrder]);
+    if (dashboardFiltersReady) fetchData(page);
+  }, [dashboardFiltersReady, statusFilter, deliveryFilter, paymentFilter, reminderFilter, dateFrom, dateTo, deliveredFrom, deliveredTo, followUpFrom, followUpTo, datePreset, deliveredPreset, followUpPreset, page, pageSize, sortField, sortOrder]);
 
   // Search and status filtering is now done server-side
   const filtered = leads;
@@ -502,6 +524,7 @@ export default function LeadsPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm({ name: '', phone: '', alternatePhone: '', email: '', description: '', age: '', height: '', weight: '', gender: '', address: '', pinCode: '', trackingNumber: '', diseases: '', status: 'NEW', notes: '', deliveredAt: '', nextFollowUpDate: '', assignedDoctorId: '', deliveryStatus: 'NONE', paymentReceived: false, paymentAmount: '', discount: '', shippingCharges: '', paymentMode: '', paymentType: 'COD' });
     setItems([{ productId: 0, quantity: 1, search: '', showDropdown: false }]);
@@ -509,9 +532,11 @@ export default function LeadsPage() {
     setShowInlineForm(true);
   };
 
-  const cancelCreate = () => { setShowInlineForm(false); setEditing(null); setError(''); };
+  const confirmDiscard = useUnsavedChanges(showInlineForm, { form, items });
 
-  const openEdit = (l: Lead) => {
+  const cancelCreate = () => { if (!confirmDiscard()) return; setShowInlineForm(false); setEditing(null); setError(''); };
+
+  const openEdit = useCallback((l: Lead) => {
     setEditing(l);
     setForm({
       name: l.name, phone: l.phone || '', alternatePhone: l.alternatePhone || '', email: l.email || '', description: l.description || '',
@@ -534,7 +559,17 @@ export default function LeadsPage() {
     setError('');
     setShowInlineForm(true);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!currentUser || (currentUser.role !== 'SUPER_ADMIN' && !currentUser.canManageLeads)) return;
+    const id = Number(new URLSearchParams(window.location.search).get('leadId'));
+    if (!Number.isInteger(id) || id <= 0) return;
+    let active = true;
+    api.get<Lead>(`/leads/${id}`).then(({ data }) => { if (active) openEdit(data); })
+      .catch(() => { if (active) setError('Unable to open the selected lead. Please try again from the list.'); });
+    return () => { active = false; };
+  }, [currentUser, openEdit]);
 
   const addItem = () => setItems((prev) => [...prev, { productId: 0, quantity: 1, search: '', showDropdown: false }]);
   const removeItem = (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx));
@@ -820,14 +855,15 @@ export default function LeadsPage() {
     <form onSubmit={handleSubmit} className={s.inlineForm}>
       <h2 className={s.inlineFormTitle}>{editing ? 'Edit Lead' : 'New Lead'}</h2>
       {error && <div className={s.error}>{error}</div>}
+      <h3 className={s.formSectionTitle}>Contact details</h3>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Name *</label><input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={s.formInput} /></div>
-        <div className={s.formGroup}><label>Phone</label><input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-1`}>Name *</label><input id={`${fieldIds}-1`} type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-2`}>Phone</label><input id={`${fieldIds}-2`} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={s.formInput} /></div>
       </div>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Alternate Number</label><input type="tel" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value })} className={s.formInput} placeholder="Optional" /></div>
-        <div className={s.formGroup}><label>Assign Doctor</label>
-          <CustomSelect
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-3`}>Alternate Number</label><input id={`${fieldIds}-3`} type="tel" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value })} className={s.formInput} placeholder="Optional" /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-4`}>Assign Doctor</label>
+          <CustomSelect id={`${fieldIds}-4`}
             options={[{ label: 'No doctor assigned', value: '' }, ...doctors.map((d) => ({ label: `Dr. ${d.username}`, value: d.id }))]}
             value={form.assignedDoctorId}
             onChange={(val) => setForm({ ...form, assignedDoctorId: String(val) })}
@@ -837,13 +873,14 @@ export default function LeadsPage() {
         </div>
       </div>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={s.formInput} /></div>
-        <div className={s.formGroup}><label>Description</label><input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={s.formInput} placeholder="Inquiry details..." /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-5`}>Email</label><input id={`${fieldIds}-5`} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-6`}>Description</label><input id={`${fieldIds}-6`} type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={s.formInput} placeholder="Inquiry details..." /></div>
       </div>
+      <h3 className={s.formSectionTitle}>Health and location</h3>
       <div className={s.grid3}>
-        <div className={s.formGroup}><label>Age</label><input type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className={s.formInput} /></div>
-        <div className={s.formGroup}><label>Gender</label>
-          <CustomSelect
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-7`}>Age</label><input id={`${fieldIds}-7`} type="number" value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-8`}>Gender</label>
+          <CustomSelect id={`${fieldIds}-8`}
             options={[{ label: 'Select...', value: '' }, { label: 'Male', value: 'Male' }, { label: 'Female', value: 'Female' }, { label: 'Other', value: 'Other' }]}
             value={form.gender}
             onChange={(val) => setForm({ ...form, gender: String(val) })}
@@ -851,11 +888,12 @@ export default function LeadsPage() {
             minWidth="100%"
           />
         </div>
-        <div className={s.formGroup}><label>Pin Code</label><input type="text" value={form.pinCode} onChange={(e) => setForm({ ...form, pinCode: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-9`}>Pin Code</label><input id={`${fieldIds}-9`} type="text" value={form.pinCode} onChange={(e) => setForm({ ...form, pinCode: e.target.value })} className={s.formInput} /></div>
       </div>
+      <details className={s.optionalSection}><summary>Body measurements (optional)</summary>
       <div className={s.grid3}>
-        <div className={s.formGroup}><label>Height (cm)</label><input type="number" min={1} step="0.1" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} className={s.formInput} placeholder="e.g. 170" /></div>
-        <div className={s.formGroup}><label>Weight (kg)</label><input type="number" min={1} step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className={s.formInput} placeholder="e.g. 70" /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-10`}>Height (cm)</label><input id={`${fieldIds}-10`} type="number" min={1} step="0.1" value={form.height} onChange={(e) => setForm({ ...form, height: e.target.value })} className={s.formInput} placeholder="e.g. 170" /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-11`}>Weight (kg)</label><input id={`${fieldIds}-11`} type="number" min={1} step="0.1" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} className={s.formInput} placeholder="e.g. 70" /></div>
         <div className={s.formGroup}>
           <label>BMI</label>
           {(() => {
@@ -870,12 +908,14 @@ export default function LeadsPage() {
           })()}
         </div>
       </div>
-      <div className={s.formGroup}><label>Address</label><textarea value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2} className={s.formTextarea} /></div>
-      <div className={s.formGroup}><label>Diseases</label><textarea value={form.diseases} onChange={(e) => setForm({ ...form, diseases: e.target.value })} rows={2} className={s.formTextarea} /></div>
+      </details>
+      <div className={s.formGroup}><label htmlFor={`${fieldIds}-12`}>Address</label><textarea id={`${fieldIds}-12`} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} rows={2} className={s.formTextarea} /></div>
+      <div className={s.formGroup}><label htmlFor={`${fieldIds}-13`}>Diseases</label><textarea id={`${fieldIds}-13`} value={form.diseases} onChange={(e) => setForm({ ...form, diseases: e.target.value })} rows={2} className={s.formTextarea} /></div>
+      <h3 className={s.formSectionTitle}>Order and follow-up</h3>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Tracking Number</label><input type="text" value={form.trackingNumber} onChange={(e) => setForm({ ...form, trackingNumber: e.target.value })} className={s.formInput} /></div>
-        <div className={s.formGroup}><label>Status</label>
-          <CustomSelect
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-14`}>Tracking Number</label><input id={`${fieldIds}-14`} type="text" value={form.trackingNumber} onChange={(e) => setForm({ ...form, trackingNumber: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-15`}>Status</label>
+          <CustomSelect id={`${fieldIds}-15`}
             options={statuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))}
             value={form.status}
             onChange={(val) => setForm({ ...form, status: val as LeadStatus })}
@@ -885,8 +925,8 @@ export default function LeadsPage() {
         </div>
       </div>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Delivery Status</label>
-          <CustomSelect
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-16`}>Delivery Status</label>
+          <CustomSelect id={`${fieldIds}-16`}
             options={deliveryStatuses.map((st) => ({ label: DELIVERY_LABELS[st], value: st }))}
             value={form.deliveryStatus}
             onChange={(val) => setForm({ ...form, deliveryStatus: val as DeliveryStatus })}
@@ -907,8 +947,8 @@ export default function LeadsPage() {
         </div>
       </div>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Payment Type</label>
-          <CustomSelect
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-17`}>Payment Type</label>
+          <CustomSelect id={`${fieldIds}-17`}
             options={paymentTypes.map((pt) => ({ label: PAYMENT_TYPE_LABELS[pt], value: pt }))}
             value={form.paymentType}
             onChange={(val) => setForm({ ...form, paymentType: val as PaymentType })}
@@ -916,17 +956,17 @@ export default function LeadsPage() {
             minWidth="100%"
           />
         </div>
-        <div className={s.formGroup}><label>Discount (₹)</label><input type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-18`}>Discount (₹)</label><input id={`${fieldIds}-18`} type="number" min={0} step="0.01" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} className={s.formInput} placeholder="e.g. 100" /></div>
       </div>
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Shipping Charges (₹)</label><input type="number" min={0} step="0.01" value={form.shippingCharges} onChange={(e) => setForm({ ...form, shippingCharges: e.target.value })} className={s.formInput} placeholder="e.g. 60 (leave blank for free)" /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-19`}>Shipping Charges (₹)</label><input id={`${fieldIds}-19`} type="number" min={0} step="0.01" value={form.shippingCharges} onChange={(e) => setForm({ ...form, shippingCharges: e.target.value })} className={s.formInput} placeholder="e.g. 60 (leave blank for free)" /></div>
         <div className={s.formGroup} />
       </div>
       {(form.paymentReceived || form.paymentType !== 'COD') && (
         <div className={s.grid2}>
-          <div className={s.formGroup}><label>{form.paymentType === 'PARTIAL' ? 'Advance Amount (₹)' : 'Payment Amount (₹)'}</label><input type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
-          <div className={s.formGroup}><label>Payment Mode</label>
-            <CustomSelect
+          <div className={s.formGroup}><label htmlFor={`${fieldIds}-20`}>{form.paymentType === 'PARTIAL' ? 'Advance Amount (₹)' : 'Payment Amount (₹)'}</label><input id={`${fieldIds}-20`} type="number" min={0} step="0.01" value={form.paymentAmount} onChange={(e) => setForm({ ...form, paymentAmount: e.target.value })} className={s.formInput} placeholder="e.g. 1499" /></div>
+          <div className={s.formGroup}><label htmlFor={`${fieldIds}-21`}>Payment Mode</label>
+            <CustomSelect id={`${fieldIds}-21`}
               options={[{ label: 'Select...', value: '' }, ...paymentModes.map((m) => ({ label: m, value: m }))]}
               value={form.paymentMode}
               onChange={(val) => setForm({ ...form, paymentMode: val as PaymentMode | '' })}
@@ -937,8 +977,8 @@ export default function LeadsPage() {
         </div>
       )}
       <div className={s.grid2}>
-        <div className={s.formGroup}><label>Delivered At</label><input type="date" value={form.deliveredAt} onChange={(e) => setForm({ ...form, deliveredAt: e.target.value })} className={s.formInput} /></div>
-        <div className={s.formGroup}><label>Next Follow-Up Date</label><input type="date" value={form.nextFollowUpDate} onChange={(e) => setForm({ ...form, nextFollowUpDate: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-22`}>Delivered At</label><input id={`${fieldIds}-22`} type="date" value={form.deliveredAt} onChange={(e) => setForm({ ...form, deliveredAt: e.target.value })} className={s.formInput} /></div>
+        <div className={s.formGroup}><label htmlFor={`${fieldIds}-23`}>Next Follow-Up Date</label><input id={`${fieldIds}-23`} type="date" value={form.nextFollowUpDate} onChange={(e) => setForm({ ...form, nextFollowUpDate: e.target.value })} className={s.formInput} /></div>
       </div>
       <div>
         <div className={s.itemsHeader}>
@@ -956,13 +996,13 @@ export default function LeadsPage() {
                   updateItem(idx, 'search', name);
                 }}
               />
-              <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className={s.itemQty} placeholder="Qty" />
+              <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(idx, 'quantity', Number(e.target.value))} className={s.itemQty} aria-label="Product quantity" placeholder="Qty" />
               {items.length > 1 && <button type="button" onClick={() => removeItem(idx)} className={s.removeItemBtn}>✕</button>}
             </div>
           ))}
         </div>
       </div>
-      <div className={s.formGroup}><label>Notes</label><input type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} /></div>
+      <div className={s.formGroup}><label htmlFor={`${fieldIds}-24`}>Notes</label><input id={`${fieldIds}-24`} type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} /></div>
       <div className={s.formActions}>
         <button type="button" onClick={cancelCreate} className={s.cancelBtn}>Cancel</button>
         <button type="submit" disabled={saving} className={s.saveBtn}>{saving ? 'Saving...' : editing ? 'Update' : 'Create'}</button>
@@ -982,31 +1022,32 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      <div className={s.reminderCards}>
+      {reminderStatsError && <p role="status">Follow-up counts are temporarily unavailable.</p>}
+      {!showInlineForm && (<div className={s.reminderCards}>
         <button type="button" onClick={() => { setReminderFilter('overdue'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'overdue' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>Overdue</span>
-          <strong className={s.reminderValue}>{reminderStats.overdue}</strong>
+          <strong className={s.reminderValue}>{reminderStatsError ? '—' : reminderStats.overdue}</strong>
         </button>
         <button type="button" onClick={() => { setReminderFilter('today'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'today' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>Due Today</span>
-          <strong className={s.reminderValue}>{reminderStats.dueToday}</strong>
+          <strong className={s.reminderValue}>{reminderStatsError ? '—' : reminderStats.dueToday}</strong>
         </button>
         <button type="button" onClick={() => { setReminderFilter('upcoming'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'upcoming' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>Next 7 Days</span>
-          <strong className={s.reminderValue}>{reminderStats.upcoming}</strong>
+          <strong className={s.reminderValue}>{reminderStatsError ? '—' : reminderStats.upcoming}</strong>
         </button>
-        <button type="button" onClick={() => { setReminderFilter(''); setPage(1); }} className={`${s.reminderCard} ${!reminderFilter ? s.reminderCardActive : ''}`}>
+        <button type="button" onClick={() => { setReminderFilter('scheduled'); setPage(1); }} className={`${s.reminderCard} ${reminderFilter === 'scheduled' ? s.reminderCardActive : ''}`}>
           <span className={s.reminderLabel}>All Scheduled</span>
-          <strong className={s.reminderValue}>{reminderStats.scheduled}</strong>
+          <strong className={s.reminderValue}>{reminderStatsError ? '—' : reminderStats.scheduled}</strong>
         </button>
-      </div>
+      </div>)}
 
-      <div className={`${s.filterPanel} ${showDateFilters || hasActiveDateFilters ? s.filterPanelExpanded : ''}`}>
+      {!showInlineForm && (<div className={`${s.filterPanel} ${showDateFilters || hasActiveDateFilters ? s.filterPanelExpanded : ''}`}>
         <div className={s.filterRow}>
           <div className={s.searchWrapper}>
             <input type="text" placeholder="Search by name, phone, or disease..." value={search} onChange={(e) => { setSearch(e.target.value); }} onKeyDown={(e) => { if (e.key === 'Enter') { if (page === 1) fetchData(1); else setPage(1); } }} className={s.searchInput} />
             {search && (
-              <button type="button" className={s.searchClear} onClick={() => { setSearch(''); if (page === 1) fetchData(1); else setPage(1); }}>✕</button>
+              <button type="button" className={s.searchClear} onClick={() => { setSearch(''); setPage(1); fetchData(1, pageSize, ''); }}>✕</button>
             )}
           </div>
           <button onClick={() => { if (page === 1) fetchData(1); else setPage(1); }} className={s.searchBtn}>Search</button>
@@ -1180,7 +1221,7 @@ export default function LeadsPage() {
             )}
           </>
         )}
-      </div>
+      </div>)}
 
       {showInlineForm && (
         <div className={s.inlineFormWrap}>
@@ -1196,7 +1237,7 @@ export default function LeadsPage() {
         </div>
       )}
 
-      {!showInlineForm && (loading ? (
+      {!showInlineForm && (loadError ? <LoadError message={loadError} onRetry={() => fetchData()} loading={loading} /> : loading ? (
         <SkeletonList rows={5} />
       ) : filtered.length === 0 ? (
         <div className={s.emptyBox}>
@@ -1546,7 +1587,7 @@ export default function LeadsPage() {
       )}
 
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Lead</h3>
             <p className={s.deleteMsg}>Are you sure you want to delete &ldquo;{deleteTarget.name}&rdquo;? This cannot be undone.</p>
@@ -1555,11 +1596,11 @@ export default function LeadsPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {track.open && (
-        <div className={s.overlay} onClick={closeTrack}>
+        <Dialog className={s.overlay} onClose={closeTrack}>
           <div className={`${s.deleteModal} ${t.modal}`} onClick={(e) => e.stopPropagation()}>
             <div className={t.header}>
               <div className={t.headerIcon}><IconPackage size={19} /></div>
@@ -1651,7 +1692,7 @@ export default function LeadsPage() {
               <button onClick={closeTrack} className={s.deleteCancelBtn}>Close</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

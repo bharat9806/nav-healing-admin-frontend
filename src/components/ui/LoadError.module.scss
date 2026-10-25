@@ -1,0 +1,40 @@
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid color-mix(in srgb, var(--status-danger) 40%, transparent);
+  border-radius: 12px;
+  color: var(--shell-text-primary);
+  background: var(--shell-card-bg);
+}
+.error strong {
+  font-size: 14px;
+}
+.error p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--shell-text-secondary);
+}
+.error button {
+  min-height: 44px;
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--shell-border-strong);
+  background: var(--shell-control-bg);
+  color: var(--shell-text-primary);
+  cursor: pointer;
+}
+.error button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+@media (max-width: 480px) {
+  .error {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

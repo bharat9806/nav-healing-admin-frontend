@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { isAxiosError } from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useId, useEffect, useMemo, useRef, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { PatientDetail, PatientListItem, User } from '@/types';
 import s from './patients.module.scss';
@@ -18,6 +19,7 @@ const formatDate = (value?: string | null) => {
 const currency = (value: number | string) => `Rs. ${Number(value || 0).toFixed(2)}`;
 
 export default function PatientsPage() {
+  const fieldIds = useId();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [patients, setPatients] = useState<PatientListItem[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
@@ -55,20 +57,37 @@ export default function PatientsPage() {
     notes: '',
   });
 
+  const discardPatient = useUnsavedChanges(showPatientForm, patientForm);
+  const discardNote = useUnsavedChanges(showInteractionForm, interactionForm);
+  const discardContact = useUnsavedChanges(showEditContactForm, editContactForm);
+
   const canManagePatients = currentUser?.role === 'SUPER_ADMIN' || currentUser?.canManageSales;
 
-  const loadPatients = async (query = search, nextSelectedPatientId?: number | null) => {
+  const [patientPage, setPatientPage] = useState(1);
+  const [patientTotal, setPatientTotal] = useState(0);
+  const [patientPages, setPatientPages] = useState(1);
+
+  const patientRequest = useRef(0);
+  const detailRequest = useRef(0);
+
+  const loadPatients = async (query = search, nextSelectedPatientId?: number | null, requestedPage = 1, append = false) => {
+    const requestId = ++patientRequest.current;
     setLoadingList(true);
     setListError('');
 
     try {
       const params = new URLSearchParams();
       if (query.trim()) params.set('search', query.trim());
-      params.set('limit', '100');
+      params.set('limit', '50');
+      params.set('page', String(requestedPage));
 
-      const res = await api.get<{ data: PatientListItem[] }>(`/patients?${params.toString()}`);
+      const res = await api.get<{ data: PatientListItem[]; meta?: { total: number; totalPages: number } }>(`/patients?${params.toString()}`);
+      if (requestId !== patientRequest.current) return;
       const nextPatients = res.data.data || [];
-      setPatients(nextPatients);
+      setPatients((previous) => append ? [...previous, ...nextPatients.filter((patient) => !previous.some((existing) => existing.id === patient.id))] : nextPatients);
+      setPatientPage(requestedPage);
+      setPatientTotal(res.data.meta?.total ?? nextPatients.length);
+      setPatientPages(res.data.meta?.totalPages ?? 1);
 
       const selectedExists = nextPatients.some((patient) => patient.id === nextSelectedPatientId);
       const currentExists = nextPatients.some((patient) => patient.id === selectedPatientId);
@@ -77,27 +96,30 @@ export default function PatientsPage() {
         currentExists ? selectedPatientId :
         nextPatients[0]?.id ?? null;
 
-      setSelectedPatientId(resolvedSelectedId ?? null);
+      if (!append) setSelectedPatientId(resolvedSelectedId ?? null);
     } catch {
-      setPatients([]);
+      if (requestId !== patientRequest.current) return;
+      if (!append) setPatients([]);
       setListError('Failed to load patients');
     } finally {
-      setLoadingList(false);
+      if (requestId === patientRequest.current) setLoadingList(false);
     }
   };
 
   const loadPatientDetail = async (patientId: number) => {
+    const requestId = ++detailRequest.current;
     setLoadingDetail(true);
     setDetailError('');
 
     try {
       const res = await api.get<PatientDetail>(`/patients/${patientId}`);
-      setPatientDetail(res.data);
+      if (requestId === detailRequest.current) setPatientDetail(res.data);
     } catch {
+      if (requestId !== detailRequest.current) return;
       setPatientDetail(null);
       setDetailError('Failed to load patient details');
     } finally {
-      setLoadingDetail(false);
+      if (requestId === detailRequest.current) setLoadingDetail(false);
     }
   };
 
@@ -268,6 +290,7 @@ export default function PatientsPage() {
             type="button"
             className={s.primaryButton}
             onClick={() => {
+              if (showPatientForm && !discardPatient()) return;
               setShowPatientForm((current) => !current);
               setPatientFormError('');
             }}
@@ -288,8 +311,8 @@ export default function PatientsPage() {
 
           <form onSubmit={handleCreatePatient} className={s.formGrid}>
             <div className={s.formGroup}>
-              <label>Patient Name</label>
-              <input
+              <label htmlFor={`${fieldIds}-1`}>Patient Name</label>
+              <input id={`${fieldIds}-1`}
                 type="text"
                 className={s.input}
                 value={patientForm.name}
@@ -298,8 +321,8 @@ export default function PatientsPage() {
               />
             </div>
             <div className={s.formGroup}>
-              <label>Phone</label>
-              <input
+              <label htmlFor={`${fieldIds}-2`}>Phone</label>
+              <input id={`${fieldIds}-2`}
                 type="text"
                 className={s.input}
                 value={patientForm.phone}
@@ -307,8 +330,8 @@ export default function PatientsPage() {
               />
             </div>
             <div className={s.formGroup}>
-              <label>Alternate Phone</label>
-              <input
+              <label htmlFor={`${fieldIds}-3`}>Alternate Phone</label>
+              <input id={`${fieldIds}-3`}
                 type="text"
                 className={s.input}
                 value={patientForm.alternatePhone}
@@ -316,8 +339,8 @@ export default function PatientsPage() {
               />
             </div>
             <div className={s.formGroup}>
-              <label>Email</label>
-              <input
+              <label htmlFor={`${fieldIds}-4`}>Email</label>
+              <input id={`${fieldIds}-4`}
                 type="email"
                 className={s.input}
                 value={patientForm.email}
@@ -325,8 +348,8 @@ export default function PatientsPage() {
               />
             </div>
             <div className={`${s.formGroup} ${s.formGroupFull}`}>
-              <label>General Notes</label>
-              <textarea
+              <label htmlFor={`${fieldIds}-5`}>General Notes</label>
+              <textarea id={`${fieldIds}-5`}
                 className={s.textarea}
                 rows={4}
                 value={patientForm.notes}
@@ -338,7 +361,7 @@ export default function PatientsPage() {
             {patientFormError ? <p className={s.formError}>{patientFormError}</p> : null}
 
             <div className={s.formActions}>
-              <button type="button" className={s.secondaryButton} onClick={resetPatientForm}>
+              <button type="button" className={s.secondaryButton} onClick={() => { if (discardPatient()) resetPatientForm(); }}>
                 Cancel
               </button>
               <button type="submit" className={s.primaryButton} disabled={savingPatient}>
@@ -361,7 +384,8 @@ export default function PatientsPage() {
             />
           </div>
 
-          {loadingList ? (
+          <p className={s.patientCount} role="status">Showing {patients.length} of {patientTotal} patients</p>
+          {loadingList && patients.length === 0 ? (
             <div className={s.stateCard}>Loading patients...</div>
           ) : listError ? (
             <div className={s.stateCard}>{listError}</div>
@@ -390,6 +414,7 @@ export default function PatientsPage() {
               ))}
             </div>
           )}
+          {patientPage < patientPages && <button type="button" className={s.loadMore} disabled={loadingList} onClick={() => void loadPatients(search, selectedPatientId, patientPage + 1, true)}>{loadingList ? 'Loading…' : 'Load more patients'}</button>}
         </aside>
 
         <section className={s.detailPanel}>
@@ -422,6 +447,7 @@ export default function PatientsPage() {
                       type="button"
                       className={s.primaryButton}
                       onClick={() => {
+                        if (showInteractionForm && !discardNote()) return;
                         setShowInteractionForm((current) => !current);
                         setInteractionFormError('');
                       }}
@@ -461,7 +487,7 @@ export default function PatientsPage() {
                         className={s.editContactBtn}
                         onClick={() =>
                           showEditContactForm
-                            ? resetEditContactForm()
+                            ? (discardContact() && resetEditContactForm())
                             : openEditContactForm(patientDetail)
                         }
                       >
@@ -473,8 +499,8 @@ export default function PatientsPage() {
                   {showEditContactForm ? (
                     <form onSubmit={handleSaveContact} className={s.editContactForm}>
                       <div className={s.editContactField}>
-                        <label>Phone</label>
-                        <input
+                        <label htmlFor={`${fieldIds}-6`}>Phone</label>
+                        <input id={`${fieldIds}-6`}
                           type="text"
                           className={s.input}
                           value={editContactForm.phone}
@@ -485,8 +511,8 @@ export default function PatientsPage() {
                         />
                       </div>
                       <div className={s.editContactField}>
-                        <label>Alternate Phone</label>
-                        <input
+                        <label htmlFor={`${fieldIds}-7`}>Alternate Phone</label>
+                        <input id={`${fieldIds}-7`}
                           type="text"
                           className={s.input}
                           value={editContactForm.alternatePhone}
@@ -497,8 +523,8 @@ export default function PatientsPage() {
                         />
                       </div>
                       <div className={s.editContactField}>
-                        <label>Email</label>
-                        <input
+                        <label htmlFor={`${fieldIds}-8`}>Email</label>
+                        <input id={`${fieldIds}-8`}
                           type="email"
                           className={s.input}
                           value={editContactForm.email}
@@ -515,7 +541,7 @@ export default function PatientsPage() {
                         <button
                           type="button"
                           className={s.secondaryButton}
-                          onClick={resetEditContactForm}
+                          onClick={() => { if (discardContact()) resetEditContactForm(); }}
                         >
                           Cancel
                         </button>
@@ -557,8 +583,8 @@ export default function PatientsPage() {
 
                   <form onSubmit={handleCreateInteraction} className={s.formGrid}>
                     <div className={s.formGroup}>
-                      <label>Date</label>
-                      <input
+                      <label htmlFor={`${fieldIds}-9`}>Date</label>
+                      <input id={`${fieldIds}-9`}
                         type="date"
                         className={s.input}
                         value={interactionForm.interactionDate}
@@ -567,8 +593,8 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className={s.formGroup}>
-                      <label>Type</label>
-                      <select
+                      <label htmlFor={`${fieldIds}-10`}>Type</label>
+                      <select id={`${fieldIds}-10`}
                         className={s.input}
                         value={interactionForm.type}
                         onChange={(e) => setInteractionForm((current) => ({ ...current, type: e.target.value }))}
@@ -579,8 +605,8 @@ export default function PatientsPage() {
                       </select>
                     </div>
                     <div className={`${s.formGroup} ${s.formGroupFull}`}>
-                      <label>Short Summary</label>
-                      <input
+                      <label htmlFor={`${fieldIds}-11`}>Short Summary</label>
+                      <input id={`${fieldIds}-11`}
                         type="text"
                         className={s.input}
                         value={interactionForm.summary}
@@ -589,8 +615,8 @@ export default function PatientsPage() {
                       />
                     </div>
                     <div className={`${s.formGroup} ${s.formGroupFull}`}>
-                      <label>Conversation Notes</label>
-                      <textarea
+                      <label htmlFor={`${fieldIds}-12`}>Conversation Notes</label>
+                      <textarea id={`${fieldIds}-12`}
                         className={s.textarea}
                         rows={5}
                         value={interactionForm.notes}
@@ -603,7 +629,7 @@ export default function PatientsPage() {
                     {interactionFormError ? <p className={s.formError}>{interactionFormError}</p> : null}
 
                     <div className={s.formActions}>
-                      <button type="button" className={s.secondaryButton} onClick={resetInteractionForm}>
+                      <button type="button" className={s.secondaryButton} onClick={() => { if (discardNote()) resetInteractionForm(); }}>
                         Cancel
                       </button>
                       <button type="submit" className={s.primaryButton} disabled={savingInteraction}>

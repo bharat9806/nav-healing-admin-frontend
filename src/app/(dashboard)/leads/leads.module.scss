@@ -85,8 +85,8 @@
 }
 
 .reminderCardActive {
-  border-color: rgba($emerald, 0.35);
-  background: rgba($emerald, 0.08);
+  border-color: color-mix(in srgb, var(--brand-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 8%, transparent);
 }
 
 .reminderLabel {
@@ -150,9 +150,9 @@
 }
 
 .moreFiltersBtnActive {
-  background: rgba($emerald, 0.1);
-  border-color: rgba($emerald, 0.3);
-  color: $emerald-light;
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  color: var(--status-success);
 }
 
 .moreFiltersMeta {
@@ -197,8 +197,8 @@
   justify-content: center;
 
   &:hover {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
+    color: var(--status-danger);
+    background: color-mix(in srgb, var(--status-danger) 10%, transparent);
   }
 }
 
@@ -317,12 +317,12 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: $text-muted;
+  color: var(--shell-text-muted);
   font-size: 0.75rem;
   padding: 0.3125rem $s2;
   border-radius: $r-md;
   transition: color 0.15s;
-  &:hover { color: $red-light; }
+  &:hover { color: var(--status-danger); }
 }
 
 // Two-column date filter row
@@ -493,13 +493,13 @@
 }
 
 .colMenuBtnActive {
-  background: rgba($emerald, 0.12);
-  border-color: rgba($emerald, 0.3);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--brand-primary) 30%, transparent);
 }
 
 .colMenuBtnActive::before,
 .colMenuBtnActive::after {
-  color: $emerald-light;
+  color: var(--status-success);
 }
 
 .colMenuIcon {
@@ -557,7 +557,7 @@
   }
 
   input {
-    accent-color: $emerald;
+    accent-color: var(--brand-primary);
   }
 }
 
@@ -592,7 +592,7 @@
   cursor: pointer;
   user-select: none;
   white-space: nowrap;
-  &:hover { color: $text-muted; }
+  &:hover { color: var(--shell-text-muted); }
 }
 
 .tr {
@@ -603,11 +603,11 @@
 }
 
 .rowOverdue {
-  background-color: rgba(#ef4444, 0.04);
+  background-color: color-mix(in srgb, var(--status-danger) 4%, transparent);
 }
 
 .rowDueToday {
-  background-color: rgba(#f59e0b, 0.05);
+  background-color: color-mix(in srgb, var(--status-warning) 5%, transparent);
 }
 
 .td {
@@ -653,18 +653,18 @@
 }
 
 .reminderBadgeOverdue {
-  background: rgba(#ef4444, 0.14);
-  color: $red-light;
+  background: color-mix(in srgb, var(--status-danger) 14%, transparent);
+  color: var(--status-danger);
 }
 
 .reminderBadgeToday {
-  background: rgba(#f59e0b, 0.14);
-  color: $amber-light;
+  background: color-mix(in srgb, var(--status-warning) 14%, transparent);
+  color: var(--status-warning);
 }
 
 .reminderBadgeUpcoming {
-  background: rgba(#06b6d4, 0.14);
-  color: #67e8f9;
+  background: color-mix(in srgb, var(--status-info) 14%, transparent);
+  color: var(--status-info);
 }
 
 .tracking {
@@ -695,25 +695,25 @@
   }
 }
 
-.statusNew           { background-color: rgba(#3b82f6, 0.1); color: $blue-light; }
-.statusContacted     { background-color: rgba(#f59e0b, 0.1); color: $amber-light; }
-.statusConverted     { background-color: rgba($emerald, 0.1); color: $emerald-light; }
-.statusClosed        { background-color: rgba(#6b7280, 0.1); color: $text-muted; }
-.statusMissed        { background-color: rgba(#ef4444, 0.1); color: $red-light; }
-.statusCallBack      { background-color: rgba(#8b5cf6, 0.1); color: #a78bfa; }
-.statusNotInterested { background-color: rgba(#6b7280, 0.15); color: #9ca3af; }
-.statusDnc           { background-color: rgba(#ef4444, 0.2); color: #fca5a5; }
-.statusFollowUp      { background-color: rgba(#06b6d4, 0.1); color: #67e8f9; }
+.statusNew           { background-color: color-mix(in srgb, var(--status-info) 10%, transparent); color: var(--status-info); }
+.statusContacted     { background-color: color-mix(in srgb, var(--status-warning) 10%, transparent); color: var(--status-warning); }
+.statusConverted     { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent); color: var(--status-success); }
+.statusClosed        { background-color: color-mix(in srgb, var(--status-neutral) 10%, transparent); color: var(--shell-text-muted); }
+.statusMissed        { background-color: color-mix(in srgb, var(--status-danger) 10%, transparent); color: var(--status-danger); }
+.statusCallBack      { background-color: color-mix(in srgb, var(--status-special) 10%, transparent); color: var(--status-special); }
+.statusNotInterested { background-color: color-mix(in srgb, var(--status-neutral) 15%, transparent); color: var(--status-neutral); }
+.statusDnc           { background-color: color-mix(in srgb, var(--status-danger) 20%, transparent); color: var(--status-danger); }
+.statusFollowUp      { background-color: color-mix(in srgb, var(--status-info) 10%, transparent); color: var(--status-info); }
 
 .invoiceBtn {
   @include btn-ghost;
   margin-right: $s3;
-  color: #10b981;
+  color: var(--brand-primary);
   font-weight: 600;
-  &:hover { color: #34d399; }
+  &:hover { color: var(--status-success); }
 }
-.editBtn   { @include btn-ghost; margin-right: $s3; &:hover { color: $text-primary; } }
-.deleteBtn { @include btn-ghost; &:hover { color: $red-light; } }
+.editBtn   { @include btn-ghost; margin-right: $s3; &:hover { color: var(--shell-text-primary); } }
+.deleteBtn { @include btn-ghost; &:hover { color: var(--status-danger); } }
 
 // ── Row actions kebab (3-dot) menu ──────────────────────────────
 .kebabBtn {
@@ -778,8 +778,8 @@
 }
 
 .actionMenuItemDanger {
-  color: $red-light;
-  &:hover { color: $red-light; background: rgba(239, 68, 68, 0.12); }
+  color: var(--status-danger);
+  &:hover { color: var(--status-danger); background: color-mix(in srgb, var(--status-danger) 12%, transparent); }
 }
 
 .mobileList {
@@ -824,8 +824,8 @@
   width: fit-content;
   padding: 0.18rem 0.45rem;
   border-radius: 999px;
-  background: rgba(#8b5cf6, 0.14);
-  color: #c4b5fd;
+  background: color-mix(in srgb, var(--status-special) 14%, transparent);
+  color: var(--status-special);
   font-size: clamp(0.68rem, 0.64rem + 0.18vw, 0.75rem);
 }
 
@@ -869,8 +869,8 @@
   @include btn-ghost;
   grid-column: 1 / -1;
   min-height: clamp(2.75rem, 8vw, 3rem);
-  border: 1px solid #10b981;
-  color: #10b981;
+  border: 1px solid var(--brand-primary);
+  color: var(--brand-primary);
   font-weight: 600;
 }
 
@@ -983,15 +983,15 @@
   font-weight: 500;
 }
 
-.bmiUnderweight { background-color: rgba(#f59e0b, 0.1); color: $amber-light; border-color: rgba(#f59e0b, 0.3); }
-.bmiNormal      { background-color: rgba($emerald, 0.1); color: $emerald-light; border-color: rgba($emerald, 0.3); }
-.bmiOverweight  { background-color: rgba(#f97316, 0.1); color: #fb923c; border-color: rgba(#f97316, 0.3); }
-.bmiObese       { background-color: rgba(#ef4444, 0.1); color: $red-light; border-color: rgba(#ef4444, 0.3); }
+.bmiUnderweight { background-color: color-mix(in srgb, var(--status-warning) 10%, transparent); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 30%, transparent); }
+.bmiNormal      { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent); color: var(--status-success); border-color: color-mix(in srgb, var(--brand-primary) 30%, transparent); }
+.bmiOverweight  { background-color: color-mix(in srgb, var(--status-warning) 10%, transparent); color: var(--status-warning); border-color: color-mix(in srgb, var(--status-warning) 30%, transparent); }
+.bmiObese       { background-color: color-mix(in srgb, var(--status-danger) 10%, transparent); color: var(--status-danger); border-color: color-mix(in srgb, var(--status-danger) 30%, transparent); }
 
 .error {
-  background-color: rgba($red-light, 0.1);
-  border: 1px solid rgba($red-light, 0.3);
-  color: $red-light;
+  background-color: color-mix(in srgb, var(--status-danger) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--status-danger) 30%, transparent);
+  color: var(--status-danger);
   border-radius: $r-md;
   padding: $s3 $s4;
   font-size: 0.875rem;
@@ -1004,9 +1004,9 @@
   justify-content: space-between;
   gap: $s3;
   margin-bottom: $s3;
-  background-color: rgba(#f59e0b, 0.1);
-  border: 1px solid rgba(#f59e0b, 0.3);
-  color: $amber-light;
+  background-color: color-mix(in srgb, var(--status-warning) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--status-warning) 30%, transparent);
+  color: var(--status-warning);
   border-radius: $r-md;
   padding: $s3 $s4;
   font-size: 0.875rem;
@@ -1033,10 +1033,10 @@
   gap: $s3;
   padding: $s3 $s4;
   border-bottom: 1px solid var(--shell-table-divider);
-  background-color: rgba($emerald, 0.08);
+  background-color: color-mix(in srgb, var(--brand-primary) 8%, transparent);
 
   @media (max-width: ($md - 1px)) {
-    border: 1px solid rgba($emerald, 0.3);
+    border: 1px solid color-mix(in srgb, var(--brand-primary) 30%, transparent);
     border-radius: $r-md;
     margin-bottom: $s3;
   }
@@ -1061,11 +1061,11 @@
 .bulkInvoiceBtn {
   @include btn-ghost;
   padding: $s2 $s4;
-  border: 1px solid #10b981;
-  color: #10b981;
+  border: 1px solid var(--brand-primary);
+  color: var(--brand-primary);
   font-weight: 600;
   white-space: nowrap;
-  &:hover { background-color: rgba(#10b981, 0.12); }
+  &:hover { background-color: color-mix(in srgb, var(--brand-primary) 12%, transparent); }
 
   @media (max-width: ($md - 1px)) {
     flex: 1;
@@ -1091,13 +1091,13 @@
 .rowCheckbox {
   width: 1rem;
   height: 1rem;
-  accent-color: #10b981;
+  accent-color: var(--brand-primary);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .rowSelected {
-  background-color: rgba($emerald, 0.07);
+  background-color: color-mix(in srgb, var(--brand-primary) 7%, transparent);
 }
 
 .mobileNameWrap {
@@ -1110,14 +1110,14 @@
 .itemsHeader {
   @include flex-between;
   margin-bottom: $s2;
-  label { font-size: 0.875rem; font-weight: 500; color: $text-secondary; }
+  label { font-size: 0.875rem; font-weight: 500; color: var(--shell-text-secondary); }
 }
 
 .addItemBtn {
   @include btn-ghost;
   font-size: 0.75rem;
-  color: $emerald-light;
-  &:hover { color: $emerald-hover; }
+  color: var(--status-success);
+  &:hover { color: var(--brand-primary-hover); }
 }
 
 .itemRow {
@@ -1151,8 +1151,8 @@
   left: 0;
   right: 0;
   z-index: 50;
-  background-color: $bg-elevated;
-  border: 1px solid $border;
+  background-color: var(--shell-elevated);
+  border: 1px solid var(--shell-border);
   border-radius: $r-md;
   max-height: 12rem;
   overflow-y: auto;
@@ -1170,25 +1170,25 @@
   padding: $s2 $s3;
   cursor: pointer;
   font-size: 0.875rem;
-  color: $text-secondary;
+  color: var(--shell-text-secondary);
   transition: background-color 0.1s;
-  &:hover { background-color: rgba($emerald, 0.1); color: $text-primary; }
+  &:hover { background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent); color: var(--shell-text-primary); }
 }
 
 .productOptionSelected {
-  background-color: rgba($emerald, 0.15);
-  color: $emerald-light;
+  background-color: color-mix(in srgb, var(--brand-primary) 15%, transparent);
+  color: var(--status-success);
 }
 
 .productPrice {
   font-size: 0.75rem;
-  color: $text-muted;
+  color: var(--shell-text-muted);
 }
 
 .productOptionEmpty {
   padding: $s3;
   text-align: center;
-  color: $text-subtle;
+  color: var(--shell-text-subtle);
   font-size: 0.875rem;
 }
 
@@ -1203,9 +1203,9 @@
 
 .removeItemBtn {
   @include btn-ghost;
-  color: $red-light;
+  color: var(--status-danger);
   padding: 0 $s2;
-  &:hover { color: $red-hover; }
+  &:hover { color: var(--status-danger); }
 }
 
 .formActions {
@@ -1296,3 +1296,14 @@
   color: var(--shell-text-secondary);
   white-space: nowrap;
 }
+
+@media (max-width: 767px) { .reminderCards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+
+.optionalSection { border: 1px solid var(--shell-border); border-radius: 10px; padding: 12px; }
+.optionalSection summary { cursor: pointer; font-size: 14px; font-weight: 600; min-height: 32px; }
+.optionalSection[open] summary { margin-bottom: 12px; }
+@media (max-width: 767px) { .inlineForm .formActions { position: sticky; bottom: 0; z-index: 10; padding: 12px; margin-inline: -12px; background: var(--shell-card-bg); border-top: 1px solid var(--shell-border); box-shadow: 0 -6px 16px rgba(0,0,0,.08); } }
+
+.formSectionTitle { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--shell-border); font-size: 15px; color: var(--shell-text-primary); }
+
+@media (max-width: 767px) { .formActions { flex-direction: row; flex-wrap: wrap; } .formActions .saveBtn { order: 0; flex: 1; } .formActions .cancelBtn { order: 1; flex: 1; } .formActions .invoiceBtn { order: 2; flex-basis: 100%; } }

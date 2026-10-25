@@ -1,0 +1,35 @@
+.toggle {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid var(--shell-border);
+  background: var(--shell-card-bg);
+  color: var(--shell-text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+  &:hover {
+    background: var(--shell-hover);
+    border-color: var(--shell-border-strong);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 3px;
+  }
+}
+.floating {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toggle {
+    transition: none;
+  }
+}

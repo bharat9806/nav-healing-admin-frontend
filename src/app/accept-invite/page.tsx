@@ -1,9 +1,11 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import api from '@/lib/api';
+import ThemeToggle from '@/components/theme/ThemeToggle';
+import BrandLogo from '@/components/ui/BrandLogo';
 import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './accept-invite.module.scss';
 
@@ -16,11 +18,6 @@ function AcceptInviteForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Invalid invite link. Please contact your administrator.');
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,15 +66,13 @@ function AcceptInviteForm() {
   return (
     <>
       <div className={s.brand}>
-        <div className={s.brandIcon}>
-          <span>N</span>
-        </div>
+        <div className={s.brandLogo}><BrandLogo /></div>
         <h1 className={s.brandTitle}>Set up your account</h1>
         <p className={s.brandSub}>Choose a username and password to get started</p>
       </div>
 
       <form onSubmit={handleSubmit} className={s.form}>
-        {error && <div className={s.error}>{error}</div>}
+        {(error || !token) && <div className={s.error}>{error || 'Invalid invite link. Please contact your administrator.'}</div>}
 
         <div className={s.field}>
           <label>Username</label>
@@ -127,8 +122,9 @@ function AcceptInviteForm() {
 export default function AcceptInvitePage() {
   return (
     <div className={s.page}>
+      <ThemeToggle floating />
       <div className={s.card}>
-        <Suspense fallback={<div style={{ color: '#9ca3af', textAlign: 'center' }}>Loading...</div>}>
+        <Suspense fallback={<div style={{ color: 'var(--shell-text-muted)', textAlign: 'center' }}>Loading...</div>}>
           <AcceptInviteForm />
         </Suspense>
       </div>

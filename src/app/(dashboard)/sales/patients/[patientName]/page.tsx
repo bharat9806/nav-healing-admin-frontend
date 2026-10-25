@@ -3,8 +3,10 @@
 import { isAxiosError } from 'axios';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useId, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useComboboxKeyboard } from '@/hooks/useComboboxKeyboard';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { PatientSaleHistoryResponse, User } from '@/types';
 import { Loader } from '@/components/ui/Loader';
@@ -119,9 +121,10 @@ function SearchableProductSelect({
     setQuery('');
   };
 
+  const combo = useComboboxKeyboard({ open, setOpen, options: results, onSelect: handleSelect });
   return (
     <div className={s.comboWrap} ref={wrapRef}>
-      <input
+      <input {...combo.inputProps} aria-label="Search product"
         ref={inputRef}
         type="text"
         className={s.formInput}
@@ -158,7 +161,7 @@ function SearchableProductSelect({
       )}
 
       {open && (
-        <ul className={s.comboList}>
+        <ul {...combo.listProps} className={s.comboList}>
           <li
             className={s.comboItem}
             onMouseDown={() => {
@@ -174,8 +177,8 @@ function SearchableProductSelect({
           ) : results.length === 0 ? (
             <li className={s.comboEmpty}>No products found</li>
           ) : (
-            results.map((product) => (
-              <li
+            results.map((product, optionIndex) => (
+              <li {...combo.optionProps(optionIndex)}
                 key={product.id}
                 className={`${s.comboItem} ${product.id === value ? s.comboItemActive : ''}`}
                 onMouseDown={() => handleSelect(product)}
@@ -192,6 +195,7 @@ function SearchableProductSelect({
 }
 
 export default function PatientHistoryPage() {
+  const fieldIds = useId();
   const params = useParams<{ patientName: string }>();
   const patientParam = typeof params?.patientName === 'string' ? params.patientName : '';
   const patientName = useMemo(() => decodeURIComponent(patientParam), [patientParam]);
@@ -272,6 +276,8 @@ export default function PatientHistoryPage() {
     setShowAddVisitForm(false);
   };
 
+  const confirmDiscard = useUnsavedChanges(showAddVisitForm, { form, items });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -327,6 +333,7 @@ export default function PatientHistoryPage() {
             type="button"
             className={s.primaryAction}
             onClick={() => {
+              if (showAddVisitForm && !confirmDiscard()) return;
               setShowAddVisitForm((current) => !current);
               setSaveError('');
             }}
@@ -421,8 +428,8 @@ export default function PatientHistoryPage() {
                         </div>
 
                         <div className={s.qtyField}>
-                          <label>Qty</label>
-                          <input
+                          <label htmlFor={`${fieldIds}-1-${index}`}>Qty</label>
+                          <input id={`${fieldIds}-1-${index}`}
                             type="number"
                             min="1"
                             step="1"

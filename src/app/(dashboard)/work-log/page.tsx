@@ -1,7 +1,9 @@
 'use client';
 
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { useId, Fragment, useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import Dialog from '@/components/ui/Dialog';
 import { fetchCurrentUser } from '@/lib/current-user';
 import {
   CallOutcome,
@@ -327,6 +329,7 @@ function CallNumberInput({
 }
 
 export default function WorkLogPage() {
+  const fieldIds = useId();
   const [rows, setRows] = useState<WorkLog[]>([]);
   const [stats, setStats] = useState<WorkLogStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -438,6 +441,7 @@ export default function WorkLogPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm(emptyForm());
     setError('');
@@ -563,6 +567,8 @@ export default function WorkLogPage() {
         prospectId: c.linkType === 'PROSPECT' ? c.linkId : undefined,
       })),
   });
+
+  const confirmDiscard = useUnsavedChanges(showForm, form);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -881,8 +887,8 @@ export default function WorkLogPage() {
                       <div className={f.extras}>
                         <div className={f.extrasGrid}>
                           <div className={f.extrasField}>
-                            <label>Category</label>
-                            <CustomSelect
+                            <label htmlFor={`${fieldIds}-1-${ti}`}>Category</label>
+                            <CustomSelect id={`${fieldIds}-1-${ti}`}
                               options={[
                                 { label: 'Auto', value: '' },
                                 ...categories.map((c) => ({ label: CATEGORY_LABELS[c], value: c })),
@@ -896,8 +902,8 @@ export default function WorkLogPage() {
                             />
                           </div>
                           <div className={f.extrasField}>
-                            <label>Status</label>
-                            <CustomSelect
+                            <label htmlFor={`${fieldIds}-2-${ti}`}>Status</label>
+                            <CustomSelect id={`${fieldIds}-2-${ti}`}
                               options={workStatuses.map((st) => ({
                                 label: STATUS_LABELS[st],
                                 value: st,
@@ -948,7 +954,7 @@ export default function WorkLogPage() {
             <div className={s.formActions}>
               <button
                 type="button"
-                onClick={() => { setShowForm(false); setEditing(null); }}
+                onClick={() => { if (!confirmDiscard()) return; setShowForm(false); setEditing(null); }}
                 className={s.cancelBtn}
               >
                 Cancel
@@ -1221,7 +1227,7 @@ export default function WorkLogPage() {
       ))}
 
       {showPdfModal && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Download Work Report</h3>
             <p className={s.deleteMsg}>
@@ -1256,8 +1262,8 @@ export default function WorkLogPage() {
 
               {isAdmin && stats && stats.byUser.length > 0 && (
                 <div className={f.modalField}>
-                  <label>Staff</label>
-                  <CustomSelect
+                  <label htmlFor={`${fieldIds}-3`}>Staff</label>
+                  <CustomSelect id={`${fieldIds}-3`}
                     options={[
                       { label: 'All staff', value: '' },
                       ...stats.byUser.map((u) => ({ label: u.username, value: String(u.userId) })),
@@ -1291,11 +1297,11 @@ export default function WorkLogPage() {
               </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setShowPdfModal(false)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Entry?</h3>
             <p className={s.deleteMsg}>
@@ -1307,7 +1313,7 @@ export default function WorkLogPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

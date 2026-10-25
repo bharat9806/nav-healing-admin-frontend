@@ -219,3 +219,5 @@
   flex-shrink: 0;
   color: var(--brand-primary);
 }
+
+.item:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: -2px; background: var(--shell-hover); }

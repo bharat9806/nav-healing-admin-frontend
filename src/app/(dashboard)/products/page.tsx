@@ -1,9 +1,12 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { useEffect, useRef, useState } from 'react';
+import { useId, useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import Dialog from '@/components/ui/Dialog';
+import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Company, Product, User } from '@/types';
@@ -100,6 +103,7 @@ function ProductForm({
   onImageChange,
   onAddCompany,
 }: ProductFormProps) {
+  const fieldIds = useId();
   const selectedCategory = categoryOptions.find((c) => c.name === form.category);
   const subcategoryOptions = selectedCategory?.subcategories ?? [];
   const subcategorySelectOptions = [
@@ -161,8 +165,8 @@ function ProductForm({
       {error && <div className={s.error}>{error}</div>}
       <div className={s.productMetaRow}>
         <div className={s.formGroup}>
-          <label>Company {editing ? '' : '*'}</label>
-          <CustomSelect
+          <label htmlFor={`${fieldIds}-1`}>Company {editing ? '' : '*'}</label>
+          <CustomSelect id={`${fieldIds}-1`}
             className={s.formSelectWrap}
             fullWidth
             options={companySelectOptions}
@@ -199,8 +203,8 @@ function ProductForm({
           )}
         </div>
         <div className={s.formGroup}>
-          <label>SKU / Product Code</label>
-          <input
+          <label htmlFor={`${fieldIds}-2`}>SKU / Product Code</label>
+          <input id={`${fieldIds}-2`}
             type="text"
             value={editing ? form.sku : (form.companyId ? skuPreview : form.sku)}
             onChange={(e) => onFormChange({ ...form, sku: e.target.value.toUpperCase() })}
@@ -213,8 +217,8 @@ function ProductForm({
           )}
         </div>
         <div className={s.formGroup}>
-          <label>Category *</label>
-          <CustomSelect
+          <label htmlFor={`${fieldIds}-3`}>Category *</label>
+          <CustomSelect id={`${fieldIds}-3`}
             className={s.formSelectWrap}
             fullWidth
             options={categoryOptions.map((c) => ({ label: c.name, value: c.name }))}
@@ -225,8 +229,8 @@ function ProductForm({
           />
         </div>
         <div className={s.formGroup}>
-          <label>Subcategory</label>
-          <TypeableSelect
+          <label htmlFor={`${fieldIds}-4`}>Subcategory</label>
+          <TypeableSelect id={`${fieldIds}-4`}
             className={s.formSelectWrap}
             fullWidth
             options={subcategorySelectOptions}
@@ -241,8 +245,8 @@ function ProductForm({
         </div>
       </div>
       <div className={s.formGroup}>
-        <label>Name *</label>
-        <input
+        <label htmlFor={`${fieldIds}-5`}>Name *</label>
+        <input id={`${fieldIds}-5`}
           type="text"
           required
           value={form.name}
@@ -251,8 +255,8 @@ function ProductForm({
         />
       </div>
       <div className={s.formGroup}>
-        <label>Description</label>
-        <textarea
+        <label htmlFor={`${fieldIds}-6`}>Description</label>
+        <textarea id={`${fieldIds}-6`}
           value={form.description}
           onChange={(e) => onFormChange({ ...form, description: e.target.value })}
           rows={2}
@@ -261,8 +265,8 @@ function ProductForm({
       </div>
       <div className={s.grid3}>
         <div className={s.formGroup}>
-          <label>Price *</label>
-          <input
+          <label htmlFor={`${fieldIds}-7`}>Price *</label>
+          <input id={`${fieldIds}-7`}
             type="number"
             step="0.01"
             required
@@ -272,8 +276,8 @@ function ProductForm({
           />
         </div>
         <div className={s.formGroup}>
-          <label>Current Stock</label>
-          <input
+          <label htmlFor={`${fieldIds}-8`}>Current Stock</label>
+          <input id={`${fieldIds}-8`}
             type="number"
             min="0"
             value={form.currentStock}
@@ -282,8 +286,8 @@ function ProductForm({
           />
         </div>
         <div className={s.formGroup}>
-          <label>Reorder Level</label>
-          <input
+          <label htmlFor={`${fieldIds}-9`}>Reorder Level</label>
+          <input id={`${fieldIds}-9`}
             type="number"
             min="0"
             value={form.reorderLevel}
@@ -293,8 +297,8 @@ function ProductForm({
         </div>
       </div>
       <div className={s.formGroup}>
-        <label>Product Image</label>
-        <input type="file" accept="image/*" onChange={onImageChange} className={s.fileInput} />
+        <label htmlFor={`${fieldIds}-10`}>Product Image</label>
+        <input id={`${fieldIds}-10`} type="file" accept="image/*" onChange={onImageChange} className={s.fileInput} />
         {imagePreview && <img src={imagePreview} alt="Preview" className={s.imagePreview} />}
       </div>
       <div className={s.checkboxRow}>
@@ -341,6 +345,11 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [lowStockOnly, setLowStockOnly] = useState(false);
+  const [dashboardFiltersReady, setDashboardFiltersReady] = useState(false);
+  useEffect(() => {
+    setLowStockOnly(new URLSearchParams(window.location.search).get('lowStock') === 'true');
+    setDashboardFiltersReady(true);
+  }, []);
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [lowStockCount, setLowStockCount] = useState(0);
@@ -371,10 +380,15 @@ export default function ProductsPage() {
     setPage(1);
   };
 
-  const fetchProducts = (p = page, nextLowStockOnly = lowStockOnly, nextPageSize = pageSize) => {
+  const [loadError, setLoadError] = useState('');
+  const listRequest = useRef(0);
+
+  const fetchProducts = (p = page, nextLowStockOnly = lowStockOnly, nextPageSize = pageSize, searchValue = search) => {
+    const requestId = ++listRequest.current;
+    setLoadError('');
     setLoading(true);
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
+    if (searchValue) params.set('search', searchValue);
     if (catFilter) params.set('category', catFilter);
     if (nextLowStockOnly) params.set('lowStock', 'true');
     params.set('page', String(p));
@@ -383,13 +397,16 @@ export default function ProductsPage() {
     params.set('order', sortOrder);
     api.get(`/products?${params.toString()}`)
       .then((res) => {
+        if (requestId !== listRequest.current) return;
         setProducts(res.data.data);
         setTotalPages(res.data.meta.totalPages);
         setTotal(res.data.meta.total);
         setLowStockCount(res.data.summary?.lowStockCount ?? 0);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((error: unknown) => {
+        if (requestId === listRequest.current) setLoadError(loadErrorMessage(error, 'Unable to load products. Check your connection and try again.'));
+      })
+      .finally(() => { if (requestId === listRequest.current) setLoading(false); });
   };
 
   useEffect(() => {
@@ -430,14 +447,15 @@ export default function ProductsPage() {
   };
 
   useEffect(() => {
-    fetchProducts(page);
-  }, [catFilter, page, pageSize, sortField, sortOrder]);
+    if (dashboardFiltersReady) fetchProducts(page);
+  }, [dashboardFiltersReady, lowStockOnly, catFilter, page, pageSize, sortField, sortOrder]);
 
   const goToPage = (p: number) => {
     setPage(p);
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm(initialForm());
     setImageFile(null);
@@ -446,7 +464,9 @@ export default function ProductsPage() {
     setShowInlineForm(true);
   };
 
-  const cancelCreate = () => {
+  const confirmDiscard = useUnsavedChanges(showInlineForm, { form, image: imageFile?.name });
+
+  const cancelCreate = () => { if (!confirmDiscard()) return;
     setShowInlineForm(false);
     setError('');
   };
@@ -743,10 +763,10 @@ export default function ProductsPage() {
         style={{ display: 'none' }}
       />
 
-      <div className={s.statsRow}>
+      {!showInlineForm && (<div className={s.statsRow}>
         <div className={s.statCard}>
           <span className={s.statLabel}>Low Stock Items</span>
-          <strong className={s.statValue}>{lowStockCount}</strong>
+          <strong className={s.statValue}>{loadError || loading ? '—' : lowStockCount}</strong>
         </div>
         <div className={s.statCard}>
           <span className={s.statLabel}>View</span>
@@ -756,14 +776,13 @@ export default function ProductsPage() {
               const next = !lowStockOnly;
               setLowStockOnly(next);
               setPage(1);
-              fetchProducts(1, next);
             }}
             className={`${s.filterChip} ${lowStockOnly ? s.filterChipActive : ''}`}
           >
             {lowStockOnly ? 'Showing Low Stock Only' : 'Show Low Stock Only'}
           </button>
         </div>
-      </div>
+      </div>)}
 
       {(importMessage || importError) && (
         <div className={importError ? s.error : s.importSuccess}>
@@ -812,7 +831,8 @@ export default function ProductsPage() {
                 className={s.searchClear}
                 onClick={() => {
                   setSearch('');
-                  if (page === 1) fetchProducts(1); else setPage(1);
+                  setPage(1);
+                  fetchProducts(1, lowStockOnly, pageSize, '');
                 }}
                 aria-label="Clear search"
               >
@@ -830,7 +850,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {!showInlineForm && (loading ? (
+      {!showInlineForm && (loadError ? <LoadError message={loadError} onRetry={() => fetchProducts()} loading={loading} /> : loading ? (
         <SkeletonList rows={5} />
       ) : products.length === 0 ? (
         <div className={s.emptyBox}>
@@ -974,7 +994,7 @@ export default function ProductsPage() {
       ))}
 
       {importPreview && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={closeImportPreview} closeDisabled={committing}>
           <div className={s.importModal}>
             <h3 className={s.importTitle}>Review Import</h3>
             <p className={s.importSummary}>
@@ -1083,11 +1103,11 @@ export default function ProductsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Product</h3>
             <p className={s.deleteMsg}>Are you sure you want to delete "{deleteTarget.name}"? This cannot be undone.</p>
@@ -1096,7 +1116,7 @@ export default function ProductsPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

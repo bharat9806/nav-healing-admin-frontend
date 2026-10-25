@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useId, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import Dialog from '@/components/ui/Dialog';
 import { User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import s from './users.module.scss';
@@ -253,13 +256,13 @@ function PermissionSection<T extends PermissionForm>({
   disabledByDependency?: boolean;
 }) {
   return (
-    <section className={s.permissionsCard}>
-      <div className={s.sectionHead}>
+    <details className={s.permissionsCard} open={title === 'Page Access'}>
+      <summary className={s.sectionHead}>
         <h3 className={s.sectionTitle}>{title}</h3>
         <p className={s.sectionText}>{description}</p>
-      </div>
+      </summary>
       <div className={s.permissionsGrid}>
-        {items.map((item) => {
+        {items.filter((item) => item.key !== 'canManageUsers').map((item) => {
           const dependencyDisabled =
             disabledByDependency && 'dependsOn' in item
               ? !values[item.dependsOn]
@@ -294,17 +297,19 @@ function PermissionSection<T extends PermissionForm>({
           );
         })}
       </div>
-    </section>
+    </details>
   );
 }
 
 export default function UsersPage() {
+  const fieldIds = useId();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [showInlineForm, setShowInlineForm] = useState(false);
@@ -326,6 +331,7 @@ export default function UsersPage() {
   };
 
   const fetchUsers = async () => {
+    setLoadError('');
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -333,8 +339,8 @@ export default function UsersPage() {
       params.set('order', sortOrder);
       const res = await api.get(`/users?${params.toString()}`);
       setUsers(res.data);
-    } catch {
-      setError('Failed to load users');
+    } catch (error: unknown) {
+      setLoadError(loadErrorMessage(error, 'Unable to load users. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -348,7 +354,7 @@ export default function UsersPage() {
     try {
       await api.put(`/users/${id}/toggle`);
       fetchUsers();
-    } catch {}
+    } catch { setError('Unable to update this user. Please try again.'); }
   };
 
   const handleDelete = async () => {
@@ -363,6 +369,7 @@ export default function UsersPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditingUser(null);
     setCreateForm(initialCreateForm());
     setFormError('');
@@ -400,7 +407,9 @@ export default function UsersPage() {
     setShowInlineForm(true);
   };
 
-  const cancelForm = () => {
+  const confirmDiscard = useUnsavedChanges(showInlineForm, editingUser ? editForm : createForm);
+
+  const cancelForm = () => { if (!confirmDiscard()) return;
     setShowInlineForm(false);
     setEditingUser(null);
     setFormError('');
@@ -478,6 +487,8 @@ export default function UsersPage() {
     setPage(nextPage);
   };
 
+  if (loadError.startsWith('You do not have access')) return <div className={s.page}><h1 className={s.pageTitle}>Users</h1><LoadError message={loadError} onRetry={() => void fetchUsers()} loading={loading} /></div>;
+
   return (
     <div className={s.page}>
       <div className={s.header}>
@@ -514,8 +525,8 @@ export default function UsersPage() {
                   </div>
                   <div className={s.formGridTwo}>
                     <div className={s.formGroup}>
-                      <label>Username</label>
-                      <input
+                      <label htmlFor={`${fieldIds}-1`}>Username</label>
+                      <input id={`${fieldIds}-1`}
                         type="text"
                         required
                         value={createForm.username}
@@ -529,8 +540,8 @@ export default function UsersPage() {
                       />
                     </div>
                     <div className={s.formGroup}>
-                      <label>Email</label>
-                      <input
+                      <label htmlFor={`${fieldIds}-2`}>Email</label>
+                      <input id={`${fieldIds}-2`}
                         type="email"
                         required
                         value={createForm.email}
@@ -541,8 +552,8 @@ export default function UsersPage() {
                       />
                     </div>
                     <div className={s.formGroup}>
-                      <label>User Code</label>
-                      <input
+                      <label htmlFor={`${fieldIds}-3`}>User Code</label>
+                      <input id={`${fieldIds}-3`}
                         type="text"
                         value={createForm.userCode}
                         onChange={(e) =>
@@ -559,8 +570,8 @@ export default function UsersPage() {
                   <div className={s.formGridTwo}>
                     {createForm.role === 'SUPER_ADMIN' && (
                       <div className={s.formGroup}>
-                        <label>Password</label>
-                        <input
+                        <label htmlFor={`${fieldIds}-4`}>Password</label>
+                        <input id={`${fieldIds}-4`}
                           type="password"
                           required
                           minLength={6}
@@ -576,8 +587,8 @@ export default function UsersPage() {
                       </div>
                     )}
                     <div className={s.formGroup}>
-                      <label>Role</label>
-                      <CustomSelect
+                      <label htmlFor={`${fieldIds}-5`}>Role</label>
+                      <CustomSelect id={`${fieldIds}-5`}
                         options={[
                           { label: 'Super Admin', value: 'SUPER_ADMIN' },
                           { label: 'Admin', value: 'ADMIN' },
@@ -610,7 +621,7 @@ export default function UsersPage() {
                   <div className={s.permissionsLayout}>
                     <PermissionSection
                       title="Page Access"
-                      description="Choose which parts of the app this user can work with."
+                      description="Choose which parts of the app this user can work with. User management is reserved for Super Admins."
                       items={PAGE_PERMISSIONS}
                       values={createForm}
                       onToggle={(key, checked) =>
@@ -662,8 +673,8 @@ export default function UsersPage() {
                   </div>
                   <div className={s.formGridTwo}>
                     <div className={s.formGroup}>
-                      <label>User Code</label>
-                      <input
+                      <label htmlFor={`${fieldIds}-6`}>User Code</label>
+                      <input id={`${fieldIds}-6`}
                         type="text"
                         value={editForm.userCode}
                         onChange={(e) =>
@@ -676,8 +687,8 @@ export default function UsersPage() {
                       />
                     </div>
                     <div className={s.formGroup}>
-                      <label>Role</label>
-                      <CustomSelect
+                      <label htmlFor={`${fieldIds}-7`}>Role</label>
+                      <CustomSelect id={`${fieldIds}-7`}
                         options={[
                           { label: 'Super Admin', value: 'SUPER_ADMIN' },
                           { label: 'Admin', value: 'ADMIN' },
@@ -726,7 +737,7 @@ export default function UsersPage() {
                   <div className={s.permissionsLayout}>
                     <PermissionSection
                       title="Page Access"
-                      description="Enable only the modules this user should open and manage."
+                      description="Enable only the modules this user should open and manage. User management is reserved for Super Admins."
                       items={PAGE_PERMISSIONS}
                       values={editForm}
                       onToggle={(key, checked) =>
@@ -799,8 +810,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      {!showInlineForm && (
-        <div className={s.tableWrap}>
+      {!showInlineForm && (loadError ? <LoadError message={loadError} onRetry={() => void fetchUsers()} loading={loading} /> : <div className={s.tableWrap}>
           <div className={s.mobileList}>
             {loading ? (
               [...Array(4)].map((_, i) => (
@@ -1009,7 +1019,7 @@ export default function UsersPage() {
       )}
 
       {showDeleteModal && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setShowDeleteModal(false)}>
           <div className={s.deleteModal}>
             <div className={s.deleteIconWrap}>
               <span>!</span>
@@ -1028,7 +1038,7 @@ export default function UsersPage() {
               </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

@@ -136,7 +136,7 @@
 
 .ghostActionActive {
   border-color: var(--brand-primary);
-  color: $emerald-light;
+  color: var(--status-success);
   background: var(--brand-primary-soft);
 }
 
@@ -158,8 +158,8 @@
   svg { width: 14px; height: 14px; }
 
   &:hover {
-    color: $red-light;
-    background: rgba($red-light, 0.08);
+    color: var(--status-danger);
+    background: color-mix(in srgb, var(--status-danger) 8%, transparent);
   }
 
   &:focus-visible {
@@ -266,8 +266,8 @@
   svg { width: 16px; height: 16px; }
 
   &:hover {
-    color: $red-light;
-    background: rgba($red-light, 0.1);
+    color: var(--status-danger);
+    background: color-mix(in srgb, var(--status-danger) 10%, transparent);
   }
 
   &:focus-visible {
@@ -393,7 +393,7 @@
   @include status-badge;
   flex-shrink: 0;
   background: var(--brand-primary-soft-strong);
-  color: $emerald-light;
+  color: var(--status-success);
 }
 
 .contactChipUnlink {
@@ -410,7 +410,7 @@
 
   svg { width: 14px; height: 14px; }
 
-  &:hover { color: $red-light; background: rgba($red-light, 0.12); }
+  &:hover { color: var(--status-danger); background: color-mix(in srgb, var(--status-danger) 12%, transparent); }
   &:focus-visible { outline: 2px solid $red-light; outline-offset: 1px; }
 }
 
@@ -478,7 +478,7 @@
 
   &:hover {
     border-color: var(--brand-primary);
-    color: $emerald-light;
+    color: var(--status-success);
     background: var(--brand-primary-soft);
   }
 

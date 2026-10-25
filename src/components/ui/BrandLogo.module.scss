@@ -1,0 +1,21 @@
+.logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 196px;
+  max-width: 100%;
+  padding: 8px;
+  background: #fbf8f1;
+  border: 1px solid #d8cfb9;
+  border-radius: 12px;
+  flex-shrink: 0;
+  img { display: block; width: 100%; height: auto; object-fit: contain; }
+}
+.compact { width: 176px; }
+
+// A softer paper mount keeps the original artwork readable without glare.
+:global(:root:not([data-theme='light'])) .logo {
+  background: #d6d6c7;
+  border-color: #7f8876;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .16);
+}

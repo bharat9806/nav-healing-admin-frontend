@@ -25,13 +25,13 @@
 .backLink {
   display: inline-block;
   margin-bottom: $s2;
-  color: $emerald-light;
+  color: var(--status-success);
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 600;
 
   &:hover {
-    color: color-mix(in srgb, #ffffff 20%, #34d399);
+    color: var(--status-success);
   }
 }
 
@@ -77,8 +77,8 @@
 
 .primaryAction {
   padding: 0.85rem 1.15rem;
-  background: linear-gradient(135deg, $emerald 0%, color-mix(in srgb, $emerald 70%, #ffffff) 100%);
-  color: #03291f;
+  background: var(--brand-primary);
+  color: var(--brand-on-primary);
 }
 
 .secondaryAction,
@@ -130,8 +130,8 @@
 .totalBadge {
   padding: 0.8rem 1rem;
   border-radius: $r-md;
-  background: rgba($emerald, 0.12);
-  color: $emerald-light;
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--status-success);
   font-weight: 700;
 }
 
@@ -177,8 +177,8 @@
 
   &:focus {
     outline: none;
-    border-color: rgba($emerald, 0.7);
-    box-shadow: 0 0 0 3px rgba($emerald, 0.14);
+    border-color: color-mix(in srgb, var(--brand-primary) 70%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
   }
 }
 
@@ -266,7 +266,7 @@
 
 .formError {
   margin: 0;
-  color: $red-light;
+  color: var(--status-danger);
   font-weight: 600;
 }
 
@@ -322,7 +322,7 @@
 }
 
 .comboItemActive {
-  background: rgba($emerald, 0.12);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
 }
 
 .comboItemName {
@@ -377,7 +377,7 @@
 }
 
 .pendingValue {
-  color: $amber-light;
+  color: var(--status-warning);
 }
 
 .timeline {
@@ -429,8 +429,8 @@
 .statusBadge {
   @include status-badge;
   border: none;
-  background-color: rgba($emerald, 0.12);
-  color: $emerald-light;
+  background-color: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--status-success);
 }
 
 .amount {
@@ -477,7 +477,7 @@
 }
 
 .pendingText {
-  color: $amber-light;
+  color: var(--status-warning);
 }
 
 .medicineBlock,
@@ -536,3 +536,5 @@
   color: var(--shell-text-secondary);
   line-height: 1.6;
 }
+
+@media (max-width: 767px) { .summaryGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }

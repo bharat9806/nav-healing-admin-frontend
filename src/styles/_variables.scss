@@ -1,36 +1,36 @@
 // Background
-$bg-base:     #030712; // gray-950
-$bg-surface:  #111827; // gray-900
-$bg-elevated: #1f2937; // gray-800
-$bg-muted:    #374151; // gray-700
+$bg-base:     #101b15;
+$bg-surface:  #17271e;
+$bg-elevated: #213328;
+$bg-muted:    #304438;
 
 // Border
-$border:       #1f2937; // gray-800
-$border-input: #374151; // gray-700
+$border:       #213328;
+$border-input: #304438;
 
 // Text
-$text-primary:   #ffffff;
-$text-secondary: #d1d5db; // gray-300
-$text-muted:     #9ca3af; // gray-400
-$text-subtle:    #6b7280; // gray-500
-$text-faint:     #4b5563; // gray-600
+$text-primary:   #f5efdf;
+$text-secondary: #d6d9c8;
+$text-muted:     #b7bcaa;
+$text-subtle:    #a8ae9b;
+$text-faint:     #8f9b85;
 
-// Brand (emerald)
-$emerald:         #059669; // emerald-600
-$emerald-hover:   #10b981; // emerald-500
-$emerald-light:   #34d399; // emerald-400
-$emerald-lighter: #6ee7b7; // emerald-300
+// Herbal brand (legacy names retained for compatibility)
+$emerald:         #0f5132;
+$emerald-hover:   #2f6b4f;
+$emerald-light:   #a9caa3;
+$emerald-lighter: #c0dbb9;
 
 // Status
-$red:        #dc2626;
-$red-hover:  #ef4444;
-$red-light:  #f87171;
-$blue-light: #60a5fa;
-$blue-muted: #93c5fd;
-$amber-light: #fbbf24;
-$violet-light: #a78bfa;
-$violet-muted: #c4b5fd;
-$green-light: #4ade80;
+$red:        #a33f30;
+$red-hover:  #bb4d3b;
+$red-light:  #f1a99a;
+$blue-light: #a4c5ce;
+$blue-muted: #b9d4d8;
+$amber-light: #e5bf79;
+$violet-light: #d2b4cc;
+$violet-muted: #dfcbd8;
+$green-light: #aad0a4;
 
 // Spacing
 $s1: 0.25rem;

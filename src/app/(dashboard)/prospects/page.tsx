@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useId, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import Dialog from '@/components/ui/Dialog';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { Prospect, ProspectStatus, ProspectsResponse } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
@@ -60,6 +62,7 @@ const emptyForm = (): ProspectForm => ({
 });
 
 export default function ProspectsPage() {
+  const fieldIds = useId();
   const [rows, setRows] = useState<Prospect[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -129,6 +132,7 @@ export default function ProspectsPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm(emptyForm());
     setError('');
@@ -149,6 +153,8 @@ export default function ProspectsPage() {
     setError('');
     setShowForm(true);
   };
+
+  const confirmDiscard = useUnsavedChanges(showForm, form);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,28 +249,28 @@ export default function ProspectsPage() {
             {error && <div className={s.error}>{error}</div>}
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Name</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={s.formInput} placeholder="Optional until qualified" />
+                <label htmlFor={`${fieldIds}-1`}>Name</label>
+                <input id={`${fieldIds}-1`} type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={s.formInput} placeholder="Optional until qualified" />
               </div>
               <div className={s.formGroup}>
-                <label>Phone</label>
-                <input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={s.formInput} />
-              </div>
-            </div>
-            <div className={s.grid2}>
-              <div className={s.formGroup}>
-                <label>Alternate Number</label>
-                <input type="tel" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value })} className={s.formInput} placeholder="Optional" />
-              </div>
-              <div className={s.formGroup}>
-                <label>City</label>
-                <input type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={s.formInput} />
+                <label htmlFor={`${fieldIds}-2`}>Phone</label>
+                <input id={`${fieldIds}-2`} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={s.formInput} />
               </div>
             </div>
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Status</label>
-                <CustomSelect
+                <label htmlFor={`${fieldIds}-3`}>Alternate Number</label>
+                <input id={`${fieldIds}-3`} type="tel" value={form.alternatePhone} onChange={(e) => setForm({ ...form, alternatePhone: e.target.value })} className={s.formInput} placeholder="Optional" />
+              </div>
+              <div className={s.formGroup}>
+                <label htmlFor={`${fieldIds}-4`}>City</label>
+                <input id={`${fieldIds}-4`} type="text" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={s.formInput} />
+              </div>
+            </div>
+            <div className={s.grid2}>
+              <div className={s.formGroup}>
+                <label htmlFor={`${fieldIds}-5`}>Status</label>
+                <CustomSelect id={`${fieldIds}-5`}
                   options={statuses.map((st) => ({ label: STATUS_LABELS[st], value: st }))}
                   value={form.status}
                   onChange={(val) => setForm({ ...form, status: val as ProspectStatus })}
@@ -273,16 +279,16 @@ export default function ProspectsPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>Next Follow-Up</label>
-                <input type="date" value={form.nextFollowUpDate} onChange={(e) => setForm({ ...form, nextFollowUpDate: e.target.value })} className={s.formInput} />
+                <label htmlFor={`${fieldIds}-6`}>Next Follow-Up</label>
+                <input id={`${fieldIds}-6`} type="date" value={form.nextFollowUpDate} onChange={(e) => setForm({ ...form, nextFollowUpDate: e.target.value })} className={s.formInput} />
               </div>
             </div>
             <div className={s.formGroup}>
-              <label>Notes</label>
-              <input type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} placeholder="Call notes..." />
+              <label htmlFor={`${fieldIds}-7`}>Notes</label>
+              <input id={`${fieldIds}-7`} type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} placeholder="Call notes..." />
             </div>
             <div className={s.formActions}>
-              <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className={s.cancelBtn}>Cancel</button>
+              <button type="button" onClick={() => { if (!confirmDiscard()) return; setShowForm(false); setEditing(null); }} className={s.cancelBtn}>Cancel</button>
               <button type="submit" disabled={saving} className={s.saveBtn}>
                 {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Prospect'}
               </button>
@@ -456,7 +462,7 @@ export default function ProspectsPage() {
 
       {/* Convert modal */}
       {convertTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setConvertTarget(null)} closeDisabled={converting}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Convert to Lead</h3>
             <p className={s.deleteMsg}>
@@ -464,12 +470,12 @@ export default function ProspectsPage() {
             </p>
             <form onSubmit={handleConvert}>
               <div className={s.formGroup}>
-                <label>Lead Name *</label>
-                <input type="text" required value={convertName} onChange={(e) => setConvertName(e.target.value)} className={s.formInput} placeholder="Customer name" />
+                <label htmlFor={`${fieldIds}-8`}>Lead Name *</label>
+                <input id={`${fieldIds}-8`} type="text" required value={convertName} onChange={(e) => setConvertName(e.target.value)} className={s.formInput} placeholder="Customer name" />
               </div>
               <div className={s.formGroup}>
-                <label>Description</label>
-                <input type="text" value={convertDesc} onChange={(e) => setConvertDesc(e.target.value)} className={s.formInput} placeholder="Optional" />
+                <label htmlFor={`${fieldIds}-9`}>Description</label>
+                <input id={`${fieldIds}-9`} type="text" value={convertDesc} onChange={(e) => setConvertDesc(e.target.value)} className={s.formInput} placeholder="Optional" />
               </div>
               {error && <div className={s.error}>{error}</div>}
               <div className={s.deleteActions}>
@@ -478,12 +484,12 @@ export default function ProspectsPage() {
               </div>
             </form>
           </div>
-        </div>
+        </Dialog>
       )}
 
       {/* Delete modal */}
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Prospect?</h3>
             <p className={s.deleteMsg}>
@@ -494,7 +500,7 @@ export default function ProspectsPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

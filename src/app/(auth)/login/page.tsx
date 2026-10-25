@@ -3,6 +3,8 @@
 import { isAxiosError } from 'axios';
 import { useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
+import ThemeToggle from '@/components/theme/ThemeToggle';
+import BrandLogo from '@/components/ui/BrandLogo';
 import { clearCurrentUserCache } from '@/lib/current-user';
 import s from './login.module.scss';
 
@@ -156,18 +158,10 @@ export default function LoginPage() {
 
   return (
     <div className={s.page}>
+      <ThemeToggle floating />
       <div className={s.wrapper}>
         <div className={s.brand}>
-          <div className={s.brandIcon}>
-            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 3c-1.5 2-4 4-4 7a4 4 0 108 0c0-3-2.5-5-4-7zM12 14v7m-3-3h6"
-              />
-            </svg>
-          </div>
+          <div className={s.brandLogo}><BrandLogo /></div>
           <h1 className={s.brandTitle}>Nav Healing Herbs</h1>
           <p className={s.brandSub}>Enter your user code. We’ll guide you to password or OTP automatically.</p>
         </div>

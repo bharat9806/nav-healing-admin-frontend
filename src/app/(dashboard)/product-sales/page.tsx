@@ -1,8 +1,12 @@
 'use client';
 
 import { isAxiosError } from 'axios';
-import { useEffect, useRef, useState } from 'react';
+import { useId, useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useComboboxKeyboard } from '@/hooks/useComboboxKeyboard';
+import Dialog from '@/components/ui/Dialog';
+import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { Product, ProductSaleItem, User } from '@/types';
@@ -91,11 +95,12 @@ function ProductLookupSelect({
     onSearch(query.trim() || undefined);
   };
 
+  const combo = useComboboxKeyboard({ open, setOpen, options: emptyOptionLabel ? [null, ...products] : products, onSelect: (p) => { onChange(p ? String(p.id) : ''); setQuery(''); } });
   return (
     <div className={`${s.formGroup} ${!label ? s.formGroupCompact : ''}`} ref={wrapRef}>
-      {label && <label>{label}{required ? ' *' : ''}</label>}
+      {label && <label htmlFor={combo.inputProps.id}>{label}{required ? ' *' : ''}</label>}
       <div className={s.comboWrap}>
-        <input
+        <input {...combo.inputProps} aria-label="Search product"
           ref={inputRef}
           type="text"
           className={`${inputClassName || s.formInput} ${s.comboInput}`}
@@ -113,7 +118,7 @@ function ProductLookupSelect({
               onSearch();
             }
           }}
-          onKeyDown={(e) => {
+          onKeyDown={(e) => { combo.inputProps.onKeyDown(e); if (e.defaultPrevented) return;
             if (e.key === 'Enter') {
               e.preventDefault();
               if (showSearchAction) {
@@ -156,9 +161,9 @@ function ProductLookupSelect({
         )}
 
         {open && (
-          <ul className={s.comboList}>
+          <ul {...combo.listProps} className={s.comboList}>
             {emptyOptionLabel && (
-              <li
+              <li {...combo.optionProps(0)}
                 className={`${s.comboItem} ${value === '' ? s.comboItemActive : ''}`}
                 onMouseDown={() => {
                   onChange('');
@@ -175,8 +180,8 @@ function ProductLookupSelect({
             ) : products.length === 0 ? (
               <li className={s.comboEmpty}>No products found</li>
             ) : (
-              products.map((product) => (
-                <li
+              products.map((product, optionIndex) => (
+                <li {...combo.optionProps(optionIndex + (emptyOptionLabel ? 1 : 0))}
                   key={product.id}
                   className={`${s.comboItem} ${String(product.id) === value ? s.comboItemActive : ''}`}
                   onMouseDown={() => {
@@ -221,6 +226,7 @@ function mergeProductLists(existing: Product[], incoming: Product[]) {
 }
 
 export default function ProductSalesPage() {
+  const fieldIds = useId();
   const [items, setItems] = useState<ProductSaleItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -279,10 +285,15 @@ export default function ProductSalesPage() {
     setPage(1);
   };
 
-  const fetchData = (nextPage = page, nextPageSize = pageSize) => {
+  const [loadError, setLoadError] = useState('');
+  const listRequest = useRef(0);
+
+  const fetchData = (nextPage = page, nextPageSize = pageSize, searchValue = search) => {
+    const requestId = ++listRequest.current;
+    setLoadError('');
     setLoading(true);
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
+    if (searchValue) params.set('search', searchValue);
     if (productFilter) params.set('productId', productFilter);
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo) params.set('dateTo', dateTo);
@@ -293,16 +304,15 @@ export default function ProductSalesPage() {
 
     api.get(`/product-sales?${params.toString()}`)
       .then((salesRes) => {
+        if (requestId !== listRequest.current) return;
         setItems(salesRes.data.data);
         setTotalPages(salesRes.data.meta.totalPages);
         setTotal(salesRes.data.meta.total);
       })
-      .catch(() => {
-        setItems([]);
-        setTotalPages(1);
-        setTotal(0);
+      .catch((error: unknown) => {
+        if (requestId === listRequest.current) setLoadError(loadErrorMessage(error, 'Unable to load product sales. Check your connection and try again.'));
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (requestId === listRequest.current) setLoading(false); });
   };
 
   useEffect(() => {
@@ -319,6 +329,7 @@ export default function ProductSalesPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     if (products.length === 0) {
       fetchProducts();
     }
@@ -344,7 +355,9 @@ export default function ProductSalesPage() {
     setShowInlineForm(true);
   };
 
-  const cancelForm = () => {
+  const confirmDiscard = useUnsavedChanges(showInlineForm, form);
+
+  const cancelForm = () => { if (!confirmDiscard()) return;
     setShowInlineForm(false);
     setEditing(null);
     setError('');
@@ -415,7 +428,7 @@ export default function ProductSalesPage() {
   return (
     <div className={s.page}>
       <div className={s.header}>
-        <h1 className={s.pageTitle}>Product Sales</h1>
+        <div><h1 className={s.pageTitle}>Product Sales</h1><p className={s.pageDescription}>Record inventory units sold. Use Sales for clinic visits, payments, and patient invoices.</p></div>
         <div className={s.headerActions}>
           {(currentUser?.role === 'SUPER_ADMIN' || currentUser?.canExportProductSales) && (
             <button onClick={handleExport} className={s.exportBtn}>Export Excel</button>
@@ -493,19 +506,19 @@ export default function ProductSalesPage() {
               />
 
               <div className={s.formGroup}>
-                <label>Date *</label>
-                <input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={s.formInput} required />
+                <label htmlFor={`${fieldIds}-1`}>Date *</label>
+                <input id={`${fieldIds}-1`} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={s.formInput} required />
               </div>
             </div>
 
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Quantity *</label>
-                <input type="number" min="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className={s.formInput} required />
+                <label htmlFor={`${fieldIds}-2`}>Quantity *</label>
+                <input id={`${fieldIds}-2`} type="number" min="1" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} className={s.formInput} required />
               </div>
               <div className={s.formGroup}>
-                <label>Notes</label>
-                <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className={s.formTextarea} />
+                <label htmlFor={`${fieldIds}-3`}>Notes</label>
+                <textarea id={`${fieldIds}-3`} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className={s.formTextarea} />
               </div>
             </div>
 
@@ -523,7 +536,7 @@ export default function ProductSalesPage() {
         </div>
       )}
 
-      {!showInlineForm && (loading ? (
+      {!showInlineForm && (loadError ? <LoadError message={loadError} onRetry={() => fetchData()} loading={loading} /> : loading ? (
         <SkeletonList rows={5} />
       ) : items.length === 0 ? (
         <div className={s.emptyBox}>
@@ -626,7 +639,7 @@ export default function ProductSalesPage() {
       ))}
 
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Entry</h3>
             <p className={s.deleteMsg}>Delete this product sale entry for "{deleteTarget.product?.name || 'product'}"?</p>
@@ -635,7 +648,7 @@ export default function ProductSalesPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

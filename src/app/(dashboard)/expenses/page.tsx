@@ -1,7 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useId, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import Dialog from '@/components/ui/Dialog';
 import { fetchCurrentUser } from '@/lib/current-user';
 import {
   Company,
@@ -61,6 +63,7 @@ const emptyForm = (): ExpenseForm => ({
 });
 
 export default function ExpensesPage() {
+  const fieldIds = useId();
   const [rows, setRows] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -148,6 +151,7 @@ export default function ExpensesPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm(emptyForm());
     setError('');
@@ -169,6 +173,8 @@ export default function ExpensesPage() {
     setError('');
     setShowForm(true);
   };
+
+  const confirmDiscard = useUnsavedChanges(showForm, form);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -294,18 +300,18 @@ export default function ExpensesPage() {
             {error && <div className={s.error}>{error}</div>}
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Title *</label>
-                <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={s.formInput} placeholder="e.g. Clinic stationery" />
+                <label htmlFor={`${fieldIds}-1`}>Title *</label>
+                <input id={`${fieldIds}-1`} type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className={s.formInput} placeholder="e.g. Clinic stationery" />
               </div>
               <div className={s.formGroup}>
-                <label>Amount (₹) *</label>
-                <input type="number" min="0" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={s.formInput} placeholder="0.00" />
+                <label htmlFor={`${fieldIds}-2`}>Amount (₹) *</label>
+                <input id={`${fieldIds}-2`} type="number" min="0" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className={s.formInput} placeholder="0.00" />
               </div>
             </div>
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Category *</label>
-                <TypeableSelect
+                <label htmlFor={`${fieldIds}-3`}>Category *</label>
+                <TypeableSelect id={`${fieldIds}-3`}
                   options={categoryOptions}
                   value={form.category}
                   onChange={(val) => setForm({ ...form, category: val })}
@@ -316,8 +322,8 @@ export default function ExpensesPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>Payment Method</label>
-                <CustomSelect
+                <label htmlFor={`${fieldIds}-4`}>Payment Method</label>
+                <CustomSelect id={`${fieldIds}-4`}
                   options={PAYMENT_METHODS.map((m) => ({ label: PAYMENT_LABELS[m], value: m }))}
                   value={form.paymentMethod}
                   onChange={(val) => setForm({ ...form, paymentMethod: val as ExpensePaymentMethod })}
@@ -328,18 +334,18 @@ export default function ExpensesPage() {
             </div>
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Date *</label>
-                <input type="date" value={form.expenseDate} onChange={(e) => setForm({ ...form, expenseDate: e.target.value })} className={s.formInput} />
+                <label htmlFor={`${fieldIds}-5`}>Date *</label>
+                <input id={`${fieldIds}-5`} type="date" value={form.expenseDate} onChange={(e) => setForm({ ...form, expenseDate: e.target.value })} className={s.formInput} />
               </div>
               <div className={s.formGroup}>
-                <label>Vendor / Payee</label>
-                <input type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} className={s.formInput} placeholder="Optional" />
+                <label htmlFor={`${fieldIds}-6`}>Vendor / Payee</label>
+                <input id={`${fieldIds}-6`} type="text" value={form.vendor} onChange={(e) => setForm({ ...form, vendor: e.target.value })} className={s.formInput} placeholder="Optional" />
               </div>
             </div>
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Supplier (optional)</label>
-                <CustomSelect
+                <label htmlFor={`${fieldIds}-7`}>Supplier (optional)</label>
+                <CustomSelect id={`${fieldIds}-7`}
                   options={[{ label: 'None', value: '' }, ...companies.map((c) => ({ label: c.name, value: String(c.id) }))]}
                   value={form.companyId}
                   onChange={(val) => setForm({ ...form, companyId: String(val) })}
@@ -348,12 +354,12 @@ export default function ExpensesPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>Notes</label>
-                <input type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} placeholder="Optional" />
+                <label htmlFor={`${fieldIds}-8`}>Notes</label>
+                <input id={`${fieldIds}-8`} type="text" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className={s.formInput} placeholder="Optional" />
               </div>
             </div>
             <div className={s.formActions}>
-              <button type="button" onClick={() => { setShowForm(false); setEditing(null); }} className={s.cancelBtn}>Cancel</button>
+              <button type="button" onClick={() => { if (!confirmDiscard()) return; setShowForm(false); setEditing(null); }} className={s.cancelBtn}>Cancel</button>
               <button type="submit" disabled={saving} className={s.saveBtn}>
                 {saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Expense'}
               </button>
@@ -396,12 +402,12 @@ export default function ExpensesPage() {
           </div>
           <div className={s.filterRow}>
             <div className={s.formGroup}>
-              <label>From</label>
-              <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={s.formInput} />
+              <label htmlFor={`${fieldIds}-9`}>From</label>
+              <input id={`${fieldIds}-9`} type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={s.formInput} />
             </div>
             <div className={s.formGroup}>
-              <label>To</label>
-              <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.formInput} />
+              <label htmlFor={`${fieldIds}-10`}>To</label>
+              <input id={`${fieldIds}-10`} type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={s.formInput} />
             </div>
             {(dateFrom || dateTo) && (
               <button type="button" onClick={() => { setDateFrom(''); setDateTo(''); }} className={s.clearBtn}>Clear dates</button>
@@ -522,7 +528,7 @@ export default function ExpensesPage() {
 
       {/* Delete modal */}
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Expense?</h3>
             <p className={s.deleteMsg}>
@@ -533,7 +539,7 @@ export default function ExpensesPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

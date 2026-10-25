@@ -7,6 +7,7 @@ import {
   Bar, ComposedChart, Area,
 } from 'recharts';
 import api from '@/lib/api';
+import LoadError from '@/components/ui/LoadError';
 import s from './analytics.module.scss';
 
 // ── API payload ───────────────────────────────────────────────────────────────
@@ -22,18 +23,18 @@ interface Analytics {
 }
 
 // ── Colors (match app palette) ────────────────────────────────────────────────
-const EMERALD = '#34d399';
-const BLUE    = '#60a5fa';
-const AMBER   = '#fbbf24';
-const VIOLET  = '#a78bfa';
-const RED     = '#f87171';
-const SLATE   = '#94a3b8';
+const EMERALD = 'var(--status-success)';
+const BLUE    = 'var(--status-info)';
+const AMBER   = 'var(--status-warning)';
+const VIOLET  = 'var(--status-special)';
+const RED     = 'var(--status-danger)';
+const SLATE   = 'var(--status-neutral)';
 
 const TOOLTIP_STYLE = {
-  backgroundColor: '#111827',
-  border: '1px solid #374151',
+  backgroundColor: 'var(--shell-card-bg)',
+  border: '1px solid var(--shell-border)',
   borderRadius: 8,
-  color: '#f9fafb',
+  color: 'var(--shell-text-primary)',
   fontSize: 12,
 };
 
@@ -94,13 +95,17 @@ function RankList({ rows, unit, violet }: {
 export default function AnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [months, setMonths] = useState(12);
 
+  const [refresh, setRefresh] = useState(0);
   useEffect(() => {
+    let active = true;
     api.get('/analytics')
-      .then((res) => setData(res.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+      .then((res) => { if (active) setData(res.data); })
+      .catch(() => { if (active) setData(null); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [refresh]);
 
   if (loading) {
     return (
@@ -112,7 +117,7 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (!data) return <div className={s.page}><p className={s.emptyText}>Failed to load analytics.</p></div>;
+  if (!data) return <div className={s.page}><LoadError message="Unable to load analytics. Check your connection and try again." onRetry={() => { setLoading(true); setRefresh((value) => value + 1); }} /></div>;
 
   const statusData = STATUS_BUCKETS
     .map((b) => ({
@@ -132,16 +137,16 @@ export default function AnalyticsPage() {
     }))
     .filter((d) => d.value > 0);
 
-  const timeline = data.timeline.map((t) => ({ ...t, label: monthLabel(t.month) }));
+  const timeline = data.timeline.slice(-months).map((t) => ({ ...t, label: monthLabel(t.month) }));
   const products = data.topProducts;
-  const salesTimeline = data.salesTimeline.map((t) => ({ ...t, label: monthLabel(t.month) }));
+  const salesTimeline = data.salesTimeline.slice(-months).map((t) => ({ ...t, label: monthLabel(t.month) }));
   const medicines = data.topMedicines;
-  const expenseTimeline = data.expenseTimeline.map((t) => ({
+  const expenseTimeline = data.expenseTimeline.slice(-months).map((t) => ({
     ...t,
     profit: t.revenue - t.expenses,
     label: monthLabel(t.month),
   }));
-  const PIE_COLORS = [EMERALD, BLUE, AMBER, VIOLET, RED, SLATE, '#f472b6', '#2dd4bf', '#fb923c', '#a3e635'];
+  const PIE_COLORS = [EMERALD, BLUE, AMBER, VIOLET, RED, SLATE, 'var(--status-special)', 'var(--status-info)', 'var(--accent-earth)', 'var(--status-success)'];
   const categories = data.expensesByCategory.map((c, i) => ({
     name: c.category,
     value: c.total,
@@ -153,9 +158,10 @@ export default function AnalyticsPage() {
     <div className={s.page}>
       <div>
         <h2 className={s.pageTitle}>Analytics</h2>
-        <p className={s.pageSub}>Leads, deliveries, revenue and product performance — last 12 months</p>
+        <p className={s.pageSub}>Monthly charts show the selected period. Lead and delivery totals cover all records.</p>
       </div>
 
+      <div className={s.periodControl}><label htmlFor="analytics-period">Monthly chart period</label><select id="analytics-period" value={months} onChange={(e) => setMonths(Number(e.target.value))}><option value={3}>Last 3 months</option><option value={6}>Last 6 months</option><option value={12}>Last 12 months</option></select></div>
       <div className={s.grid}>
         {/* 1 · Lead status breakdown */}
         <div className={s.panel}>
@@ -202,7 +208,7 @@ export default function AnalyticsPage() {
           <div className={s.chartWrap}>
             <ResponsiveContainer>
               <LineChart data={timeline} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--shell-border)" />
                 <XAxis dataKey="label" tick={{ fill: SLATE, fontSize: 11 }} />
                 <YAxis yAxisId="left" allowDecimals={false} tick={{ fill: SLATE, fontSize: 11 }} />
                 <YAxis yAxisId="right" orientation="right" tick={{ fill: SLATE, fontSize: 11 }} tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)} />
@@ -235,7 +241,7 @@ export default function AnalyticsPage() {
           <div className={s.chartWrap}>
             <ResponsiveContainer>
               <ComposedChart data={salesTimeline} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--shell-border)" />
                 <XAxis dataKey="label" tick={{ fill: SLATE, fontSize: 11 }} />
                 <YAxis yAxisId="left" tick={{ fill: SLATE, fontSize: 11 }} tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)} />
                 <YAxis yAxisId="right" orientation="right" allowDecimals={false} tick={{ fill: SLATE, fontSize: 11 }} />
@@ -268,7 +274,7 @@ export default function AnalyticsPage() {
           <div className={s.chartWrap}>
             <ResponsiveContainer>
               <ComposedChart data={expenseTimeline} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--shell-border)" />
                 <XAxis dataKey="label" tick={{ fill: SLATE, fontSize: 11 }} />
                 <YAxis tick={{ fill: SLATE, fontSize: 11 }} tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : `${v}`)} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value: any, name: any) => [inr(value), name]} />

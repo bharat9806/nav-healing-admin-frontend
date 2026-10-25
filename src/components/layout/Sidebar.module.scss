@@ -3,8 +3,8 @@
 
 .sidebar {
   width: 16rem;
-  background-color: var(--shell-surface);
-  border-right: 1px solid var(--shell-border);
+  background-color: var(--nav-bg);
+  border-right: 1px solid var(--nav-border);
   display: flex;
   flex-direction: column;
   height: 100dvh;
@@ -17,30 +17,11 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: $s3;
-  padding: $s5 $s6;
-  border-bottom: 1px solid var(--shell-border);
+  justify-content: center;
+  padding: $s4 $s6;
+  border-bottom: 1px solid var(--nav-border);
 }
 
-.brandIcon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: $r-sm;
-  background-color: var(--brand-primary);
-  @include flex-center;
-  span {
-    color: var(--brand-on-primary);
-    font-size: $fs-body;
-    font-weight: 700;
-  }
-}
-
-.brandName {
-  color: var(--shell-text-primary);
-  font-weight: 700;
-  font-size: $fs-lg;
-  min-width: 0;
-}
 
 .nav {
   flex: 1;
@@ -60,30 +41,30 @@
   font-size: $fs-body;
   font-weight: 500;
   transition: color 0.15s, background-color 0.15s;
-  color: var(--shell-text-muted);
+  color: var(--nav-muted);
 
   &:hover {
-    color: var(--shell-text-primary);
-    background-color: var(--shell-elevated);
+    color: var(--nav-text);
+    background-color: var(--nav-hover);
   }
 
   .icon { font-size: $fs-md; }
 }
 
 .navItemActive {
-  background-color: var(--brand-primary);
-  color: var(--brand-on-primary);
+  background-color: var(--nav-active);
+  color: var(--nav-on-active);
 
   &:hover {
-    background-color: var(--brand-primary);
-    color: var(--brand-on-primary);
+    background-color: var(--nav-active);
+    color: var(--nav-on-active);
   }
 }
 
 .navSkeleton {
   height: 2.25rem;
   border-radius: $r-md;
-  background: var(--shell-elevated);
+  background: var(--nav-hover);
   opacity: 0.4;
   animation: shimmer 1.2s ease-in-out infinite alternate;
 }
@@ -95,7 +76,7 @@
 
 .footer {
   padding: $s4 $s3;
-  border-top: 1px solid var(--shell-border);
+  border-top: 1px solid var(--nav-border);
 }
 
 .logoutBtn {
@@ -109,12 +90,22 @@
   font-weight: 500;
   background: none;
   border: none;
-  color: var(--shell-text-muted);
+  color: var(--nav-muted);
   cursor: pointer;
   transition: color 0.15s, background-color 0.15s;
 
   &:hover {
-    color: $red-light;
+    color: #f1a99a;
     background-color: rgba($red, 0.1);
   }
+}
+
+// Keep navigation usable for touch and keyboard users.
+.navItem, .logoutBtn { min-height: 44px; }
+.navItem:focus-visible, .logoutBtn:focus-visible {
+  outline: 2px solid var(--nav-on-active);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .navItem { transition: none; }
 }

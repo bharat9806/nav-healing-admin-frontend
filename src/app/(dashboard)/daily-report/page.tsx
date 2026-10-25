@@ -1,7 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useId, useCallback, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import Dialog from '@/components/ui/Dialog';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { DailyReport, DailyReportTotals, DailyReportsResponse } from '@/types';
 import { SkeletonList } from '@/components/ui/Loader';
@@ -47,6 +49,7 @@ const emptyForm = (): ReportForm => ({
 });
 
 export default function DailyReportPage() {
+  const fieldIds = useId();
   const [rows, setRows] = useState<DailyReport[]>([]);
   const [totals, setTotals] = useState<DailyReportTotals>(EMPTY_TOTALS);
   const [loading, setLoading] = useState(true);
@@ -93,6 +96,7 @@ export default function DailyReportPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm(emptyForm());
     setError('');
@@ -113,6 +117,8 @@ export default function DailyReportPage() {
     setShowForm(true);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const confirmDiscard = useUnsavedChanges(showForm, form);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,7 +219,7 @@ export default function DailyReportPage() {
         </div>
       </div>
 
-      <div className={s.reminderCards}>
+      {!showForm && (<div className={s.reminderCards}>
         <div className={s.reminderCard}>
           <span className={s.reminderLabel}>Total Calls</span>
           <span className={s.reminderValue}>{totals.totalCalls}</span>
@@ -234,7 +240,7 @@ export default function DailyReportPage() {
           <span className={s.reminderLabel}>Conversion</span>
           <span className={s.reminderValue}>{conversion}</span>
         </div>
-      </div>
+      </div>)}
 
       {error && !showForm && <div className={s.error}>{error}</div>}
 
@@ -245,8 +251,8 @@ export default function DailyReportPage() {
             {error && <div className={s.error}>{error}</div>}
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Date *</label>
-                <input
+                <label htmlFor={`${fieldIds}-1`}>Date *</label>
+                <input id={`${fieldIds}-1`}
                   type="date"
                   value={form.reportDate}
                   onChange={(e) => setForm({ ...form, reportDate: e.target.value })}
@@ -254,8 +260,8 @@ export default function DailyReportPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>Total Calls</label>
-                <input
+                <label htmlFor={`${fieldIds}-2`}>Total Calls</label>
+                <input id={`${fieldIds}-2`}
                   type="number"
                   min={0}
                   value={form.totalCalls}
@@ -267,8 +273,8 @@ export default function DailyReportPage() {
             </div>
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Verified Orders</label>
-                <input
+                <label htmlFor={`${fieldIds}-3`}>Verified Orders</label>
+                <input id={`${fieldIds}-3`}
                   type="number"
                   min={0}
                   value={form.verifiedOrders}
@@ -278,8 +284,8 @@ export default function DailyReportPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>10% Off Orders</label>
-                <input
+                <label htmlFor={`${fieldIds}-4`}>10% Off Orders</label>
+                <input id={`${fieldIds}-4`}
                   type="number"
                   min={0}
                   value={form.tenPercentOffOrders}
@@ -291,8 +297,8 @@ export default function DailyReportPage() {
             </div>
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Total Sale (₹)</label>
-                <input
+                <label htmlFor={`${fieldIds}-5`}>Total Sale (₹)</label>
+                <input id={`${fieldIds}-5`}
                   type="number"
                   min={0}
                   step="0.01"
@@ -305,8 +311,8 @@ export default function DailyReportPage() {
               <div className={s.formGroup} />
             </div>
             <div className={s.formGroup}>
-              <label>Notes</label>
-              <textarea
+              <label htmlFor={`${fieldIds}-6`}>Notes</label>
+              <textarea id={`${fieldIds}-6`}
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 rows={3}
@@ -317,7 +323,7 @@ export default function DailyReportPage() {
             <div className={s.formActions}>
               <button
                 type="button"
-                onClick={() => { setShowForm(false); setEditing(null); setError(''); }}
+                onClick={() => { if (!confirmDiscard()) return; setShowForm(false); setEditing(null); setError(''); }}
                 className={s.cancelBtn}
               >
                 Cancel
@@ -334,8 +340,8 @@ export default function DailyReportPage() {
         <div className={s.filterPanel}>
           <div className={s.filterRow}>
             <div className={s.formGroup}>
-              <label>From</label>
-              <input
+              <label htmlFor={`${fieldIds}-7`}>From</label>
+              <input id={`${fieldIds}-7`}
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
@@ -343,8 +349,8 @@ export default function DailyReportPage() {
               />
             </div>
             <div className={s.formGroup}>
-              <label>To</label>
-              <input
+              <label htmlFor={`${fieldIds}-8`}>To</label>
+              <input id={`${fieldIds}-8`}
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
@@ -467,7 +473,7 @@ export default function DailyReportPage() {
 
       {/* Delete modal */}
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete this day?</h3>
             <p className={s.deleteMsg}>
@@ -479,7 +485,7 @@ export default function DailyReportPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

@@ -51,8 +51,8 @@
 }
 
 @mixin btn-danger {
-  background-color: $red;
-  color: $text-primary;
+  background-color: var(--status-danger-button);
+  color: #fffdf7;
   border: none;
   border-radius: $r-md;
   padding: $s2 $s4;
@@ -61,7 +61,7 @@
   cursor: pointer;
   transition: background-color 0.15s;
 
-  &:hover:not(:disabled) { background-color: $red-hover; }
+  &:hover:not(:disabled) { background-color: var(--status-danger-button-hover); }
 }
 
 @mixin btn-ghost {

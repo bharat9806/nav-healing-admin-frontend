@@ -2,12 +2,16 @@
 
 import { isAxiosError } from 'axios';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useId, useEffect, useRef, useState } from 'react';
 import api from '@/lib/api';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useComboboxKeyboard } from '@/hooks/useComboboxKeyboard';
+import Dialog from '@/components/ui/Dialog';
+import LoadError, { loadErrorMessage } from '@/components/ui/LoadError';
 import { fetchCurrentUser } from '@/lib/current-user';
 import { exportToExcel } from '@/lib/exportExcel';
 import { generateOrderInvoice, generateBulkOrderInvoices, type OrderInvoiceData } from '@/lib/generateOrderInvoice';
-import { Sale, SaleItem, SaleProductsResponse, User } from '@/types';
+import { Sale, SaleItem, SaleProductsResponse, SalesResponse, SalesSummary, User } from '@/types';
 import { CustomSelect } from '@/components/ui/CustomSelect';
 import { SkeletonList } from '@/components/ui/Loader';
 import s from './sales.module.scss';
@@ -205,9 +209,10 @@ function SearchableProductSelect({
     setQuery('');
   };
 
+  const combo = useComboboxKeyboard({ open, setOpen, options: results, onSelect: handleSelect });
   return (
     <div className={s.comboWrap} ref={wrapRef}>
-      <input
+      <input {...combo.inputProps} aria-label="Search product"
         ref={inputRef}
         type="text"
         className={s.formInput}
@@ -238,7 +243,7 @@ function SearchableProductSelect({
         </button>
       )}
         {open && (
-          <ul className={s.comboList}>
+          <ul {...combo.listProps} className={s.comboList}>
             <li
               className={s.comboItem}
               onMouseDown={() => {
@@ -254,8 +259,8 @@ function SearchableProductSelect({
             ) : results.length === 0 ? (
               <li className={s.comboEmpty}>No products found</li>
             ) : (
-              results.map((p) => (
-                <li
+              results.map((p, optionIndex) => (
+                <li {...combo.optionProps(optionIndex)}
                   key={p.id}
                   className={`${s.comboItem} ${p.id === value ? s.comboItemActive : ''}`}
                   onMouseDown={() => handleSelect(p)}
@@ -272,6 +277,7 @@ function SearchableProductSelect({
 }
 
 export default function SalesPage() {
+  const fieldIds = useId();
   const [sales, setSales] = useState<Sale[]>([]);
   const [search, setSearch] = useState('');
   const [paymentModeFilter, setPaymentModeFilter] = useState('');
@@ -296,6 +302,7 @@ export default function SalesPage() {
   const [visibleCols, setVisibleCols] = useState({
     products: true,
     amount: true,
+    discount: false,
     paymentMode: true,
     status: true,
     pending: true,
@@ -348,9 +355,10 @@ export default function SalesPage() {
   );
   const subtotalAmount = validItems.length > 0 ? itemsTotal + therapyPrice : Number(form.amount || 0);
   const computedAmount = Math.max(0, subtotalAmount - discount);
-  const summaryTotalAmount = sales.reduce((sum, sale) => sum + Number(sale.amount || 0), 0);
-  const summaryPendingAmount = sales.reduce((sum, sale) => sum + Number(sale.pendingAmount || 0), 0);
-  const summaryReceivedAmount = summaryTotalAmount - summaryPendingAmount;
+  const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null);
+  const summaryPendingAmount = salesSummary?.totalPendingAmount ?? 0;
+  const summaryReceivedAmount = salesSummary?.totalReceivedAmount ?? 0;
+  const summaryDiscountAmount = salesSummary?.totalDiscount ?? 0;
 
   useEffect(() => {
     if (openProductPopover === null) return;
@@ -369,10 +377,15 @@ export default function SalesPage() {
     setPage(1);
   };
 
-  const fetchSales = (nextPage = page, nextPageSize = pageSize) => {
+  const [loadError, setLoadError] = useState('');
+  const listRequest = useRef(0);
+
+  const fetchSales = (nextPage = page, nextPageSize = pageSize, searchValue = search) => {
+    const requestId = ++listRequest.current;
+    setLoadError('');
     setLoading(true);
     const params = new URLSearchParams();
-    if (search) params.set('search', search);
+    if (searchValue) params.set('search', searchValue);
     if (paymentModeFilter) params.set('paymentMode', paymentModeFilter);
     if (statusFilter) params.set('status', statusFilter);
     if (dateFrom) params.set('dateFrom', dateFrom);
@@ -382,14 +395,18 @@ export default function SalesPage() {
     params.set('sortBy', sortField);
     params.set('order', sortOrder);
 
-    api.get(`/sales?${params.toString()}`)
+    api.get<SalesResponse>(`/sales?${params.toString()}`)
       .then((res) => {
+        if (requestId !== listRequest.current) return;
         setSales(res.data.data);
+        setSalesSummary(res.data.summary ?? null);
         setTotalPages(res.data.meta.totalPages);
         setTotal(res.data.meta.total);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((error: unknown) => {
+        if (requestId === listRequest.current) setLoadError(loadErrorMessage(error, 'Unable to load sales. Check your connection and try again.'));
+      })
+      .finally(() => { if (requestId === listRequest.current) setLoading(false); });
   };
 
   useEffect(() => {
@@ -492,6 +509,7 @@ export default function SalesPage() {
   };
 
   const openCreate = () => {
+    if (!confirmDiscard()) return;
     setEditing(null);
     setForm(initialForm());
     setItems([initialItem()]);
@@ -550,7 +568,9 @@ export default function SalesPage() {
     }
   };
 
-  const cancelForm = () => {
+  const confirmDiscard = useUnsavedChanges(showInlineForm, { form, items });
+
+  const cancelForm = () => { if (!confirmDiscard()) return;
     setShowInlineForm(false);
     setEditing(null);
     setItems([initialItem()]);
@@ -669,19 +689,19 @@ export default function SalesPage() {
         </div>
       </div>
 
-      {!showInlineForm && (
+      {!showInlineForm && !loading && !loadError && salesSummary && (
         <div className={s.summaryRow}>
           <div className={s.summaryCard}>
-            <span className={s.summaryLabel}>Current Sales</span>
-            <strong className={s.summaryValue}>{currency(summaryTotalAmount)}</strong>
-          </div>
-          <div className={s.summaryCard}>
-            <span className={s.summaryLabel}>Received Amount</span>
+            <span className={s.summaryLabel}>Received</span>
             <strong className={`${s.summaryValue} ${s.summaryValueReceived}`}>{currency(summaryReceivedAmount)}</strong>
           </div>
           <div className={s.summaryCard}>
-            <span className={s.summaryLabel}>Pending Amount</span>
+            <span className={s.summaryLabel}>Pending</span>
             <strong className={`${s.summaryValue} ${s.summaryValuePending}`}>{currency(summaryPendingAmount)}</strong>
+          </div>
+          <div className={s.summaryCard}>
+            <span className={s.summaryLabel}>Total Discount</span>
+            <strong className={s.summaryValue}>{currency(summaryDiscountAmount)}</strong>
           </div>
         </div>
       )}
@@ -709,7 +729,7 @@ export default function SalesPage() {
                 onClick={() => {
                   setSearch('');
                   setPage(1);
-                  fetchSales(1);
+                  fetchSales(1, pageSize, '');
                 }}
               >
                 ✕
@@ -755,6 +775,7 @@ export default function SalesPage() {
                 {([
                   ['products',    'Products'],
                   ['amount',      'Amount'],
+                  ['discount',    'Discount'],
                   ['paymentMode', 'Payment Mode'],
                   ['status',      'Status'],
                   ['pending',     'Pending'],
@@ -780,12 +801,12 @@ export default function SalesPage() {
             {/* Row 1: Date + Patient */}
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Date *</label>
-                <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={s.formInput} />
+                <label htmlFor={`${fieldIds}-1`}>Date *</label>
+                <input id={`${fieldIds}-1`} type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className={s.formInput} />
               </div>
               <div className={s.formGroup}>
-                <label>Patient Name *</label>
-                <input type="text" required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className={s.formInput} />
+                <label htmlFor={`${fieldIds}-2`}>Patient Name *</label>
+                <input id={`${fieldIds}-2`} type="text" required value={form.patientName} onChange={(e) => setForm({ ...form, patientName: e.target.value })} className={s.formInput} />
               </div>
             </div>
 
@@ -826,7 +847,7 @@ export default function SalesPage() {
                             type="text"
                             value={item.nameOverride ?? ''}
                             onChange={(e) => updateItem(index, { nameOverride: e.target.value })}
-                            placeholder="Name on this sale"
+                            aria-label="Name on this sale" placeholder="Name on this sale"
                             className={s.formInput}
                             title="Name shown on this sale only — does not change the product"
                           />
@@ -836,7 +857,7 @@ export default function SalesPage() {
                             step="0.01"
                             value={item.priceOverride ?? ''}
                             onChange={(e) => updateItem(index, { priceOverride: e.target.value })}
-                            placeholder="Price"
+                            aria-label="Unit price" placeholder="Price"
                             className={s.formInput}
                             title="Unit price for this sale only — does not change the product"
                           />
@@ -849,6 +870,7 @@ export default function SalesPage() {
                         min="1"
                         step="1"
                         inputMode="numeric"
+                        aria-label="Product quantity"
                         value={item.quantity}
                         onChange={(e) => {
                           const raw = e.target.value;
@@ -886,8 +908,8 @@ export default function SalesPage() {
 
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Therapy Price (optional)</label>
-                <input
+                <label htmlFor={`${fieldIds}-3`}>Therapy Price (optional)</label>
+                <input id={`${fieldIds}-3`}
                   type="number"
                   min="0"
                   step="0.01"
@@ -898,8 +920,8 @@ export default function SalesPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>Discount (optional)</label>
-                <input
+                <label htmlFor={`${fieldIds}-4`}>Discount (optional)</label>
+                <input id={`${fieldIds}-4`}
                   type="number"
                   min="0"
                   step="0.01"
@@ -942,8 +964,8 @@ export default function SalesPage() {
               </div>
               {validItems.length === 0 && (
                 <div className={s.formGroup}>
-                  <label>Amount * <small>(enter manually — no product selected)</small></label>
-                  <input
+                  <label htmlFor={`${fieldIds}-5`}>Amount * <small>(enter manually — no product selected)</small></label>
+                  <input id={`${fieldIds}-5`}
                     type="number"
                     min="0"
                     step="0.01"
@@ -959,8 +981,8 @@ export default function SalesPage() {
             {/* Row 3: Payment Mode + Status */}
             <div className={s.grid2}>
               <div className={s.formGroup}>
-                <label>Payment Mode *</label>
-                <CustomSelect
+                <label htmlFor={`${fieldIds}-6`}>Payment Mode *</label>
+                <CustomSelect id={`${fieldIds}-6`}
                   options={[...new Set([...defaultPaymentModes, ...paymentModes])].map((m) => ({ label: m, value: m }))}
                   value={form.paymentMode}
                   onChange={(val) => setForm({ ...form, paymentMode: String(val) })}
@@ -969,8 +991,8 @@ export default function SalesPage() {
                 />
               </div>
               <div className={s.formGroup}>
-                <label>Status *</label>
-                <CustomSelect
+                <label htmlFor={`${fieldIds}-7`}>Status *</label>
+                <CustomSelect id={`${fieldIds}-7`}
                   options={[...new Set([...defaultStatuses, ...statuses])].map((st) => ({ label: st, value: st }))}
                   value={form.status}
                   onChange={(val) => setForm({ ...form, status: String(val) })}
@@ -982,8 +1004,8 @@ export default function SalesPage() {
 
             {/* Pending Amount */}
             <div className={s.formGroup}>
-              <label>Pending Amount</label>
-              <input
+              <label htmlFor={`${fieldIds}-8`}>Pending Amount</label>
+              <input id={`${fieldIds}-8`}
                 type="number"
                 min="0"
                 step="0.01"
@@ -994,8 +1016,8 @@ export default function SalesPage() {
             </div>
 
             <div className={s.formGroup}>
-              <label>Notes</label>
-              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className={s.formTextarea} />
+              <label htmlFor={`${fieldIds}-9`}>Notes</label>
+              <textarea id={`${fieldIds}-9`} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} className={s.formTextarea} />
             </div>
 
             <div className={s.formActions}>
@@ -1056,7 +1078,7 @@ export default function SalesPage() {
         </div>
       )}
 
-      {!showInlineForm && (loading ? (
+      {!showInlineForm && (loadError ? <LoadError message={loadError} onRetry={() => fetchSales()} loading={loading} /> : loading ? (
         <SkeletonList rows={5} />
       ) : sales.length === 0 ? (
         <div className={s.emptyBox}>
@@ -1116,6 +1138,10 @@ export default function SalesPage() {
                 </div>
 
                 <div className={s.mobileMetaGrid}>
+                  {visibleCols.discount && <div className={s.mobileMetaItem}>
+                    <span className={s.mobileMetaLabel}>Discount</span>
+                    <span className={s.cellText}>{currency(sale.discount ?? 0)}</span>
+                  </div>}
                   <div className={s.mobileMetaItem}>
                     <span className={s.mobileMetaLabel}>Payment</span>
                     <span className={s.cellText}>{sale.paymentMode}</span>
@@ -1180,6 +1206,7 @@ export default function SalesPage() {
                 <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('patientName')}>Patient Name{sortField === 'patientName' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>
                 {visibleCols.products    && <th className={s.th}>Products</th>}
                 {visibleCols.amount      && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('amount')}>Amount{sortField === 'amount' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
+                {visibleCols.discount    && <th className={s.th}>Discount</th>}
                 {visibleCols.paymentMode && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('paymentMode')}>Payment Mode{sortField === 'paymentMode' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
                 {visibleCols.status      && <th className={`${s.th} ${s.thSortable}`} onClick={() => handleSort('status')}>Status{sortField === 'status' ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ' ↕'}</th>}
                 {visibleCols.pending     && <th className={s.th}>Pending</th>}
@@ -1257,6 +1284,7 @@ export default function SalesPage() {
                     })()}
                   </td>}
                   {visibleCols.amount      && <td className={s.td}><span className={s.amountText}>{currency(sale.amount)}</span></td>}
+                  {visibleCols.discount    && <td className={s.td}><span className={s.cellText}>{currency(sale.discount ?? 0)}</span></td>}
                   {visibleCols.paymentMode && <td className={s.td}><span className={s.cellText}>{sale.paymentMode}</span></td>}
                   {visibleCols.status      && <td className={s.td}><span className={statusClass(sale.status)}>{sale.status}</span></td>}
                   {visibleCols.pending     && <td className={s.td}><span className={s.pendingText}>{currency(sale.pendingAmount)}</span></td>}
@@ -1295,7 +1323,7 @@ export default function SalesPage() {
       ))}
 
       {deleteTarget && (
-        <div className={s.overlay}>
+        <Dialog className={s.overlay} onClose={() => setDeleteTarget(null)}>
           <div className={s.deleteModal}>
             <h3 className={s.deleteTitle}>Delete Sale</h3>
             <p className={s.deleteMsg}>Are you sure you want to delete "{deleteTarget.patientName}"? This cannot be undone.</p>
@@ -1304,7 +1332,7 @@ export default function SalesPage() {
               <button onClick={handleDelete} className={s.deleteConfirmBtn}>Delete</button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

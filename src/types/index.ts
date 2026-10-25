@@ -212,6 +212,19 @@ export interface Sale {
   updatedAt: string;
 }
 
+export interface SalesSummary {
+  totalAmount: number;
+  totalPendingAmount: number;
+  totalReceivedAmount: number;
+  totalDiscount: number;
+}
+
+export interface SalesResponse {
+  data: Sale[];
+  meta: { total: number; page: number; limit: number; totalPages: number };
+  summary: SalesSummary;
+}
+
 export interface SaleItem {
   id: number;
   saleId: number;

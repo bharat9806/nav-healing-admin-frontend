@@ -120,7 +120,7 @@
   margin: 0;
   font-size: $fs-body;
   font-weight: 500;
-  color: $red-light;
+  color: var(--status-danger);
 }
 
 .formActions {
@@ -199,7 +199,7 @@
 
 .patientListItemActive {
   background: var(--brand-primary-soft) !important;
-  border-color: rgba($emerald, 0.4) !important;
+  border-color: color-mix(in srgb, var(--brand-primary) 40%, transparent) !important;
 }
 
 .patientListTop {
@@ -218,7 +218,7 @@
 .patientMeta {
   font-size: $fs-xs;
   font-weight: 600;
-  color: $emerald-light;
+  color: var(--status-success);
   white-space: nowrap;
 }
 
@@ -349,12 +349,12 @@
   padding: 0.2rem $s3;
   border: 1px solid var(--shell-border);
   border-radius: $r-full;
-  color: $emerald-light;
+  color: var(--status-success);
 
   &:hover {
     background: var(--brand-primary-soft);
-    border-color: rgba($emerald, 0.35);
-    color: $emerald-light;
+    border-color: color-mix(in srgb, var(--brand-primary) 35%, transparent);
+    color: var(--status-success);
   }
 }
 
@@ -453,7 +453,7 @@
   font-size: $fs-xs;
   font-weight: 600;
   background: var(--brand-primary-soft);
-  color: $emerald-light;
+  color: var(--status-success);
 }
 
 .timelineSummary {
@@ -479,7 +479,7 @@
 // ── Sales cards ───────────────────────────────────────────────────────────────
 .saleAmount {
   font-weight: 700;
-  color: $emerald-light;
+  color: var(--status-success);
   white-space: nowrap;
 }
 
@@ -502,3 +502,6 @@
   font-size: $fs-body;
   color: var(--shell-text-subtle);
 }
+
+.patientCount { font-size: 13px; color: var(--shell-text-muted); padding: 0 8px; }
+.loadMore { width: 100%; min-height: 44px; border: 1px solid var(--shell-border); border-radius: 8px; background: var(--shell-control-bg); color: var(--shell-text-primary); cursor: pointer; }

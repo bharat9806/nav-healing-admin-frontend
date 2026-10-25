@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import api from '@/lib/api';
+import BrandLogo from '@/components/ui/BrandLogo';
 import { clearCurrentUserCache, fetchCurrentUser } from '@/lib/current-user';
 import { User } from '@/types';
 import s from './Sidebar.module.scss';
@@ -55,6 +56,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const navItems = allNavItems.filter((item) => {
     if (!user) return false;
     if (!item.permission) return true;
+    if (item.permission === 'canManageUsers') return user.role === 'SUPER_ADMIN';
     if (user.role === 'SUPER_ADMIN') return true;
     return user[item.permission] === true;
   });
@@ -74,10 +76,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <aside className={s.sidebar}>
       <div className={s.brand}>
-        <div className={s.brandIcon}>
-          <span>N</span>
-        </div>
-        <span className={s.brandName}>Nav Healing</span>
+        <BrandLogo compact />
       </div>
 
       <nav className={s.nav}>
@@ -95,6 +94,7 @@ export default function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={`${s.navItem} ${isActive ? s.navItemActive : ''}`}
                 onClick={onNavigate}
               >

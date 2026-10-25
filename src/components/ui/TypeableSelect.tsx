@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CustomSelect, SelectOption } from './CustomSelect';
 import s from './TypeableSelect.module.scss';
 
 type Props = {
+  id?: string;
   options: SelectOption[];
   value: string;
   onChange: (value: string) => void;
@@ -21,6 +22,7 @@ type Props = {
 const CUSTOM_VALUE = '__custom__';
 
 export function TypeableSelect({
+  id,
   options,
   value,
   onChange,
@@ -37,24 +39,20 @@ export function TypeableSelect({
     () => !!value && !options.some((option) => String(option.value) === String(value)),
     [options, value],
   );
-  const [isTyping, setIsTyping] = useState(hasCustomValue);
+  const [isTyping, setIsTyping] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    if (hasCustomValue) {
-      setIsTyping(true);
-    }
-  }, [hasCustomValue]);
 
   const selectOptions = useMemo(
     () => [...options, { label: customOptionLabel, value: CUSTOM_VALUE }],
     [customOptionLabel, options],
   );
 
-  if (isTyping) {
+  if (isTyping ?? hasCustomValue) {
     return (
       <div className={`${s.wrap} ${fullWidth ? s.wrapFull : ''} ${className}`}>
         <div className={s.inputShell}>
           <input
+            id={id}
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -79,6 +77,7 @@ export function TypeableSelect({
 
   return (
     <CustomSelect
+      id={id}
       options={selectOptions}
       value={value || ''}
       onChange={(nextValue) => {
@@ -88,6 +87,7 @@ export function TypeableSelect({
           onChange(hasCustomValue ? value : '');
           return;
         }
+        setIsTyping(null);
         onChange(normalized);
       }}
       placeholder={placeholder}

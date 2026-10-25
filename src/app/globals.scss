@@ -4,88 +4,115 @@
 
 :root {
   color-scheme: dark;
-  --app-bg: #030712;
-  --app-text: #ffffff;
-  --app-text-muted: #9ca3af;
+  --app-bg: #141615;
+  --app-text: #f0eee7;
+  --app-text-muted: #abb0a8;
   --app-link: inherit;
-
-  --shell-base: #030712;
-  --shell-surface: #111827;
-  --shell-elevated: #1f2937;
-  --shell-muted: #374151;
-  --shell-border: #1f2937;
-  --shell-border-strong: rgba(255, 255, 255, 0.16);
-  --shell-text-primary: #ffffff;
-  --shell-text-secondary: #d1d5db;
-  --shell-text-muted: #9ca3af;
-  --shell-text-subtle: #6b7280;
-  --shell-hover: rgba(255, 255, 255, 0.07);
-  --shell-overlay: rgba(0, 0, 0, 0.6);
-  --shell-shadow-soft: 0 20px 45px rgba(0, 0, 0, 0.35);
-  --shell-focus-ring: rgba(5, 150, 105, 0.3);
-
-  --brand-primary: #059669;
-  --brand-primary-hover: #10b981;
-  --brand-primary-soft: rgba(5, 150, 105, 0.12);
-  --brand-primary-soft-strong: rgba(5, 150, 105, 0.18);
-  --brand-on-primary: #ffffff;
-
-  --shell-control-bg: rgba(255, 255, 255, 0.05);
-  --shell-control-bg-strong: rgba(255, 255, 255, 0.09);
-  --shell-scrollbar: rgba(255, 255, 255, 0.22);
-  --shell-card-bg: #111827;
-  --shell-input-bg: #1f2937;
-  --shell-input-border: #374151;
-  --shell-table-border: rgba(31, 41, 55, 0.5);
-  --shell-table-divider: rgba(255, 255, 255, 0.06);
-  --shell-row-hover: rgba(31, 41, 55, 0.3);
-  --shell-pill-bg: rgba(255, 255, 255, 0.08);
-  --shell-soft-bg: rgba(255, 255, 255, 0.03);
-  --shell-soft-bg-strong: rgba(255, 255, 255, 0.06);
+  --shell-base: #141615;
+  --shell-surface: #1b1e1c;
+  --shell-elevated: #2b302c;
+  --shell-muted: #363d37;
+  --shell-border: #3b423c;
+  --shell-border-strong: #69776a;
+  --shell-text-primary: #f0eee7;
+  --shell-text-secondary: #d4d8ce;
+  --shell-text-muted: #abb0a8;
+  --shell-text-subtle: #a4ada1;
+  --shell-hover: rgba(170,195,173,0.07);
+  --shell-overlay: rgba(4,9,6,0.78);
+  --shell-shadow-soft: 0 8px 24px rgba(0,0,0,0.24), 0 1px 0 rgba(238,233,222,0.025) inset;
+  --shell-focus-ring: rgba(146,188,160,0.4);
+  --brand-primary: #88b397;
+  --brand-primary-hover: #a0c7ad;
+  --brand-primary-soft: rgba(136,179,151,0.09);
+  --brand-primary-soft-strong: rgba(136,179,151,0.10);
+  --brand-on-primary: #11251a;
+  --shell-control-bg: rgba(245,239,223,0.04);
+  --shell-control-bg-strong: rgba(245,239,223,0.08);
+  --shell-scrollbar: #63705f;
+  --shell-card-bg: #202420;
+  --shell-input-bg: #171b18;
+  --shell-input-border: #6c7968;
+  --shell-table-border: #3b423c;
+  --shell-table-divider: rgba(173,183,169,0.14);
+  --shell-row-hover: rgba(146,188,160,0.075);
+  --shell-pill-bg: rgba(173,183,169,0.14);
+  --shell-soft-bg: rgba(245,239,223,0.025);
+  --shell-soft-bg-strong: rgba(245,239,223,0.055);
+  --status-danger-button: #a33f30;
+  --status-danger-button-hover: #8d3024;
+  --accent-earth: #d9b87a;
+  --accent-earth-soft: rgba(217,184,122,0.12);
+  --status-success: #a0c5a3;
+  --status-warning: #d8b77c;
+  --status-danger: #e5a499;
+  --status-info: #a0bdc6;
+  --status-special: #c6aec3;
+  --status-neutral: #adb7a9;
+  --nav-bg: #101511;
+  --nav-text: #e6e9de;
+  --nav-muted: #afb9a9;
+  --nav-border: #303a31;
+  --nav-hover: #252f27;
+  --nav-active: #2a4834;
+  --nav-on-active: #f0eee7;
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --app-bg: #f3f7f6;
-  --app-text: #0f172a;
-  --app-text-muted: #475569;
-
-  --shell-base: #eef4f1;
-  --shell-surface: #ffffff;
-  --shell-elevated: #f8fafc;
-  --shell-muted: #e2e8f0;
-  --shell-border: rgba(15, 23, 42, 0.1);
-  --shell-border-strong: rgba(15, 23, 42, 0.18);
-  --shell-text-primary: #0f172a;
-  --shell-text-secondary: #334155;
-  --shell-text-muted: #64748b;
-  --shell-text-subtle: #94a3b8;
-  --shell-hover: rgba(15, 23, 42, 0.05);
-  --shell-overlay: rgba(15, 23, 42, 0.28);
-  --shell-shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.08);
-  --shell-focus-ring: rgba(5, 150, 105, 0.22);
-
-  --brand-primary: #059669;
-  --brand-primary-hover: #047857;
-  --brand-primary-soft: rgba(5, 150, 105, 0.1);
-  --brand-primary-soft-strong: rgba(5, 150, 105, 0.16);
-  --brand-on-primary: #ffffff;
-
-  --shell-control-bg: rgba(15, 23, 42, 0.03);
-  --shell-control-bg-strong: rgba(15, 23, 42, 0.06);
-  --shell-scrollbar: rgba(15, 23, 42, 0.18);
-  --shell-card-bg: #ffffff;
-  --shell-input-bg: #f8fafc;
-  --shell-input-border: rgba(148, 163, 184, 0.45);
-  --shell-table-border: rgba(148, 163, 184, 0.35);
-  --shell-table-divider: rgba(148, 163, 184, 0.28);
-  --shell-row-hover: rgba(15, 23, 42, 0.03);
-  --shell-pill-bg: rgba(15, 23, 42, 0.06);
-  --shell-soft-bg: rgba(15, 23, 42, 0.025);
-  --shell-soft-bg-strong: rgba(15, 23, 42, 0.05);
+  --app-bg: #f7f2e7;
+  --app-text: #1c2d22;
+  --app-text-muted: #626b58;
+  --shell-base: #f7f2e7;
+  --shell-surface: #fbf8f1;
+  --shell-elevated: #eee8d8;
+  --shell-muted: #e3dbc7;
+  --shell-border: #d8cfb9;
+  --shell-border-strong: #b1b598;
+  --shell-text-primary: #1c2d22;
+  --shell-text-secondary: #3c4938;
+  --shell-text-muted: #626b58;
+  --shell-text-subtle: #6c705f;
+  --shell-hover: rgba(15,81,50,0.06);
+  --shell-overlay: rgba(10,36,22,0.35);
+  --shell-shadow-soft: 0 8px 28px rgba(64,53,27,0.055);
+  --shell-focus-ring: rgba(15,81,50,0.24);
+  --brand-primary: #0f5132;
+  --brand-primary-hover: #0a3622;
+  --brand-primary-soft: rgba(15,81,50,0.07);
+  --brand-primary-soft-strong: rgba(15,81,50,0.12);
+  --brand-on-primary: #fbf8f1;
+  --shell-control-bg: rgba(15,81,50,0.035);
+  --shell-control-bg-strong: rgba(15,81,50,0.07);
+  --shell-scrollbar: #9da68a;
+  --shell-card-bg: #fbf8f1;
+  --shell-input-bg: #fffdf7;
+  --shell-input-border: #85886f;
+  --shell-table-border: #d8cfb9;
+  --shell-table-divider: rgba(86,86,55,0.13);
+  --shell-row-hover: rgba(15,81,50,0.04);
+  --shell-pill-bg: #eee5d1;
+  --shell-soft-bg: rgba(137,96,47,0.035);
+  --shell-soft-bg-strong: rgba(137,96,47,0.065);
+  --accent-earth: #89602f;
+  --accent-earth-soft: rgba(137,96,47,0.09);
+  --status-success: #285d38;
+  --status-warning: #80571d;
+  --status-danger: #a33f30;
+  --status-info: #37626b;
+  --status-special: #78516d;
+  --status-neutral: #626b58;
+  --nav-bg: #0a3622;
+  --nav-text: #f7f2e7;
+  --nav-muted: #c3d0b9;
+  --nav-border: rgba(228,234,221,0.18);
+  --nav-hover: #194c32;
+  --nav-active: #2f6b4f;
+  --nav-on-active: #fbf8f1;
 }
 
 html, body {
+  accent-color: var(--brand-primary);
   margin: 0;
   padding: 0;
   height: 100%;
@@ -93,6 +120,7 @@ html, body {
 }
 
 body {
+  accent-color: var(--brand-primary);
   background-color: var(--app-bg);
   color: var(--app-text);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
@@ -108,9 +136,34 @@ input, select, textarea { font-family: inherit; }
 img, svg, video, canvas { max-width: 100%; }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: var(--date-picker-filter, invert(1));
+  filter: none;
 }
 
 :root[data-theme='light'] input[type="date"]::-webkit-calendar-picker-indicator {
   filter: none;
+}
+
+:root { --font-heading: Georgia, 'Times New Roman', serif; }
+h1, h2 { font-family: var(--font-heading); }
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+::selection { background: var(--brand-primary); color: var(--brand-on-primary); }
+@media (prefers-reduced-motion: reduce) { body { transition: none; } }
+
+/* Compact summaries keep records and actions within reach on a phone. */
+@media (max-width: 767px) {
+  main input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  main select, main textarea { font-size: 16px !important; }
+  main :is(button, a) { scroll-margin-block: 24px; }
+  main form :is(button[type='submit'], button[type='button']) { min-height: 44px; }
+}
+[role='listbox'] [role='option'][aria-selected='true'] { outline: 2px solid var(--brand-primary); outline-offset: -2px; background-color: var(--shell-hover); }
+
+@media (max-width: 767px) { main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), main select { min-height: 44px; } }
+@media (max-width: 767px) {
+  [role='dialog'] input:not([type='checkbox']):not([type='radio']):not([type='file']),
+  [role='dialog'] select, [role='dialog'] textarea { font-size: 16px !important; min-height: 44px; }
+  [role='dialog'] button { min-height: 44px; }
 }

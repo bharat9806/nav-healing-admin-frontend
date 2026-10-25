@@ -82,8 +82,8 @@
   justify-content: center;
   font-size: $fs-xs;
   font-weight: 700;
-  background: rgba($emerald, 0.12);
-  color: $emerald-light;
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  color: var(--status-success);
 }
 
 .rankBody { flex: 1; min-width: 0; }
@@ -110,7 +110,7 @@
 }
 
 .rankValue {
-  color: $emerald-light;
+  color: var(--status-success);
   font-weight: 700;
 }
 
@@ -125,12 +125,12 @@
 .rankFill {
   height: 100%;
   border-radius: $r-full;
-  background: linear-gradient(to right, rgba($emerald, 0.55), $emerald);
+  background: linear-gradient(to right, var(--brand-primary-soft-strong), var(--brand-primary));
   transition: width 0.4s ease;
 }
 
 .rankFillViolet {
-  background: linear-gradient(to right, rgba(#8b5cf6, 0.55), #a78bfa);
+  background: linear-gradient(to right, var(--accent-earth-soft), var(--accent-earth));
 }
 
 .emptyText {
@@ -150,3 +150,6 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+.periodControl { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; color: var(--shell-text-secondary); font-size: 14px; }
+.periodControl select { min-height: 44px; padding: 8px 12px; border: 1px solid var(--shell-input-border); border-radius: 8px; background: var(--shell-input-bg); color: var(--shell-text-primary); }
